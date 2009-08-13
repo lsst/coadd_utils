@@ -2,6 +2,7 @@
 #
 # Setup our environment
 #
+import glob
 import os.path
 import lsst.SConsUtils as scons
 
