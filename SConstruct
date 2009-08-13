@@ -46,7 +46,6 @@ Alias("install", [
     env.Install(env['prefix'], "python"),
     env.Install(env['prefix'], "include"),
     env.Install(env['prefix'], "lib"),
-    env.Install(env['prefix'] + "/bin", Glob("bin/*.py")),
     env.InstallEups(env['prefix'] + "/ups", Glob("ups/*.table")),
 ])
 
