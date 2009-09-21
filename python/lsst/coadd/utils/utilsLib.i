@@ -20,5 +20,15 @@ Python interface to lsst::coadd::utils functions and classes
 
 %lsst_exceptions()
 
+%include "lsst/coadd/utils/addToCoadd.h"
+%define %ADDTOMASKEDIMAGE(IMAGEPIXEL)
+    %template(addToCoadd) lsst::coadd::utils::addToCoadd<IMAGEPIXEL,
+        lsst::afw::image::MaskPixel, lsst::afw::image::VariancePixel>;
+%enddef
+%ADDTOMASKEDIMAGE(double);
+%ADDTOMASKEDIMAGE(float);
+%ADDTOMASKEDIMAGE(int);
+%ADDTOMASKEDIMAGE(boost::uint16_t);
+
 %include "lsst/coadd/utils/setCoaddEdgeBits.h"
 %template(setCoaddEdgeBits) lsst::coadd::utils::setCoaddEdgeBits<lsst::afw::image::MaskPixel>;

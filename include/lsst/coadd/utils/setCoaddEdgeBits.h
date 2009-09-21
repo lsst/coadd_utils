@@ -2,8 +2,6 @@
 #ifndef LSST_COADD_UTILS_SETCOADDEDGEBITS_H
 #define LSST_COADD_UTILS_SETCOADDEDGEBITS_H
 /**
-* @brief declare setCoaddEdgeBits
-*
 * @file
 *
 * @author Russell Owen

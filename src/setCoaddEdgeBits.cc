@@ -1,7 +1,5 @@
 // -*- LSST-C++ -*-
 /**
-* @brief define addToCoadd
-*
 * @file
 *
 * @author Russell Owen
