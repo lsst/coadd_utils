@@ -31,16 +31,12 @@ def makeBlankCoadd(fromExposure, resolutionFactor, coaddClass=afwImage.ExposureF
     Warning:
     - fromExposure must use FK5 J2000 coordinates for its WCS. This is NOT yet checked.
     """
-    fromMaskedImage = fromExposure.getMaskedImage()
-    fromShape = numpy.array(fromMaskedImage.getDimensions(), dtype=int)
-    fromWcs = fromExposure.getWcs()
-
-    coaddShape = fromShape * resolutionFactor
-    coaddMaskedImage = afwImage.MaskedImageD(coaddShape[0], coaddShape[1])
-    coaddMaskedImage.set((0,0,0))
+    fromShape = numpy.array(fromExposure.getMaskedImage().getDimensions())
+    coaddShape = numpy.round(fromShape * resolutionFactor).astype(int)
     
     # make tangent-plane projection WCS for the coadd
-    fromCtr = (fromShape - 1) / 2
+    fromWcs = fromExposure.getWcs()
+    fromCtr = (fromShape - 1) / 2.0
     fromCtrPt = afwImage.PointD(*fromCtr)
     raDecCtr = numpy.array(fromWcs.xyToRaDec(fromCtrPt))
     coaddDegPerPix = math.sqrt(fromWcs.pixArea(fromCtrPt)) / float(resolutionFactor)
@@ -51,8 +47,8 @@ def makeBlankCoadd(fromExposure, resolutionFactor, coaddClass=afwImage.ExposureF
     coaddMetadata.add("RADECSYS", "FK5")
     coaddMetadata.add("CTYPE1", "RA---TAN")
     coaddMetadata.add("CTYPE2", "DEC--TAN")
-    coaddMetadata.add("CRPIX1", coaddShape[0]/2)
-    coaddMetadata.add("CRPIX2", coaddShape[1]/2)
+    coaddMetadata.add("CRPIX1", coaddShape[0]/2.0)
+    coaddMetadata.add("CRPIX2", coaddShape[1]/2.0)
     coaddMetadata.add("CRVAL1", raDecCtr[0])
     coaddMetadata.add("CRVAL2", raDecCtr[1])
     coaddMetadata.add("CD1_1", coaddDegPerPix)
@@ -60,5 +56,5 @@ def makeBlankCoadd(fromExposure, resolutionFactor, coaddClass=afwImage.ExposureF
     coaddMetadata.add("CD2_1", 0.0)
     coaddMetadata.add("CD2_2", coaddDegPerPix)
     coaddWcs = afwImage.Wcs(coaddMetadata)
-    coaddExposure = coaddClass(coaddMaskedImage, coaddWcs)
+    coaddExposure = coaddClass(coaddShape[0], coaddShape[1], coaddWcs)
     return coaddExposure
