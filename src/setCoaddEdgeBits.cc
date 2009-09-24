@@ -8,44 +8,52 @@
 #include "lsst/coadd/utils/setCoaddEdgeBits.h"
 
 namespace pexExcept = lsst::pex::exceptions;
+namespace afwImage = lsst::afw::image;
+namespace coaddUtils = lsst::coadd::utils;
 
 /**
-* @brief set edge bits of coadd mask based on depth map
+* @brief set edge bits of coadd mask based on weight map
 *
-* @throw pexExcept::InvalidParameterException if the image dimensions do not match.
+* @throw pexExcept::InvalidParameterException if the dimensions of coaddMask and weightMap do not match.
 */
-template<typename MaskPixelT>
-void lsst::coadd::utils::setCoaddEdgeBits(
-    lsst::afw::image::Mask<MaskPixelT> &coaddMask, ///< mask plane of coadd
-    lsst::afw::image::Image<boost::uint16_t> const &depthMap    ///< depth map
+template<typename WeightPixelT>
+void coaddUtils::setCoaddEdgeBits(
+    afwImage::Mask<afwImage::MaskPixel> &coaddMask, ///< mask of coadd
+    afwImage::Image<WeightPixelT> const &weightMap  ///< weight map
 ) {
-    typedef lsst::afw::image::Mask<MaskPixelT> MaskT;
-    typedef lsst::afw::image::Image<boost::uint16_t> DepthMapT;
+    typedef afwImage::Mask<afwImage::MaskPixel>::x_iterator MaskXIter;
+    typedef typename afwImage::Image<WeightPixelT>::const_x_iterator WeightMapConstXIter;
 
-    if (coaddMask.getDimensions() != depthMap.getDimensions()) {
-        throw LSST_EXCEPT(pexExcept::InvalidParameterException, "coaddMask and depthMap dimensions do not match");
+    if (coaddMask.getDimensions() != weightMap.getDimensions()) {
+        throw LSST_EXCEPT(pexExcept::InvalidParameterException,
+            "coaddMask and weightMap dimensions do not match");
     }
     
-    MaskPixelT const edgeMask = MaskT::getPlaneBitMask("EDGE");
+    afwImage::MaskPixel const edgeMask = afwImage::Mask<afwImage::MaskPixel>::getPlaneBitMask("EDGE");
 
     // Set the pixels row by row, to avoid repeated checks for end-of-row
-    for (int y = 0, endY = depthMap.getHeight(); y != endY; ++y) {
-        typename DepthMapT::const_x_iterator depthMapPtr = depthMap.row_begin(y);
-        typename DepthMapT::const_x_iterator depthMapEndPtr = depthMap.row_end(y);
-        typename MaskT::x_iterator coaddMaskPtr = coaddMask.row_begin(y);
-        for (; depthMapPtr != depthMapEndPtr; ++depthMapPtr, ++coaddMaskPtr) {
-            if (*depthMapPtr == 0) {
+    for (int y = 0, endY = weightMap.getHeight(); y != endY; ++y) {
+        WeightMapConstXIter weightMapPtr = weightMap.row_begin(y);
+        WeightMapConstXIter const weightMapEndPtr = weightMap.row_end(y);
+        MaskXIter coaddMaskPtr = coaddMask.row_begin(y);
+        for (; weightMapPtr != weightMapEndPtr; ++weightMapPtr, ++coaddMaskPtr) {
+            if (*weightMapPtr == 0) {
                 (*coaddMaskPtr) = (*coaddMaskPtr) | edgeMask;
             }
         }
     }
 }
 
-
 //
 // Explicit instantiations
 //
-template void lsst::coadd::utils::setCoaddEdgeBits<lsst::afw::image::MaskPixel>(
-    lsst::afw::image::Mask<lsst::afw::image::MaskPixel> &coaddMask,
-    lsst::afw::image::Image<boost::uint16_t> const &depthMap
-);
+#define INSTANTIATE(WEIGHTPIXEL) \
+    template void coaddUtils::setCoaddEdgeBits<WEIGHTPIXEL>( \
+        afwImage::Mask<afwImage::MaskPixel> &coaddMask, \
+        afwImage::Image<WEIGHTPIXEL> const &weightMap \
+    );
+
+INSTANTIATE(double);
+INSTANTIATE(float);
+INSTANTIATE(int);
+INSTANTIATE(boost::uint16_t);

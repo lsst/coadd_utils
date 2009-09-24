@@ -21,14 +21,37 @@ Python interface to lsst::coadd::utils functions and classes
 %lsst_exceptions()
 
 %include "lsst/coadd/utils/addToCoadd.h"
-%define %ADDTOMASKEDIMAGE(IMAGEPIXEL)
-    %template(addToCoadd) lsst::coadd::utils::addToCoadd<IMAGEPIXEL,
-        lsst::afw::image::MaskPixel, lsst::afw::image::VariancePixel>;
+%define %ADDTOCOADD(COADDPIXEL, WEIGHTPIXEL)
+    %template(addToCoadd) lsst::coadd::utils::addToCoadd<COADDPIXEL, WEIGHTPIXEL>;
 %enddef
-%ADDTOMASKEDIMAGE(double);
-%ADDTOMASKEDIMAGE(float);
-%ADDTOMASKEDIMAGE(int);
-%ADDTOMASKEDIMAGE(boost::uint16_t);
+%ADDTOCOADD(double, double);
+%ADDTOCOADD(double, float);
+%ADDTOCOADD(double, int);
+%ADDTOCOADD(double, boost::uint16_t);
+%ADDTOCOADD(float, double);
+%ADDTOCOADD(float, float);
+%ADDTOCOADD(float, int);
+%ADDTOCOADD(float, boost::uint16_t);
+
+%include "lsst/coadd/utils/imageMath.h"
+%define %DIVIDEMASKEDIMAGEBYIMAGE(MASKEDIMAGEPIXEL, IMAGEPIXEL)
+    %template(divideMaskedImageByImage)
+        lsst::coadd::utils::divideMaskedImageByImage<MASKEDIMAGEPIXEL, IMAGEPIXEL>;
+%enddef
+%DIVIDEMASKEDIMAGEBYIMAGE(double, double);
+%DIVIDEMASKEDIMAGEBYIMAGE(double, float);
+%DIVIDEMASKEDIMAGEBYIMAGE(double, int);
+%DIVIDEMASKEDIMAGEBYIMAGE(double, boost::uint16_t);
+%DIVIDEMASKEDIMAGEBYIMAGE(float, double);
+%DIVIDEMASKEDIMAGEBYIMAGE(float, float);
+%DIVIDEMASKEDIMAGEBYIMAGE(float, int);
+%DIVIDEMASKEDIMAGEBYIMAGE(float, boost::uint16_t);
 
 %include "lsst/coadd/utils/setCoaddEdgeBits.h"
-%template(setCoaddEdgeBits) lsst::coadd::utils::setCoaddEdgeBits<lsst::afw::image::MaskPixel>;
+%define %SETCOADDEDGEBITS(WEIGHTPIXEL)
+    %template(setCoaddEdgeBits) lsst::coadd::utils::setCoaddEdgeBits<WEIGHTPIXEL>;
+%enddef
+%SETCOADDEDGEBITS(double);
+%SETCOADDEDGEBITS(float);
+%SETCOADDEDGEBITS(int);
+%SETCOADDEDGEBITS(boost::uint16_t);

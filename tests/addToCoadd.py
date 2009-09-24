@@ -32,48 +32,50 @@ medMIPath = os.path.join(dataDir, InputMaskedImageNameMed)
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-def referenceAddToCoadd(coadd, depthMap, image, badPixelMask):
+def referenceAddToCoadd(coadd, weightMap, maskedImage, badPixelMask, weight):
     """Reference implementation of lsst.coadd.utils.addToCoadd
     
     Unlike lsst.coadd.utils.addToCoadd this one does not change the inputs.
     
     Inputs:
-    - coadd: coadd before adding image
-    - depthMap: depth map before adding image
-    - image: masked image to add to coadd
+    - coadd: coadd before adding maskedImage
+    - weightMap: weight map before adding maskedImage
+    - maskedImage: masked image to add to coadd
     - badPixelMask: mask of bad pixels to ignore
+    - weight: relative weight of this maskedImage
 
     Returns two items:
     - coaddArrayList: new coadd as a list of image, mask, variance numpy arrays
-    - depthMapArray: new depth map, as a numpy array
+    - weightMapArray: new weight map, as a numpy array
     """
-    imageArrayList = imTestUtils.arraysFromMaskedImage(image)
+    maskedImageArrayList = imTestUtils.arraysFromMaskedImage(maskedImage)
     coaddArrayList = imTestUtils.arraysFromMaskedImage(coadd)
-    depthMapArray = imTestUtils.arrayFromImage(depthMap)
+    weightMapArray = imTestUtils.arrayFromImage(weightMap)
 
-    badMaskArr = (imageArrayList[1] & badPixelMask) != 0
+    badMaskArr = (maskedImageArrayList[1] & badPixelMask) != 0
     for ind in (0, 2):
         coaddArray = coaddArrayList[ind]
-        coaddArray += numpy.where(badMaskArr, 0, imageArrayList[ind])
+        coaddArray += numpy.where(badMaskArr, 0, maskedImageArrayList[ind])
     coaddArray = coaddArrayList[1]
-    coaddArray |= numpy.where(badMaskArr, 0, imageArrayList[1])
-    depthMapArray += numpy.where(badMaskArr, 0, 1)
-    return coaddArrayList, depthMapArray
+    coaddArray |= numpy.where(badMaskArr, 0, maskedImageArrayList[1])
+    weightMapArray += numpy.where(badMaskArr, 0, 1) * weight
+    return coaddArrayList, weightMapArray
 
 
 class AddToCoaddTestCase(unittest.TestCase):
     """
     A test case for addToCoadd
     """
-    def referenceTest(self, coadd, depthMap, image, badPixelMask):
+    def referenceTest(self, coadd, weightMap, image, badPixelMask, weight):
         """Compare lsst implemenation of addToCoadd to a reference implementation.
         """
-        refCoaddArrayList, refDepthMapArray = referenceAddToCoadd(coadd, depthMap, image, badPixelMask)
-        coaddUtils.addToCoadd(coadd, depthMap, image, badPixelMask) # changes the inputs
-        depthMap.writeFits("depthMap.fits")
+        refCoaddArrayList, refweightMapArray = \
+            referenceAddToCoadd(coadd, weightMap, image, badPixelMask, weight)
+        coaddUtils.addToCoadd(coadd, weightMap, image, badPixelMask, weight) # changes the inputs
+        weightMap.writeFits("weightMap.fits")
         coaddArrayList = imTestUtils.arraysFromMaskedImage(coadd)
         maskArr = coaddArrayList[1]
-        depthMapArray = imTestUtils.arrayFromImage(depthMap)
+        weightMapArray = imTestUtils.arrayFromImage(weightMap)
         
         for name, ind in (("image", 0), ("mask", 1), ("variance", 2)):
             if not numpy.allclose(coaddArrayList[ind], refCoaddArrayList[ind]):
@@ -84,11 +86,11 @@ class AddToCoaddTestCase(unittest.TestCase):
                 )
                 errMsg = "\n".join(errMsgList)
                 self.fail(errMsg)
-        if numpy.any(depthMapArray != refDepthMapArray):
+        if not numpy.allclose(weightMapArray, refweightMapArray):
             errMsgList = (
-                "Computed depth map does not match reference for badPixelMask=%s:" % (badPixelMask,),
-                "computed=  %s" % (depthMapArray,),
-                "reference= %s" % (refDepthMapArray,),
+                "Computed weight map does not match reference for badPixelMask=%s:" % (badPixelMask,),
+                "computed=  %s" % (weightMapArray,),
+                "reference= %s" % (refweightMapArray,),
             )
             errMsg = "\n".join(errMsgList)
             self.fail(errMsg)
@@ -99,9 +101,10 @@ class AddToCoaddTestCase(unittest.TestCase):
         image = afwImage.MaskedImageF(medMIPath)
         coadd = afwImage.MaskedImageF(image.getDimensions())
         coadd *= 0.0
-        depthMap = afwImage.ImageU(image.getDimensions(), 0)
+        weightMap = afwImage.ImageF(image.getDimensions(), 0)
+        weight = 0.9
         for badPixelMask in (0x01, 0x03):
-            self.referenceTest(coadd, depthMap, image, badPixelMask)
+            self.referenceTest(coadd, weightMap, image, badPixelMask, weight)
 
 class SetCoaddEdgeBitsTestCase(unittest.TestCase):
     """
@@ -113,15 +116,15 @@ class SetCoaddEdgeBitsTestCase(unittest.TestCase):
         image = afwImage.MaskedImageF(medMIPath)
         coadd = afwImage.MaskedImageF(image.getDimensions())
         coadd *= 0.0
-        depthMap = afwImage.ImageU(image.getDimensions(), 0)
-        coaddUtils.addToCoadd(coadd, depthMap, image, 0xFFFF)
-        depthMapArray = imTestUtils.arrayFromImage(depthMap)
+        weightMap = afwImage.ImageF(image.getDimensions(), 0)
+        coaddUtils.addToCoadd(coadd, weightMap, image, 0xFFFF, 1.0)
+        weightMapArray = imTestUtils.arrayFromImage(weightMap)
         refCoaddMaskArray = imTestUtils.arrayFromMask(coadd.getMask())
         edgeMask = afwImage.MaskU.getPlaneBitMask("EDGE")
-        refCoaddMaskArray |= numpy.where(depthMapArray > 0, 0, edgeMask)
+        refCoaddMaskArray |= numpy.where(weightMapArray > 0, 0, edgeMask)
         
         coaddMask = coadd.getMask()
-        coaddUtils.setCoaddEdgeBits(coaddMask, depthMap)
+        coaddUtils.setCoaddEdgeBits(coaddMask, weightMap)
         coaddMaskArray = imTestUtils.arrayFromMask(coaddMask)
         if numpy.any(refCoaddMaskArray != coaddMaskArray):
             errMsgList = (

@@ -4,9 +4,7 @@
 /**
 * @file
 *
-* @author Russell Owen.
-*
-* @todo: move to a better location
+* @author Russell Owen
 */
 #include "boost/cstdint.hpp"
 
@@ -16,12 +14,15 @@ namespace lsst {
 namespace coadd {
 namespace utils {
 
-    template<typename ImagePixelT, typename MaskPixelT, typename VariancePixelT>
+    template<typename CoaddPixelT, typename WeightPixelT>
     void addToCoadd(
-        lsst::afw::image::MaskedImage<ImagePixelT, MaskPixelT, VariancePixelT> &coadd,
-        lsst::afw::image::Image<boost::uint16_t> &depthMap,
-        lsst::afw::image::MaskedImage<ImagePixelT, MaskPixelT, VariancePixelT> const &image,
-        MaskPixelT const badPixelMask
+        lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
+            lsst::afw::image::VariancePixel> &coadd,
+        lsst::afw::image::Image<WeightPixelT> &weightMap,
+        lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
+            lsst::afw::image::VariancePixel> const &maskedImage,
+        lsst::afw::image::MaskPixel const badPixelMask,
+        WeightPixelT weight
     );
 
 }}} // lsst::coadd::utils

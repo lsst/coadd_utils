@@ -14,10 +14,10 @@ namespace lsst {
 namespace coadd {
 namespace utils {
     
-    template<typename MaskPixelT>
+    template<typename WeightPixelT>
     void setCoaddEdgeBits(
-        lsst::afw::image::Mask<MaskPixelT> &coaddMask,
-        lsst::afw::image::Image<boost::uint16_t> const &depthMap
+        lsst::afw::image::Mask<lsst::afw::image::MaskPixel> &coaddMask,
+        lsst::afw::image::Image<WeightPixelT> const &weightMap
     );
 
 }}} // lsst::coadd::utils

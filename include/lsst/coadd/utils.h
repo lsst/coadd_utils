@@ -4,4 +4,5 @@
 * @file
 */
 #include "lsst/coadd/utils/addToCoadd.h"
+#include "lsst/coadd/utils/imageMath.h"
 #include "lsst/coadd/utils/setCoaddEdgeBits.h"
