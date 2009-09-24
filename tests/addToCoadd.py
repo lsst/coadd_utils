@@ -1,8 +1,6 @@
 #!/usr/bin/env python
+"""Test lsst.coadd.utils.addToCoadd
 """
-Test lsst.coadd.utils.addToCoadd
-"""
-
 import os
 import math
 import pdb # we may want to say pdb.set_trace()
@@ -63,8 +61,7 @@ def referenceAddToCoadd(coadd, weightMap, maskedImage, badPixelMask, weight):
 
 
 class AddToCoaddTestCase(unittest.TestCase):
-    """
-    A test case for addToCoadd
+    """A test case for addToCoadd
     """
     def referenceTest(self, coadd, weightMap, image, badPixelMask, weight):
         """Compare lsst implemenation of addToCoadd to a reference implementation.
@@ -72,7 +69,6 @@ class AddToCoaddTestCase(unittest.TestCase):
         refCoaddArrayList, refweightMapArray = \
             referenceAddToCoadd(coadd, weightMap, image, badPixelMask, weight)
         coaddUtils.addToCoadd(coadd, weightMap, image, badPixelMask, weight) # changes the inputs
-        weightMap.writeFits("weightMap.fits")
         coaddArrayList = imTestUtils.arraysFromMaskedImage(coadd)
         maskArr = coaddArrayList[1]
         weightMapArray = imTestUtils.arrayFromImage(weightMap)
@@ -107,8 +103,7 @@ class AddToCoaddTestCase(unittest.TestCase):
             self.referenceTest(coadd, weightMap, image, badPixelMask, weight)
 
 class SetCoaddEdgeBitsTestCase(unittest.TestCase):
-    """
-    A test case for setCoaddEdgeBits
+    """A test case for setCoaddEdgeBits
     """
     def testMed(self):
         """Test setCoaddEdgeBits on the usual medium-sized image
@@ -138,8 +133,7 @@ class SetCoaddEdgeBitsTestCase(unittest.TestCase):
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 def suite():
-    """
-    Returns a suite containing all the test cases in this module.
+    """Return a suite containing all the test cases in this module.
     """
     utilsTests.init()
 

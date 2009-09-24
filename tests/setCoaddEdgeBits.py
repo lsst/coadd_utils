@@ -1,8 +1,6 @@
 #!/usr/bin/env python
+"""Test lsst.coadd.utils.setCoaddEdgeBits
 """
-Test lsst.coadd.utils.setCoaddEdgeBits
-"""
-
 import os
 import math
 import pdb # we may want to say pdb.set_trace()
@@ -25,8 +23,7 @@ pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
 
 class SetCoaddEdgeBitsTestCase(unittest.TestCase):
-    """
-    A test case for setCoaddEdgeBits
+    """A test case for setCoaddEdgeBits
     """
     def testRandomMap(self):
         """Test setCoaddEdgeBits using a random depth map
@@ -57,8 +54,7 @@ class SetCoaddEdgeBitsTestCase(unittest.TestCase):
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 def suite():
-    """
-    Returns a suite containing all the test cases in this module.
+    """Return a suite containing all the test cases in this module.
     """
     utilsTests.init()
 

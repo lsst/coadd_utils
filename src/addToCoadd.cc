@@ -59,7 +59,8 @@ void coaddUtils::addToCoadd(
 //
 // Explicit instantiations
 //
-#define MASKEDIMAGE(IMAGEPIXEL) afwImage::MaskedImage<IMAGEPIXEL, afwImage::MaskPixel, afwImage::VariancePixel>
+#define MASKEDIMAGE(IMAGEPIXEL) afwImage::MaskedImage<IMAGEPIXEL, \
+    afwImage::MaskPixel, afwImage::VariancePixel>
 #define INSTANTIATE(COADDPIXEL, WEIGHTPIXEL) \
     template void coaddUtils::addToCoadd<COADDPIXEL, WEIGHTPIXEL>( \
         MASKEDIMAGE(COADDPIXEL) &coadd, \
