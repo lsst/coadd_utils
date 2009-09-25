@@ -102,35 +102,6 @@ class AddToCoaddTestCase(unittest.TestCase):
         for badPixelMask in (0x01, 0x03):
             self.referenceTest(coadd, weightMap, image, badPixelMask, weight)
 
-class SetCoaddEdgeBitsTestCase(unittest.TestCase):
-    """A test case for setCoaddEdgeBits
-    """
-    def testMed(self):
-        """Test setCoaddEdgeBits on the usual medium-sized image
-        """
-        image = afwImage.MaskedImageF(medMIPath)
-        coadd = afwImage.MaskedImageF(image.getDimensions())
-        coadd *= 0.0
-        weightMap = afwImage.ImageF(image.getDimensions(), 0)
-        coaddUtils.addToCoadd(coadd, weightMap, image, 0xFFFF, 1.0)
-        weightMapArray = imTestUtils.arrayFromImage(weightMap)
-        refCoaddMaskArray = imTestUtils.arrayFromMask(coadd.getMask())
-        edgeMask = afwImage.MaskU.getPlaneBitMask("EDGE")
-        refCoaddMaskArray |= numpy.where(weightMapArray > 0, 0, edgeMask)
-        
-        coaddMask = coadd.getMask()
-        coaddUtils.setCoaddEdgeBits(coaddMask, weightMap)
-        coaddMaskArray = imTestUtils.arrayFromMask(coaddMask)
-        if numpy.any(refCoaddMaskArray != coaddMaskArray):
-            errMsgList = (
-                "Coadd mask does not match reference=%s:" % (badPixelMask,),
-                "computed=  %s" % (coaddMaskArray,),
-                "reference= %s" % (refCoaddMaskArray,),
-            )
-            errMsg = "\n".join(errMsgList)
-            self.fail(errMsg)
-
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 def suite():
     """Return a suite containing all the test cases in this module.
@@ -139,7 +110,6 @@ def suite():
 
     suites = []
     suites += unittest.makeSuite(AddToCoaddTestCase)
-    suites += unittest.makeSuite(SetCoaddEdgeBitsTestCase)
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
 
     return unittest.TestSuite(suites)

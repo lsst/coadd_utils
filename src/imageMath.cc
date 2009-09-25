@@ -19,7 +19,7 @@ namespace coaddUtils = lsst::coadd::utils;
 * @throw pexExcept::InvalidParameterException if the image dimensions do not match.
 */
 template <typename MaskedImagePixelT, typename ImagePixelT>
-void coaddUtils::divideMaskedImageByImage(
+void coaddUtils::divide(
     afwImage::MaskedImage<MaskedImagePixelT, afwImage::MaskPixel, afwImage::VariancePixel> &maskedImage,
         ///< masked image to be altered (in/out)
     afwImage::Image<ImagePixelT> const &image         ///< image by which to divide masked image
@@ -50,7 +50,7 @@ void coaddUtils::divideMaskedImageByImage(
 // Explicit instantiations
 //
 #define INSTANTIATE(MASKEDIMAGEPIXEL, IMAGEPIXEL) \
-    template void coaddUtils::divideMaskedImageByImage<MASKEDIMAGEPIXEL, IMAGEPIXEL> ( \
+    template void coaddUtils::divide<MASKEDIMAGEPIXEL, IMAGEPIXEL> ( \
         afwImage::MaskedImage<MASKEDIMAGEPIXEL, afwImage::MaskPixel, afwImage::VariancePixel> &maskedImage, \
         afwImage::Image<IMAGEPIXEL> const &image);
 

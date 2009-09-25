@@ -35,8 +35,8 @@ Python interface to lsst::coadd::utils functions and classes
 
 %include "lsst/coadd/utils/imageMath.h"
 %define %DIVIDEMASKEDIMAGEBYIMAGE(MASKEDIMAGEPIXEL, IMAGEPIXEL)
-    %template(divideMaskedImageByImage)
-        lsst::coadd::utils::divideMaskedImageByImage<MASKEDIMAGEPIXEL, IMAGEPIXEL>;
+    %template(divide)
+        lsst::coadd::utils::divide<MASKEDIMAGEPIXEL, IMAGEPIXEL>;
 %enddef
 %DIVIDEMASKEDIMAGEBYIMAGE(double, double);
 %DIVIDEMASKEDIMAGEBYIMAGE(double, float);

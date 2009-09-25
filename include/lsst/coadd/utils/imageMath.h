@@ -15,7 +15,7 @@ namespace coadd {
 namespace utils {
 
     template <typename MaskedImagePixelT, typename ImagePixelT>
-    void divideMaskedImageByImage(
+    void divide(
         lsst::afw::image::MaskedImage<MaskedImagePixelT, lsst::afw::image::MaskPixel,
             lsst::afw::image::VariancePixel> &maskedImage,
         lsst::afw::image::Image<ImagePixelT> const &image
