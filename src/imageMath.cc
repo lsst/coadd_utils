@@ -20,9 +20,10 @@ namespace coaddUtils = lsst::coadd::utils;
 */
 template <typename MaskedImagePixelT, typename ImagePixelT>
 void coaddUtils::divide(
-    afwImage::MaskedImage<MaskedImagePixelT, afwImage::MaskPixel, afwImage::VariancePixel> &maskedImage,
-        ///< masked image to be altered (in/out)
-    afwImage::Image<ImagePixelT> const &image         ///< image by which to divide masked image
+    // spell out lsst:afw::image to make Doxygen happy
+    lsst::afw::image::MaskedImage<MaskedImagePixelT, lsst::afw::image::MaskPixel,
+        lsst::afw::image::VariancePixel> &maskedImage,  ///< masked image to be altered (in/out)
+    lsst::afw::image::Image<ImagePixelT> const &image   ///< image by which to divide masked image
 ) {
     typedef typename afwImage::MaskedImage<MaskedImagePixelT, afwImage::MaskPixel,
         afwImage::VariancePixel>::x_iterator MaskedImageXIter;

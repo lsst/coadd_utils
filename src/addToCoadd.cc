@@ -21,12 +21,13 @@ namespace coaddUtils = lsst::coadd::utils;
 */
 template <typename CoaddPixelT, typename WeightPixelT>
 void coaddUtils::addToCoadd(
-    afwImage::MaskedImage<CoaddPixelT, afwImage::MaskPixel, afwImage::VariancePixel> &coadd,
-        ///< coadd to be modified (in/out)
-    afwImage::Image<WeightPixelT> &weightMap,   ///< weight map to be modified (in/out)
-    afwImage::MaskedImage<CoaddPixelT, afwImage::MaskPixel, afwImage::VariancePixel> const &maskedImage,
-        ///< masked image to add to coadd
-    afwImage::MaskPixel const badPixelMask, ///< skip input pixel if input mask | badPixelMask != 0
+    // spell out lsst:afw::image to make Doxygen happy
+    lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
+        lsst::afw::image::VariancePixel> &coadd,        ///< coadd to be modified (in/out)
+    lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< weight map to be modified (in/out)
+    lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
+        lsst::afw::image::VariancePixel> const &maskedImage,    ///< masked image to add to coadd
+    lsst::afw::image::MaskPixel const badPixelMask, ///< skip input pixel if input mask | badPixelMask != 0
     WeightPixelT weight ///< relative weight of this image
 ) {
     typedef typename afwImage::MaskedImage<CoaddPixelT, afwImage::MaskPixel, afwImage::VariancePixel> CoaddT;
