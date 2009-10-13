@@ -7,7 +7,7 @@ import numpy
 import lsst.daf.base as dafBase
 import lsst.afw.image as afwImage
 
-__all__ = ["makeBlankCoadd"]
+__all__ = ["makeBlankCoadd", "makeBlankExposure"]
 
 def makeBlankCoadd(fromExposure, resolutionFactor, coaddClass=afwImage.ExposureF):
     """Generate a blank coadd Exposure based on a given Exposure
@@ -58,3 +58,12 @@ def makeBlankCoadd(fromExposure, resolutionFactor, coaddClass=afwImage.ExposureF
     coaddWcs = afwImage.Wcs(coaddMetadata)
     coaddExposure = coaddClass(coaddShape[0], coaddShape[1], coaddWcs)
     return coaddExposure
+
+def makeBlankExposure(fromExposure):
+    """Return a blank exposure with the same size and WCS as fromExposure
+    """
+    maskedImage = fromExposure.getMaskedImage()
+    blankMaskedImage = maskedImage.Factory(maskedImage.getDimensions())
+    blankMaskedImage.set((0,0,0))
+    return afwImage.makeExposure(blankMaskedImage, fromExposure.getWcs())
+
