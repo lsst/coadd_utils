@@ -4,6 +4,7 @@
 import os
 import math
 import pdb # we may want to say pdb.set_trace()
+import sys
 import unittest
 
 import numpy
@@ -22,11 +23,10 @@ pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
 dataDir = eups.productDir("afwdata")
 if not dataDir:
-    raise RuntimeError("Must set up afwdata to run these tests") 
-
-InputMaskedImageNameMed = "med"
-
-medMIPath = os.path.join(dataDir, InputMaskedImageNameMed)
+    print >> sys.stderr, "Must set up afwdata to run these tests"
+else:
+    medMIPath = os.path.join(dataDir, "med")
+    
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
@@ -109,7 +109,8 @@ def suite():
     utilsTests.init()
 
     suites = []
-    suites += unittest.makeSuite(AddToCoaddTestCase)
+    if dataDir:
+        suites += unittest.makeSuite(AddToCoaddTestCase)
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
 
     return unittest.TestSuite(suites)
