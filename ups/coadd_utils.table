@@ -1,10 +1,5 @@
-setupRequired(daf_data)
-setupRequired(cfitsio)
-setupRequired(wcslib)
-setupRequired(xpa)
-setupRequired(numpy)
-setupRequired(minuit)
 setupRequired(afw)
+setupOptional(afwdata)
 
 envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
 envPrepend(DYLD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
