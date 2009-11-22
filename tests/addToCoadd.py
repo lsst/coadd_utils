@@ -13,12 +13,18 @@ import eups
 import lsst.afw.image as afwImage
 import lsst.afw.image.testUtils as imTestUtils
 import lsst.afw.math as afwMath
+import lsst.afw.display.ds9 as ds9
 import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
 import lsst.pex.exceptions as pexEx
 import lsst.coadd.utils as coaddUtils
 
-Verbosity = 0 # increase to see trace
+try:
+    display
+except NameError:
+    display = False
+    Verbosity = 0 # increase to see trace
+
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
 dataDir = eups.productDir("afwdata")
@@ -63,6 +69,43 @@ def referenceAddToCoadd(coadd, weightMap, maskedImage, badPixelMask, weight):
 class AddToCoaddTestCase(unittest.TestCase):
     """A test case for addToCoadd
     """
+
+    def testAddToCoadd(self):
+        """Test coadd"""
+        
+        coadd = afwImage.MaskedImageF(10, 20)
+        coadd.set(0, 0x0, 0)
+        weightMap = coadd.getImage().Factory(coadd.getDimensions(), 0)
+
+        badBits = 0x1
+        truth = 10.0
+        for i in range(0, 20, 3):
+            image = coadd.Factory(coadd.getDimensions())
+            image.set(float("NaN"), badBits, 0)
+
+            subImage = image.Factory(image, afwImage.BBox(afwImage.PointI(0, i),
+                                                          image.getWidth(), image.getHeight() - i))
+            subImage.set(truth, 0x0, 0)
+
+            weight = 1.0
+            coaddUtils.addToCoadd(coadd, weightMap, image, badBits, weight)
+
+        coaddUtils.divide(coadd, weightMap)
+
+        if display:
+            ds9.mtv(image, title="image", frame=1)
+            ds9.mtv(coadd, title="coadd", frame=2)
+            ds9.mtv(weightMap, title="weightMap", frame=3)
+
+        stats = afwMath.makeStatistics(coadd, afwMath.MEAN | afwMath.STDEV)
+
+        self.assertEqual(truth, stats.getValue(afwMath.MEAN))
+        self.assertEqual(0.0, stats.getValue(afwMath.STDEV))
+
+class AddToCoaddAfwdataTestCase(unittest.TestCase):
+    """A test case for addToCoadd using afwdata
+    """
+
     def referenceTest(self, coadd, weightMap, image, badPixelMask, weight):
         """Compare lsst implemenation of addToCoadd to a reference implementation.
         """
@@ -95,13 +138,12 @@ class AddToCoaddTestCase(unittest.TestCase):
         """Test addToCoadd by adding an image with known bad pixels using varying masks
         """
         image = afwImage.MaskedImageF(medMIPath)
-        coadd = afwImage.MaskedImageF(image.getDimensions())
-        coadd *= 0.0
-        weightMap = afwImage.ImageF(image.getDimensions(), 0)
+        coadd = image.Factory(image.getDimensions())
+        coadd.set(0, 0x0, 0)
+        weightMap = image.getImage().Factory(image.getDimensions(), 0)
         weight = 0.9
         for badPixelMask in (0x01, 0x03):
             self.referenceTest(coadd, weightMap, image, badPixelMask, weight)
-
 
 def suite():
     """Return a suite containing all the test cases in this module.
@@ -109,8 +151,10 @@ def suite():
     utilsTests.init()
 
     suites = []
+    suites += unittest.makeSuite(AddToCoaddTestCase)
+
     if dataDir:
-        suites += unittest.makeSuite(AddToCoaddTestCase)
+        suites += unittest.makeSuite(AddToCoaddAfwdataTestCase)
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
 
     return unittest.TestSuite(suites)
