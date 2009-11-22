@@ -1,0 +1,19 @@
+/**
+\mainpage lsst::coadd::utils;  Support for coadds
+
+\section secIntro Introduction
+
+Coadds
+
+   - \ref secFoo : Section on foo
+*/
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+namespace lsst { namespace coadd { namespace utils {
+/**
+\page secFoo  Description of Foo
+
+\section secFoo  Foo etc.
+*/
+}}}
