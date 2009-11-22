@@ -23,8 +23,8 @@ template <typename CoaddPixelT, typename WeightPixelT>
 void coaddUtils::addToCoadd(
     // spell out lsst:afw::image to make Doxygen happy
     lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
-        lsst::afw::image::VariancePixel> &coadd,        ///< coadd to be modified (in/out)
-    lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< weight map to be modified (in/out)
+        lsst::afw::image::VariancePixel> &coadd,        ///< [in,out] coadd to be modified
+    lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< [in,out] weight map to be modified
     lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
         lsst::afw::image::VariancePixel> const &maskedImage,    ///< masked image to add to coadd
     lsst::afw::image::MaskPixel const badPixelMask, ///< skip input pixel if input mask | badPixelMask != 0
@@ -59,7 +59,7 @@ void coaddUtils::addToCoadd(
 
 //
 // Explicit instantiations
-//
+// \cond
 #define MASKEDIMAGE(IMAGEPIXEL) afwImage::MaskedImage<IMAGEPIXEL, \
     afwImage::MaskPixel, afwImage::VariancePixel>
 #define INSTANTIATE(COADDPIXEL, WEIGHTPIXEL) \
@@ -79,3 +79,4 @@ INSTANTIATE(float, double);
 INSTANTIATE(float, float);
 INSTANTIATE(float, int);
 INSTANTIATE(float, boost::uint16_t);
+/* \endcond */
