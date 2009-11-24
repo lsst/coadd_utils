@@ -16,6 +16,14 @@ namespace utils {
 
     template<typename CoaddPixelT, typename WeightPixelT>
     void addToCoadd(
+        lsst::afw::image::Image<CoaddPixelT> &coadd,
+        lsst::afw::image::Image<WeightPixelT> &weightMap,
+        lsst::afw::image::Image<CoaddPixelT> const &maskedImage,
+        WeightPixelT weight
+    );
+
+    template<typename CoaddPixelT, typename WeightPixelT>
+    void addToCoadd(
         lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
             lsst::afw::image::VariancePixel> &coadd,
         lsst::afw::image::Image<WeightPixelT> &weightMap,

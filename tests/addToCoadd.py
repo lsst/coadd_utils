@@ -59,10 +59,10 @@ def referenceAddToCoadd(coadd, weightMap, maskedImage, badPixelMask, weight):
     badMaskArr = (maskedImageArrayList[1] & badPixelMask) != 0
     for ind in (0, 2):
         coaddArray = coaddArrayList[ind]
-        coaddArray += numpy.where(badMaskArr, 0, maskedImageArrayList[ind])
+        coaddArray += numpy.where(badMaskArr, 0, maskedImageArrayList[ind])*(weight if ind == 0 else weight**2)
     coaddArray = coaddArrayList[1]
     coaddArray |= numpy.where(badMaskArr, 0, maskedImageArrayList[1])
-    weightMapArray += numpy.where(badMaskArr, 0, 1) * weight
+    weightMapArray += numpy.where(badMaskArr, 0, 1)*weight
     return coaddArrayList, weightMapArray
 
 
@@ -70,27 +70,50 @@ class AddToCoaddTestCase(unittest.TestCase):
     """A test case for addToCoadd
     """
 
-    def testAddToCoadd(self):
+    def _testAddToCoaddImpl(self, useMask, uniformWeight=True):
         """Test coadd"""
-        
-        coadd = afwImage.MaskedImageF(10, 20)
-        coadd.set(0, 0x0, 0)
-        weightMap = coadd.getImage().Factory(coadd.getDimensions(), 0)
 
-        badBits = 0x1
-        truth = 10.0
+        trueImageValue = 10.0
+        if useMask:
+            coadd = afwImage.MaskedImageF(10, 20)
+            weightMap = coadd.getImage().Factory(coadd.getDimensions(), 0)
+
+            badBits = 0x1
+            badPixel = (float("NaN"), badBits, 0)
+            zero = (0.0, 0x0, 0)
+            truth = (trueImageValue, 0x0, 0)
+        else:
+            coadd = afwImage.ImageF(10, 20)
+            weightMap = coadd.Factory(coadd.getDimensions(), 0)
+
+            badPixel = float("NaN")
+            zero = 0.0
+            truth = trueImageValue
+
+        coadd.set(zero)
+
         for i in range(0, 20, 3):
             image = coadd.Factory(coadd.getDimensions())
-            image.set(float("NaN"), badBits, 0)
+            image.set(badPixel)
 
             subImage = image.Factory(image, afwImage.BBox(afwImage.PointI(0, i),
                                                           image.getWidth(), image.getHeight() - i))
-            subImage.set(truth, 0x0, 0)
+            subImage.set(truth)
+            del subImage
 
-            weight = 1.0
-            coaddUtils.addToCoadd(coadd, weightMap, image, badBits, weight)
+            weight = 1.0 if uniformWeight else 1.0 + 0.1*i
+            if useMask:
+                coaddUtils.addToCoadd(coadd, weightMap, image, badBits, weight)
+            else:
+                coaddUtils.addToCoadd(coadd, weightMap, image, weight)
 
-        coaddUtils.divide(coadd, weightMap)
+            self.assertEqual(image.get(image.getWidth() - 1, image.getHeight() - 1), truth)
+
+        if useMask:
+            coaddUtils.divide(coadd, weightMap)
+        else:
+            coadd /= weightMap
+            pass
 
         if display:
             ds9.mtv(image, title="image", frame=1)
@@ -99,8 +122,45 @@ class AddToCoaddTestCase(unittest.TestCase):
 
         stats = afwMath.makeStatistics(coadd, afwMath.MEAN | afwMath.STDEV)
 
-        self.assertEqual(truth, stats.getValue(afwMath.MEAN))
-        self.assertEqual(0.0, stats.getValue(afwMath.STDEV))
+        return [trueImageValue, stats.getValue(afwMath.MEAN), 0.0, stats.getValue(afwMath.STDEV)]
+
+    def testAddToCoaddMaskUniformWeight(self):
+        """Test coadded MaskedImages with uniform weights"""
+
+        uniformWeight = True
+        truth_mean, mean, truth_stdev, stdev = self._testAddToCoaddImpl(True, uniformWeight)
+
+        self.assertEqual(truth_mean, mean)
+        self.assertEqual(truth_stdev, stdev)
+
+    def testAddToCoaddMaskNonUniformWeight(self):
+        """Test coadded MaskedImages with non-uniform weights"""
+
+        uniformWeight = False
+        truth_mean, mean, truth_stdev, stdev = self._testAddToCoaddImpl(True, uniformWeight)
+
+        self.assertEqual(truth_mean, mean)
+        self.assertEqual(truth_stdev, stdev)
+
+    def testAddToCoaddNaNUniformWeight(self):
+        """Test coadded Images with uniform weights and NaN"""
+
+        uniformWeight = True
+        truth_mean, mean, truth_stdev, stdev = self._testAddToCoaddImpl(False, uniformWeight)
+
+        self.assertEqual(truth_mean, mean)
+        self.assertEqual(truth_stdev, stdev)
+
+    def testAddToCoaddNaNNonUniformWeight(self):
+        """Test coadded Images with non-uniform weights"""
+
+        uniformWeight = False
+        truth_mean, mean, truth_stdev, stdev = self._testAddToCoaddImpl(False, uniformWeight)
+
+        self.assertAlmostEqual(truth_mean, mean)
+        self.assertEqual(truth_stdev, stdev)
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 class AddToCoaddAfwdataTestCase(unittest.TestCase):
     """A test case for addToCoadd using afwdata
@@ -159,5 +219,10 @@ def suite():
 
     return unittest.TestSuite(suites)
 
+
+def run(shouldExit=False):
+    """Run the tests"""
+    utilsTests.run(suite(), shouldExit)
+
 if __name__ == "__main__":
-    utilsTests.run(suite())
+    run(True)
