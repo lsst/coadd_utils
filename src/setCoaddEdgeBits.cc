@@ -4,6 +4,8 @@
 *
 * @author Russell Owen
 */
+#include "boost/format.hpp"
+
 #include "lsst/pex/exceptions.h"
 #include "lsst/coadd/utils/setCoaddEdgeBits.h"
 
@@ -27,7 +29,9 @@ void coaddUtils::setCoaddEdgeBits(
 
     if (coaddMask.getDimensions() != weightMap.getDimensions()) {
         throw LSST_EXCEPT(pexExcept::InvalidParameterException,
-            "coaddMask and weightMap dimensions do not match");
+            (boost::format("coaddMask and weightMap dimensions differ: %dx%d != %dx%d") %
+            coaddMask.getWidth() % coaddMask.getHeight() % weightMap.getWidth() % weightMap.getHeight()
+            ).str());
     }
     
     afwImage::MaskPixel const edgeMask = afwImage::Mask<afwImage::MaskPixel>::getPlaneBitMask("EDGE");

@@ -5,6 +5,9 @@
 * @author Russell Owen
 */
 #include <limits>
+
+#include "boost/format.hpp"
+
 #include "lsst/pex/exceptions.h"
 #include "lsst/coadd/utils/addToCoadd.h"
 
@@ -19,7 +22,7 @@ namespace {
  * of inputs (e.g. MaskedImage with a mask bit;  Image with a check for NaN)
  */
 /*
- * A boolean functor which always checks if its pixel value val satisfies "(val & badPixel) == 0"
+ * A boolean functor to test if a MaskedImage pixel is valid (mask & badPixel == 0)
  */
 struct CheckMask {
     CheckMask(lsst::afw::image::MaskPixel badPixel) : _badPixel(badPixel) {}
@@ -33,10 +36,10 @@ private:
 };
 
 /*
- * A boolean functor to check for NaN
+ * A boolean functor to test if an Image pixel has known value (not NaN)
  */    
-struct CheckFinite {
-    CheckFinite(lsst::afw::image::MaskPixel) {}
+struct CheckKnownValue {
+    CheckKnownValue(lsst::afw::image::MaskPixel) {}
 
     template<typename T>
     bool operator()(T val) const {
@@ -55,12 +58,14 @@ static void addToCoaddImpl(
     typedef typename afwImage::Image<WeightPixelT> WeightMapT;
     
     if (coadd.getDimensions() != maskedImage.getDimensions()) {
-        throw LSST_EXCEPT(pexExcept::InvalidParameterException, \
-            "coadd and maskedImage dimensions do not match");
+        throw LSST_EXCEPT(pexExcept::InvalidParameterException,
+            (boost::format("coadd and maskedImage dimensions differ: %dx%d != %dx%d") %
+            coadd.getWidth() % coadd.getHeight() % maskedImage.getWidth() % maskedImage.getHeight()).str());
     }
     if (coadd.getDimensions() != weightMap.getDimensions()) {
-        throw LSST_EXCEPT(pexExcept::InvalidParameterException, \
-            "coadd and weightMap dimensions do not match");
+        throw LSST_EXCEPT(pexExcept::InvalidParameterException,
+            (boost::format("coadd and weightMap dimensions differ: %dx%d != %dx%d") %
+            coadd.getWidth() % coadd.getHeight() % weightMap.getWidth() % weightMap.getHeight()).str());
     }
 
     // Set the pixels row by row, to avoid repeated checks for end-of-row
@@ -80,22 +85,22 @@ static void addToCoaddImpl(
         }
     }
 }
-}
+} // anonymous namespace
 
 /**
 * @brief add good pixels from an image to a coadd and associated weight map
 *
-* Weight map: the value of each pixel is the number of good image pixels
-* that contributed to the associated pixel of the coadd. Good pixels are defined as (val & badPixelMask) == 0
+* Good pixels are those for which mask & badPixelMask == 0.
 *
-* @throw pexExcept::InvalidParameterException if the image dimensions do not match.
+* @throw pexExcept::InvalidParameterException if coadd, weightMap and maskedImage dimensions do not match.
 */
 template <typename CoaddPixelT, typename WeightPixelT>
 void coaddUtils::addToCoadd(
     // spell out lsst:afw::image to make Doxygen happy
     lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
         lsst::afw::image::VariancePixel> &coadd,        ///< [in,out] coadd to be modified
-    lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< [in,out] weight map to be modified
+    lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< [in,out] weight map to be modified;
+        ///< this is the sum of weights of all images contributing each pixel of the coadd
     lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
         lsst::afw::image::VariancePixel> const &maskedImage, ///< masked image to add to coadd
     lsst::afw::image::MaskPixel const badPixelMask, ///< skip input pixel if input mask | badPixelMask != 0
@@ -108,21 +113,23 @@ void coaddUtils::addToCoadd(
 /**
 * @brief add good pixels from an image to a coadd and associated weight map
 *
-* Weight map: the value of each pixel is the number of good image pixels
-* that contributed to the associated pixel of the coadd.  Good pixels are defined as non-NaN
+* Good pixels are those that are not NaN (thus they do include +/- inf).
 *
-* @throw pexExcept::InvalidParameterException if the image dimensions do not match.
+* Weight map: sum of weights of all images in the coadd at each pixel of the coadd.
+*
+* @throw pexExcept::InvalidParameterException if coadd, weightMap and image dimensions do not match.
 */
 template <typename CoaddPixelT, typename WeightPixelT>
 void coaddUtils::addToCoadd(
     // spell out lsst:afw::image to make Doxygen happy
     lsst::afw::image::Image<CoaddPixelT> &coadd,       ///< [in,out] coadd to be modified
     lsst::afw::image::Image<WeightPixelT> &weightMap,  ///< [in,out] weight map to be modified
-    lsst::afw::image::Image<CoaddPixelT> const &image, ///< masked image to add to coadd
+    lsst::afw::image::Image<CoaddPixelT> const &image, ///< masked image to add to coadd;
+        ///< this is the sum of weights of all images contributing each pixel of the coadd
     WeightPixelT weight                                ///< relative weight of this image
 ) {
     typedef lsst::afw::image::Image<CoaddPixelT> Image;
-    addToCoaddImpl<Image, WeightPixelT, CheckFinite>(coadd, weightMap, image, 0x0, weight);
+    addToCoaddImpl<Image, WeightPixelT, CheckKnownValue>(coadd, weightMap, image, 0x0, weight);
 }
 
 //
