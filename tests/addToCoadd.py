@@ -109,11 +109,7 @@ class AddToCoaddTestCase(unittest.TestCase):
 
             self.assertEqual(image.get(image.getWidth() - 1, image.getHeight() - 1), truth)
 
-        if useMask:
-            coaddUtils.divide(coadd, weightMap)
-        else:
-            coadd /= weightMap
-            pass
+        coadd /= weightMap
 
         if display:
             ds9.mtv(image, title="image", frame=1)

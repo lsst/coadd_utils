@@ -33,20 +33,6 @@ Python interface to lsst::coadd::utils functions and classes
 %ADDTOCOADD(float, int);
 %ADDTOCOADD(float, boost::uint16_t);
 
-%include "lsst/coadd/utils/imageMath.h"
-%define %DIVIDEMASKEDIMAGEBYIMAGE(MASKEDIMAGEPIXEL, IMAGEPIXEL)
-    %template(divide)
-        lsst::coadd::utils::divide<MASKEDIMAGEPIXEL, IMAGEPIXEL>;
-%enddef
-%DIVIDEMASKEDIMAGEBYIMAGE(double, double);
-%DIVIDEMASKEDIMAGEBYIMAGE(double, float);
-%DIVIDEMASKEDIMAGEBYIMAGE(double, int);
-%DIVIDEMASKEDIMAGEBYIMAGE(double, boost::uint16_t);
-%DIVIDEMASKEDIMAGEBYIMAGE(float, double);
-%DIVIDEMASKEDIMAGEBYIMAGE(float, float);
-%DIVIDEMASKEDIMAGEBYIMAGE(float, int);
-%DIVIDEMASKEDIMAGEBYIMAGE(float, boost::uint16_t);
-
 %include "lsst/coadd/utils/setCoaddEdgeBits.h"
 %define %SETCOADDEDGEBITS(WEIGHTPIXEL)
     %template(setCoaddEdgeBits) lsst::coadd::utils::setCoaddEdgeBits<WEIGHTPIXEL>;
