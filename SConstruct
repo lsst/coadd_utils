@@ -61,4 +61,3 @@ env.Declare()
 env.Help("""
 Utilities for coaddition of images
 """)
-
