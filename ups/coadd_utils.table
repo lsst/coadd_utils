@@ -1,4 +1,4 @@
-setupRequired(afw >= svn12478)
+setupRequired(afw > 3.3.19)
 setupOptional(afwdata)
 
 envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
