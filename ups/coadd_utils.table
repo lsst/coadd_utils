@@ -1,4 +1,4 @@
-setupRequired(afw > 3.3.19)
+setupRequired(afw >= 3.3.21)
 setupOptional(afwdata)
 
 envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
