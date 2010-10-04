@@ -15,9 +15,6 @@ env = scons.makeEnv("coadd_utils",
                     r"$HeadURL$",
                     scons.ConfigureDependentProducts("coadd_utils"))
 
-env.libs["coadd_utils"] += env.getlibs("boost wcslib cfitsio minuit2 gsl utils daf_base daf_data") + \
-    env.getlibs("daf_persistence pex_exceptions pex_logging pex_policy security afw")
-
 #
 # Build/install things
 #
