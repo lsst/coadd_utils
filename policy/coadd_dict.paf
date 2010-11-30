@@ -1,0 +1,42 @@
+#<?cfg paf dictionary ?>
+
+definitions: {
+
+    allowedMaskPlanes: {
+        type: string
+        description: "Mask planes to allow (ignore) when rejecting masked pixels.
+            Specify as a single string containing space-separated names"
+        maxOccurs: 1
+        default: "BAD SAT INTRP"
+    }
+    doWarpExposures: {
+        description: "Warp exposures to match the reference exposure?
+            If false then all exposures are assumed to match the reference in WCS and size."
+        type: "bool"
+        minOccurs: 1
+        maxOccurs: 1
+        default: true
+    }        
+    warpingKernelName: {
+        type: string
+        description: "Warping kernel for warping exposure to match referenceExposure."
+        maxOccurs: 1
+        default: "lanczos4"
+        allowed: {
+            value:        "bilinear"
+            description:  "bilinear interpolation"
+        }
+        allowed: {
+            value:        "lanczos3"
+            description:  "Lanczos kernel of order 3"
+        }
+        allowed: {
+            value:        "lanczos4"
+            description:  "Lanczos kernel of order 4"
+        }
+        allowed: {
+            value:        "lanczos5"
+            description:  "Lanczos kernel of order 5"
+        }
+    }
+}

@@ -19,7 +19,7 @@
 # the GNU General Public License along with this program.  If not, 
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-
 from makeBitMask import *
 from makeBlankCoadd import *
 from utilsLib import *
+from Coadd import *
