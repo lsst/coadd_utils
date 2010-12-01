@@ -67,14 +67,12 @@ The policy dictionary is: policy/%s
         print helpStr
         sys.exit(0)
     
-    outName = sys.argv[1]
-    if os.path.exists(outName):
-        print "Coadd file %r already exists" % (outName,)
+    coaddPath = sys.argv[1]
+    if os.path.exists(coaddPath):
+        print "Coadd file %r already exists" % (coaddPath,)
         print helpStr
         sys.exit(1)
-
-    basicOutName = os.path.splitext(outName)[0]
-    weightOutName = basicOutName + "_weight.fits"
+    weightPath = os.path.splitext(coaddPath)[0] + "_weight.fits"
     
     indata = sys.argv[2]
     
@@ -92,8 +90,6 @@ The policy dictionary is: policy/%s
 
     # process exposures
     coadd = None
-    coaddDimensions = None
-    coaddWcs = None
     with file(indata, "rU") as infile:
         for lineNum, line in enumerate(infile):
             line = line.strip()
@@ -101,26 +97,25 @@ The policy dictionary is: policy/%s
                 continue
             filePath = line
             fileName = os.path.basename(filePath)
-            if not os.path.isfile(filePath):
-                print "Skipping exposure %s; file %r not found" % (fileName, filePath)
-                continue
             
             print "Processing exposure %s" % (filePath,)
-            exposure = afwImage.ExposureF(filePath)
+            try:
+                exposure = afwImage.ExposureF(filePath)
+            except Exception, e:
+                print "Skipping %s: %s" % (filePath, e)
+                continue
             
             if not coadd:
                 print "First exposure is the reference; create warper and coadd"
                 maskedImage = exposure.getMaskedImage()
-                coaddDimensions = maskedImage.getDimensions()
-                coaddWcs = exposure.getWcs()
                 warper = coaddUtils.Warp(warpingKernelName)
-                coadd = coaddUtils.Coadd(coaddDimensions, coaddWcs, allowedMaskPlanes)
+                coadd = coaddUtils.Coadd(maskedImage.getDimensions(), exposure.getWcs(), allowedMaskPlanes)
                 
                 print "Add reference exposure to coadd (without warping)"
                 coadd.addExposure(exposure)
             else:
                 print "Warp exposure"
-                warpedExposure = warper.warpExposure(coaddDimensions, coaddWcs, exposure)
+                warpedExposure = warper.warpExposure(coadd.getDimensions(), coadd.getWcs(), exposure)
                 if SaveDebugImages:
                     warpedExposure.writeFits("warped%s" % (fileName,))
                     
@@ -128,6 +123,6 @@ The policy dictionary is: policy/%s
                 coadd.addExposure(warpedExposure)
 
     weightMap = coadd.getWeightMap()
-    weightMap.writeFits(weightOutName)
+    weightMap.writeFits(weightPath)
     coaddExposure = coadd.getCoadd()
-    coaddExposure.writeFits(outName)
+    coaddExposure.writeFits(coaddPath)

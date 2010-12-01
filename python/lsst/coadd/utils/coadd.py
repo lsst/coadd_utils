@@ -52,11 +52,17 @@ class Coadd(object):
 
         self._badPixelMask = makeBitMask.makeBitMask(allowedMaskPlanes.split(), doInvert=True)
 
-        self._wcs = wcs # for convenience
+        self._dimensions = dimensions
+        self._wcs = wcs
         blankMaskedImage = afwImage.MaskedImageF(dimensions)
         self._coadd = afwImage.ExposureF(blankMaskedImage, wcs)
 
         self._weightMap = afwImage.ImageF(self._coadd.getMaskedImage().getDimensions(), 0)
+        
+        self._statsControl = afwMath.StatisticsControl()
+        self._statsControl.setNumSigmaClip(3.0)
+        self._statsControl.setNumIter(2)
+        self._statsControl.setAndMask(self._badPixelMask)
 
     def addExposure(self, exposure, weightFactor=1.0):
         """Add an Exposure to the coadd
@@ -67,9 +73,18 @@ class Coadd(object):
         
         Subclasses may override to preprocess the exposure or change the way it is added to the coadd.
         """
-        self._basicAddExposure(warpedExposure, weightFactor)
-        
-        return warpedExposure
+        maskedImage = exposure.getMaskedImage()
+        statObj = afwMath.makeStatistics(maskedImage.getVariance(), maskedImage.getMask(),
+            afwMath.MEANCLIP, self._statsControl)
+        meanVar, meanVarErr = statObj.getResult(afwMath.MEANCLIP);
+        weight = weightFactor / float(meanVar)
+
+        self._log.log(pexLog.Log.INFO, "add masked image to coadd; weight=%0.3g" % (weight,))
+
+        utilsLib.addToCoadd(self._coadd.getMaskedImage(), self._weightMap,
+            maskedImage, self._badPixelMask, weight)
+
+        return weight
 
     def getCoadd(self):
         """Get the coadd Exposure, as computed so far
@@ -88,6 +103,16 @@ class Coadd(object):
         scaledMaskedImage /= self._weightMap
         
         return afwImage.makeExposure(scaledMaskedImage, self._wcs)
+
+    def getDimensions(self):
+        """Return the dimensions of the coadd
+        """
+        return self._dimensions
+
+    def getWcs(self):
+        """Return the wcs of the coadd
+        """
+        return self._wcs
         
     def getWeightMap(self):
         """Get the weight map
@@ -97,26 +122,3 @@ class Coadd(object):
         that contributed to the associated pixel of the coadd.
         """
         return self._weightMap
-    
-    def _basicAddExposure(self, exposure, weightFactor=1.0):
-        """Add a warped exposure the coadd
-
-        Inputs:
-        - exposure: Exposure to add to coadd; must be background-subtracted and warped to match the coadd.
-        - weightFactor: extra weight factor for this exposure; weight = weightFactor / clipped mean variance
-        """
-        # compute variance using a bit of sigma-clipping (though this is probably excessive)
-        statsControl = afwMath.StatisticsControl()
-        statsControl.setNumSigmaClip(3.0)
-        statsControl.setNumIter(2)
-        statsControl.setAndMask(self._badPixelMask)
-        maskedImage = exposure.getMaskedImage()
-        statObj = afwMath.makeStatistics(maskedImage.getVariance(), maskedImage.getMask(),
-            afwMath.MEANCLIP, statsControl)
-        meanVar, meanVarErr = statObj.getResult(afwMath.MEANCLIP);
-        weight = weightFactor / float(meanVar)
-
-        self._log.log(pexLog.Log.INFO, "add masked image to coadd; weight=%0.3g" % (weight,))
-
-        utilsLib.addToCoadd(self._coadd.getMaskedImage(), self._weightMap,
-            maskedImage, self._badPixelMask, weight)
