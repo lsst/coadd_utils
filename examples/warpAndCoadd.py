@@ -43,7 +43,7 @@ import lsst.coadd.utils as coaddUtils
 
 SaveDebugImages = False
 
-PackageName = "coadd_utils"
+PolicyPackageName = "coadd_utils"
 PolicyDictName = "WarpAndCoaddDictionary.paf"
 
 if __name__ == "__main__":
@@ -84,14 +84,16 @@ The policy dictionary is: policy/%s
     else:
         policy = pexPolicy.Policy()
 
-    policyFile = pexPolicy.DefaultPolicyFile(PackageName, PolicyDictName, "policy")
+    policyFile = pexPolicy.DefaultPolicyFile(PolicyPackageName, PolicyDictName, "policy")
     defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath(), True)
     policy.mergeDefaults(defPolicy.getDictionary())
-    warpPolicy = policy.getPolicy("warpPolicy")
-    coaddPolicy = policy.getPolicy("coaddPolicy")
+    warpingKernelName = policy.getPolicy("warpPolicy").get("warpingKernelName")
+    allowedMaskPlanes = policy.getPolicy("coaddPolicy").get("allowedMaskPlanes")
 
     # process exposures
     coadd = None
+    coaddDimensions = None
+    coaddWcs = None
     with file(indata, "rU") as infile:
         for lineNum, line in enumerate(infile):
             line = line.strip()
@@ -107,18 +109,23 @@ The policy dictionary is: policy/%s
             exposure = afwImage.ExposureF(filePath)
             
             if not coadd:
-                print "Create coadd"
+                print "First exposure is the reference; create warper and coadd"
                 maskedImage = exposure.getMaskedImage()
-                warper = coaddUtils.Warp(maskedImage.getDimensions(), exposure.getWcs(), warpPolicy)
-                coadd = coaddUtils.Coadd(maskedImage.getDimensions(), exposure.getWcs(), coaddPolicy)
-            
-            print "Warp exposure"
-            warpedExposure = warper.warpExposure(exposure)
-            if SaveDebugImages:
-                warpedExposure.writeFits("warped%s" % (fileName,))
+                coaddDimensions = maskedImage.getDimensions()
+                coaddWcs = exposure.getWcs()
+                warper = coaddUtils.Warp(warpingKernelName)
+                coadd = coaddUtils.Coadd(coaddDimensions, coaddWcs, allowedMaskPlanes)
                 
-            print "Add warped exposure to coadd"
-            coadd.addExposure(warpedExposure)
+                print "Add reference exposure to coadd (without warping)"
+                coadd.addExposure(exposure)
+            else:
+                print "Warp exposure"
+                warpedExposure = warper.warpExposure(coaddDimensions, coaddWcs, exposure)
+                if SaveDebugImages:
+                    warpedExposure.writeFits("warped%s" % (fileName,))
+                    
+                print "Add warped exposure to coadd"
+                coadd.addExposure(warpedExposure)
 
     weightMap = coadd.getWeightMap()
     weightMap.writeFits(weightOutName)

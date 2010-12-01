@@ -29,24 +29,23 @@ __all__ = ["Warp"]
 class Warp(object):
     """Warp exposures
     """
-    def __init__(self, dimensions, wcs, policy, logName="coadd.utils.WarpExposure"):
+    def __init__(self, warpingKernelName, logName="coadd.utils.WarpExposure"):
         """Create a Warp
+        
+        Inputs:
+        - warpingKernelName: name of warping kernel
+        - logName: name by which messages are logged
+        """
+        self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
+        self._warpingKernel = afwMath.makeWarpingKernel(warpingKernelName)
+
+    def warpExposure(self, dimensions, wcs, exposure):
+        """Warp an exposure
         
         Inputs:
         - dimensions: dimensions of warped exposure; must be the type of object returned by
             exposure.getMaskedImage().getDimensions() (presently std::pair<int, int>)
         - wcs: WCS of warped exposure
-        - policy: see policy/warp_dict.paf
-        """
-        self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
-        self._dimensions = dimensions
-        self._wcs = wcs
-        self._warpingKernel = afwMath.makeWarpingKernel(policy.get("warpingKernelName"))
-
-    def warpExposure(self, exposure):
-        """Warp an exposure
-        
-        Inputs:
         - exposure: Exposure to warp
             
         Returns:
@@ -54,7 +53,7 @@ class Warp(object):
         """
         self._log.log(pexLog.Log.INFO, "warp exposure")
         maskedImage = exposure.getMaskedImage()
-        blankMaskedImage = maskedImage.Factory(self._dimensions)
-        warpedExposure = afwImage.makeExposure(blankMaskedImage, self._wcs)
+        blankMaskedImage = maskedImage.Factory(dimensions)
+        warpedExposure = afwImage.makeExposure(blankMaskedImage, wcs)
         afwMath.warpExposure(warpedExposure, exposure, self._warpingKernel)
         return warpedExposure

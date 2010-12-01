@@ -38,19 +38,18 @@ class Coadd(object):
     This class may be subclassed to implement other coadd techniques.
     Typically this is done by overriding addExposure.
     """
-    def __init__(self, dimensions, wcs, policy, logName="coadd.utils.Coadd"):
+    def __init__(self, dimensions, wcs, allowedMaskPlanes, logName="coadd.utils.Coadd"):
         """Create a coadd
         
         Inputs:
         - dimensions: dimensions of coadd; must be the type of object returned by
             exposure.getMaskedImage().getDimensions() (presently std::pair<int, int>)
         - wcs: WCS of coadd
-        - policy: see policy/coadd_dict.paf
+        - allowedMaskePlanes: mask planes to allow (ignore) when rejecting masked pixels.
+            Specify as a single string containing space-separated names
         """
         self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
-        self._policy = policy
 
-        allowedMaskPlanes = policy.get("allowedMaskPlanes")
         self._badPixelMask = makeBitMask.makeBitMask(allowedMaskPlanes.split(), doInvert=True)
 
         self._wcs = wcs # for convenience
