@@ -1,0 +1,18 @@
+#<?cfg paf dictionary ?>
+
+definitions: {
+    warpPolicy: {
+        description: "Policy to control warping."
+        type: "policy"
+        dictionary: @WarpDictionary.paf
+        minOccurs: 1
+        maxOccurs: 1
+    }
+    coaddPolicy: {
+        description: "Policy to control coadd."
+        type: "policy"
+        dictionary: @CoaddDictionary.paf
+        minOccurs: 1
+        maxOccurs: 1
+    }
+}

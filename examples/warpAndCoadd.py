@@ -44,11 +44,11 @@ import lsst.coadd.utils as coaddUtils
 SaveDebugImages = False
 
 PackageName = "coadd_utils"
-PolicyDictName = "coadd_dict.paf"
+PolicyDictName = "WarpAndCoaddDictionary.paf"
 
 if __name__ == "__main__":
     pexLog.Trace.setVerbosity('lsst.coadd', 5)
-    helpStr = """Usage: makeCoadd.py coaddPath indata [policy]
+    helpStr = """Usage: warpAndCoadd.py coaddPath indata [policy]
 
 where:
 - coaddPath is the desired name or path of the output coadd
@@ -87,6 +87,8 @@ The policy dictionary is: policy/%s
     policyFile = pexPolicy.DefaultPolicyFile(PackageName, PolicyDictName, "policy")
     defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath(), True)
     policy.mergeDefaults(defPolicy.getDictionary())
+    warpPolicy = policy.getPolicy("warpPolicy")
+    coaddPolicy = policy.getPolicy("coaddPolicy")
 
     # process exposures
     coadd = None
@@ -106,12 +108,17 @@ The policy dictionary is: policy/%s
             
             if not coadd:
                 print "Create coadd"
-                coadd = coaddUtils.Coadd(exposure.getMaskedImage().getDimensions(), exposure.getWcs(), policy)
+                maskedImage = exposure.getMaskedImage()
+                warper = coaddUtils.Warp(maskedImage.getDimensions(), exposure.getWcs(), warpPolicy)
+                coadd = coaddUtils.Coadd(maskedImage.getDimensions(), exposure.getWcs(), coaddPolicy)
             
-            print "Warp and add to coadd"
-            warpedExposure = coadd.addExposure(exposure)
+            print "Warp exposure"
+            warpedExposure = warper.warpExposure(exposure)
             if SaveDebugImages:
                 warpedExposure.writeFits("warped%s" % (fileName,))
+                
+            print "Add warped exposure to coadd"
+            coadd.addExposure(warpedExposure)
 
     weightMap = coadd.getWeightMap()
     weightMap.writeFits(weightOutName)

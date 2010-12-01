@@ -36,7 +36,7 @@ class Coadd(object):
     with a weight of 1 / clipped mean variance.
     
     This class may be subclassed to implement other coadd techniques.
-    Subclasses should override _basicAddExposure and/or addExposure.
+    Typically this is done by overriding addExposure.
     """
     def __init__(self, dimensions, wcs, policy, logName="coadd.utils.Coadd"):
         """Create a coadd
@@ -49,7 +49,6 @@ class Coadd(object):
         """
         self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
         self._policy = policy
-        self._doWarpExposures = policy.get("doWarpExposures")
 
         allowedMaskPlanes = policy.get("allowedMaskPlanes")
         self._badPixelMask = makeBitMask.makeBitMask(allowedMaskPlanes.split(), doInvert=True)
@@ -58,31 +57,17 @@ class Coadd(object):
         blankMaskedImage = afwImage.MaskedImageF(dimensions)
         self._coadd = afwImage.ExposureF(blankMaskedImage, wcs)
 
-        if self._doWarpExposures:
-            self._warpingKernel = afwMath.makeWarpingKernel(policy.get("warpingKernelName"))
-        self._wcs = self._coadd.getWcs() # merely a convenience
         self._weightMap = afwImage.ImageF(self._coadd.getMaskedImage().getDimensions(), 0)
 
     def addExposure(self, exposure, weightFactor=1.0):
         """Add an Exposure to the coadd
         
-        If policy.doWarpExposures is True then first warp the exposure to match the WCS of the coadd.
-        Otherwise the exposure is assumed to already have been warped.
-        
         Inputs:
-        - exposure: Exposure to add to coadd; must have the background subtracted.
-        - weightFactor: extra weight factor for this exposure;
-            weight = weightFactor / clipped mean variance
-            
-        Returns:
-        - warpedExposure: exposure warped to match the WCS of the coadd,
-            or the original exposure if doWarpExposure false
+        - exposure: Exposure to add to coadd; must be background-subtracted and warped to match the coadd.
+        - weightFactor: extra weight factor for this exposure; weight = weightFactor / clipped mean variance
+        
+        Subclasses may override to preprocess the exposure or change the way it is added to the coadd.
         """
-        if self._doWarpExposures:
-            warpedExposure = self._warpExposure(exposure)
-        else:
-            warpedExposure = exposure
-
         self._basicAddExposure(warpedExposure, weightFactor)
         
         return warpedExposure
@@ -118,10 +103,8 @@ class Coadd(object):
         """Add a warped exposure the coadd
 
         Inputs:
-        - exposure: Exposure to add to coadd; must have the background subtracted
-            and have been warped and psf-matched to the warped reference exposure.
-        - weightFactor: extra weight factor for this exposure;
-            weight = weightFactor / clipped mean variance
+        - exposure: Exposure to add to coadd; must be background-subtracted and warped to match the coadd.
+        - weightFactor: extra weight factor for this exposure; weight = weightFactor / clipped mean variance
         """
         # compute variance using a bit of sigma-clipping (though this is probably excessive)
         statsControl = afwMath.StatisticsControl()
@@ -138,13 +121,3 @@ class Coadd(object):
 
         utilsLib.addToCoadd(self._coadd.getMaskedImage(), self._weightMap,
             maskedImage, self._badPixelMask, weight)
-
-    def _warpExposure(self, exposure):
-        """Warp an exposure to match the WCS of the coadd
-        
-        _coadd and _warpingKernel must have been set.
-        """
-        self._log.log(pexLog.Log.INFO, "warp exposure")
-        warpedExposure = makeBlankCoadd.makeBlankExposure(self._coadd)
-        afwMath.warpExposure(warpedExposure, exposure, self._warpingKernel)
-        return warpedExposure

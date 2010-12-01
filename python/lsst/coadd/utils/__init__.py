@@ -22,4 +22,5 @@
 from makeBitMask import *
 from makeBlankCoadd import *
 from utilsLib import *
+from Warp import *
 from Coadd import *
