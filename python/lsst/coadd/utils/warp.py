@@ -29,22 +29,42 @@ __all__ = ["Warp"]
 class Warp(object):
     """Warp exposures
     """
-    def __init__(self, warpingKernelName, logName="coadd.utils.WarpExposure"):
+    def __init__(self, warpingKernelName, interpLength=10, cacheSize=0, logName="coadd.utils.WarpExposure"):
         """Create a Warp
         
         Inputs:
-        - warpingKernelName: name of warping kernel
+        - warpingKernelName: argument to lsst.afw.math.makeWarpingKernel
+        - interpLength: interpLength argument to lsst.afw.warpExposure
+        - cacheSize: size of computeCache
         - logName: name by which messages are logged
         """
         self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
         self._warpingKernel = afwMath.makeWarpingKernel(warpingKernelName)
+        self._warpingKernel.computeCache(cacheSize)
+        self._interpLength = int(interpLength)
 
-    def warpExposure(self, dimensions, wcs, exposure):
+    @classmethod
+    def fromPolicy(cls, policy, logName="coadd.utils.WarpExposure"):
+        """Create a Warp from a policy
+        
+        Inputs:
+        - policy: see policy/WarpDictionary.paf
+        - logName: name by which messages are logged
+        """
+        return cls(
+            warpingKernelName = policy.getString("warpingKernelName"),
+            interpLength = policy.getInt("interpLength"),
+            cacheSize = policy.getInt("cacheSize"),
+            logName = logName,
+        )
+
+    def warpExposure(self, dimensions, xy0, wcs, exposure):
         """Warp an exposure
         
         Inputs:
         - dimensions: dimensions of warped exposure; must be the type of object returned by
             exposure.getMaskedImage().getDimensions() (presently std::pair<int, int>)
+        - xy0: xy0 of warped exposure
         - wcs: WCS of warped exposure
         - exposure: Exposure to warp
             
@@ -55,5 +75,6 @@ class Warp(object):
         maskedImage = exposure.getMaskedImage()
         blankMaskedImage = maskedImage.Factory(dimensions)
         warpedExposure = afwImage.makeExposure(blankMaskedImage, wcs)
-        afwMath.warpExposure(warpedExposure, exposure, self._warpingKernel)
+        warpedExposure.setXY0(xy0)
+        afwMath.warpExposure(warpedExposure, exposure, self._warpingKernel, self._interpLength)
         return warpedExposure

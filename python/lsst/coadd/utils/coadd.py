@@ -19,12 +19,10 @@
 # the GNU General Public License along with this program.  If not, 
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-import sys
 import lsst.pex.logging as pexLog
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import makeBitMask
-import makeBlankCoadd
 import utilsLib
 
 __all__ = ["Coadd"]
@@ -38,12 +36,13 @@ class Coadd(object):
     This class may be subclassed to implement other coadd techniques.
     Typically this is done by overriding addExposure.
     """
-    def __init__(self, dimensions, wcs, allowedMaskPlanes, logName="coadd.utils.Coadd"):
+    def __init__(self, dimensions, xy0, wcs, allowedMaskPlanes, logName="coadd.utils.Coadd"):
         """Create a coadd
         
         Inputs:
         - dimensions: dimensions of coadd; must be the type of object returned by
             exposure.getMaskedImage().getDimensions() (presently std::pair<int, int>)
+        - xy0: xy0 of coadd
         - wcs: WCS of coadd
         - allowedMaskePlanes: mask planes to allow (ignore) when rejecting masked pixels.
             Specify as a single string containing space-separated names
@@ -56,6 +55,7 @@ class Coadd(object):
         self._wcs = wcs
         blankMaskedImage = afwImage.MaskedImageF(dimensions)
         self._coadd = afwImage.ExposureF(blankMaskedImage, wcs)
+        self._coadd.setXY0(xy0)
 
         self._weightMap = afwImage.ImageF(self._coadd.getMaskedImage().getDimensions(), 0)
         
@@ -108,6 +108,11 @@ class Coadd(object):
         """Return the dimensions of the coadd
         """
         return self._dimensions
+
+    def getXY0(self):
+        """Return the xy0 of the coadd
+        """
+        return self._coadd.getXY0()
 
     def getWcs(self):
         """Return the wcs of the coadd
