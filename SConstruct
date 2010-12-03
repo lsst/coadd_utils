@@ -24,7 +24,7 @@ for d in Split("doc examples lib python/lsst/coadd/utils tests"):
 env['IgnoreFiles'] = r"(~$|\.pyc$|^\.svn$|\.o$)"
 
 Alias("install", [
-    env.InstallAs(os.path.join(env['prefix'], "doc", "doxygen"), os.path.join("doc", "htmlDir")),
+    env.InstallAs(os.path.join(env['prefix'], "doc", "htmlDir"), os.path.join("doc", "htmlDir")),
     env.Install(env['prefix'], "etc"),
     env.Install(env['prefix'], "examples"),
     env.Install(env['prefix'], "include"),
