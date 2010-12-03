@@ -115,10 +115,8 @@ The policy dictionary is: policy/%s
                     wcs = exposure.getWcs(),
                     allowedMaskPlanes = allowedMaskPlanes)
                 
-                print "Add reference exposure to coadd (without warping)"
                 coadd.addExposure(exposure)
             else:
-                print "Warp exposure"
                 warpedExposure = warper.warpExposure(
                     dimensions = coadd.getDimensions(),
                     xy0 = coadd.getXY0(),
@@ -127,7 +125,6 @@ The policy dictionary is: policy/%s
                 if SaveDebugImages:
                     warpedExposure.writeFits("warped%s" % (fileName,))
                     
-                print "Add warped exposure to coadd"
                 coadd.addExposure(warpedExposure)
 
     weightMap = coadd.getWeightMap()
