@@ -52,6 +52,7 @@ class Coadd(object):
         self._badPixelMask = makeBitMask.makeBitMask(allowedMaskPlanes.split(), doInvert=True)
 
         self._bbox = bbox
+        self._wcs = wcs
         blankMaskedImage = bboxFromImage.imageFromBBox(bbox, afwImage.MaskedImageF)
         self._coadd = afwImage.ExposureF(blankMaskedImage, wcs)
 
