@@ -23,6 +23,7 @@ import sys
 import lsst.pex.logging as pexLog
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
+import bboxFromImage
 
 __all__ = ["Warp"]
 
@@ -58,13 +59,12 @@ class Warp(object):
             logName = logName,
         )
 
-    def warpExposure(self, dimensions, xy0, wcs, exposure):
+    def warpExposure(self, bbox, wcs, exposure):
         """Warp an exposure
         
         Inputs:
-        - dimensions: dimensions of warped exposure; must be the type of object returned by
-            exposure.getMaskedImage().getDimensions() (presently std::pair<int, int>)
-        - xy0: xy0 of warped exposure
+        - bbox: bounding box of warped exposure with respect to parent (lsst.afw.geom.BoxI):
+            exposure dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
         - wcs: WCS of warped exposure
         - exposure: Exposure to warp
             
@@ -72,9 +72,7 @@ class Warp(object):
         - warpedExposure: warped exposure
         """
         self._log.log(pexLog.Log.INFO, "warp exposure")
-        maskedImage = exposure.getMaskedImage()
-        blankMaskedImage = maskedImage.Factory(dimensions)
-        warpedExposure = afwImage.makeExposure(blankMaskedImage, wcs)
-        warpedExposure.setXY0(xy0)
+        warpedExposure = bboxFromImage.imageFromBBox(bbox, type(exposure))
+        warpedExposure.setWcs(wcs)
         afwMath.warpExposure(warpedExposure, exposure, self._warpingKernel, self._interpLength)
         return warpedExposure

@@ -22,6 +22,7 @@
 import lsst.pex.logging as pexLog
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
+import bboxFromImage
 import makeBitMask
 import utilsLib
 
@@ -36,14 +37,13 @@ class Coadd(object):
     This class may be subclassed to implement other coadd techniques.
     Typically this is done by overriding addExposure.
     """
-    def __init__(self, dimensions, xy0, wcs, allowedMaskPlanes, logName="coadd.utils.Coadd"):
+    def __init__(self, bbox, wcs, allowedMaskPlanes, logName="coadd.utils.Coadd"):
         """Create a coadd
         
         Inputs:
-        - dimensions: dimensions of coadd; must be the type of object returned by
-            exposure.getMaskedImage().getDimensions() (presently std::pair<int, int>)
-        - xy0: xy0 of coadd
-        - wcs: WCS of coadd
+        - bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.BoxI):
+            coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
+        - wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
         - allowedMaskePlanes: mask planes to allow (ignore) when rejecting masked pixels.
             Specify as a single string containing space-separated names
         """
@@ -51,13 +51,11 @@ class Coadd(object):
 
         self._badPixelMask = makeBitMask.makeBitMask(allowedMaskPlanes.split(), doInvert=True)
 
-        self._dimensions = dimensions
-        self._wcs = wcs
-        blankMaskedImage = afwImage.MaskedImageF(dimensions)
+        self._bbox = bbox
+        blankMaskedImage = bboxFromImage.imageFromBBox(bbox, afwImage.MaskedImageF)
         self._coadd = afwImage.ExposureF(blankMaskedImage, wcs)
-        self._coadd.setXY0(xy0)
 
-        self._weightMap = afwImage.ImageF(self._coadd.getMaskedImage().getDimensions(), 0)
+        self._weightMap = bboxFromImage.imageFromBBox(bbox, afwImage.ImageF)
         
         self._statsControl = afwMath.StatisticsControl()
         self._statsControl.setNumSigmaClip(3.0)
@@ -104,15 +102,10 @@ class Coadd(object):
         
         return afwImage.makeExposure(scaledMaskedImage, self._wcs)
 
-    def getDimensions(self):
-        """Return the dimensions of the coadd
+    def getBBox(self):
+        """Return the bounding box of the coadd
         """
-        return self._dimensions
-
-    def getXY0(self):
-        """Return the xy0 of the coadd
-        """
-        return self._coadd.getXY0()
+        return self._bbox
 
     def getWcs(self):
         """Return the wcs of the coadd
