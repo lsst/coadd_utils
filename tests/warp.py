@@ -110,8 +110,7 @@ class WarpExposureTestCase(unittest.TestCase):
         afwWarpedImagePath = "afwWarpedExposure1%s" % (kernelName,)
 
         afwWarpedExposure = warper.warpExposure(
-            dimensions = swarpedImage.getDimensions(),
-            xy0 = swarpedImage.getXY0(),
+            bbox = coaddUtils.bboxFromImage(swarpedImage),
             wcs = warpedWcs,
             exposure = originalExposure,
         )
