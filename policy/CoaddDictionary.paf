@@ -6,6 +6,6 @@ definitions: {
         description: "Mask planes to allow (ignore) when rejecting masked pixels.
             Specify as a single string containing space-separated names"
         maxOccurs: 1
-        default: "BAD SAT INTRP"
+        default: "BAD SAT INTRP CR DETECTED DETECTED_NEGATIVE"
     }
 }
