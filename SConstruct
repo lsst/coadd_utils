@@ -10,10 +10,14 @@ try:
 except AttributeError:
     import lsst.afw.SconsUtils
     scons.ConfigureDependentProducts = lsst.afw.SconsUtils.ConfigureDependentProducts
+    
+packageName = "coadd_utils"
 
-env = scons.makeEnv("coadd_utils",
+env = scons.makeEnv(packageName,
                     r"$HeadURL$",
-                    scons.ConfigureDependentProducts("coadd_utils"))
+                    scons.ConfigureDependentProducts(packageName))
+
+env.libs[packageName] += env.getlibs("afw")
 
 #
 # Build/install things
