@@ -23,22 +23,16 @@
 #
 
 from __future__ import with_statement
-"""
-This example requires:
-- A set of science exposures
-- A file containing the paths to each, as:
-  exposure1
-  exposure2
-  ...
-The first exposure's WCS and size are used for the coadd.
+"""Demonstrate how to create a coadd by warping and adding.
 """
 import os
 import sys
+import time
+import traceback
 
 import lsst.pex.logging as pexLog
 import lsst.pex.policy as pexPolicy
 import lsst.afw.image as afwImage
-import lsst.afw.display.ds9 as ds9
 import lsst.coadd.utils as coaddUtils
 
 SaveDebugImages = False
@@ -46,13 +40,95 @@ SaveDebugImages = False
 PolicyPackageName = "coadd_utils"
 PolicyDictName = "WarpAndCoaddDictionary.paf"
 
+def warpAndCoadd(coaddPath, exposureListPath, policy):
+    """Create a coadd by warping and psf-matching
+    
+    Inputs:
+    - coaddPath: path to desired coadd; ovewritten if it exists
+    - exposureListPath: a file containing a list of paths to input exposures;
+        blank lines and lines that start with # are ignored
+    - policy: policy file; see policy/WarpAndCoaddDictionary.paf
+    
+    The first exposure in exposureListPath is used as the reference: all other exposures
+    are warped to match to it.
+    """
+    weightPath = os.path.splitext(coaddPath)[0] + "_weight.fits"
+
+    warpPolicy = policy.getPolicy("warpPolicy")
+    allowedMaskPlanes = policy.getPolicy("coaddPolicy").get("allowedMaskPlanes")
+
+    # process exposures
+    coadd = None
+    numExposuresInCoadd = 0
+    numExposuresFailed = 0
+    accumGoodTime = 0
+    with file(exposureListPath, "rU") as infile:
+        for filePath in infile:
+            filePath = filePath.strip()
+            if not filePath or filePath.startswith("#"):
+                continue
+            fileName = os.path.basename(filePath)
+
+            try:
+                print >> sys.stderr, "Processing exposure: %s" % (filePath,)
+                startTime = time.time()
+                exposure = afwImage.ExposureF(filePath)
+
+                if not coadd:
+                    print >> sys.stderr, "Create warper and coadd with size and WCS matching the first/reference exposure"
+                    warper = coaddUtils.Warp.fromPolicy(warpPolicy)
+                    coadd = coaddUtils.Coadd(
+                        bbox = coaddUtils.bboxFromImage(exposure),
+                        wcs = exposure.getWcs(),
+                        allowedMaskPlanes = allowedMaskPlanes)
+                    if SaveDebugImages:
+                        exposure.writeFits("warped%s" % (fileName,))
+                    
+                    print >> sys.stderr, "Add reference exposure to coadd (without warping)"
+                    coadd.addExposure(exposure)
+                else:
+                    print >> sys.stderr, "Warp exposure"
+                    warpedExposure = warper.warpExposure(
+                        bbox = coadd.getBBox(),
+                        wcs = coadd.getWcs(),
+                        exposure = exposure)
+                    if SaveDebugImages:
+                        warpedExposure.writeFits("warped%s" % (fileName,))
+
+                    print >> sys.stderr, "Add warped exposure to coadd"
+                    coadd.addExposure(warpedExposure)
+
+                    # ignore time for first exposure since nothing happens to it
+                    deltaTime = time.time() - startTime
+                    print >> sys.stderr, "Elapsed time for processing exposure: %0.1f sec" % (deltaTime,)
+                    accumGoodTime += deltaTime
+                numExposuresInCoadd += 1
+            except Exception, e:
+                print >> sys.stderr, "Exposure %s failed: %s" % (filePath, e)
+                traceback.print_exc(file=sys.stderr)
+                numExposuresFailed += 1
+                continue
+
+    coaddExposure = coadd.getCoadd()
+    coaddExposure.writeFits(coaddPath)
+    print >> sys.stderr, "Wrote coadd: %s" % (coaddPath,)
+    weightMap = coadd.getWeightMap()
+    weightMap.writeFits(weightPath)
+    print >> sys.stderr, "Wrote weightMap: %s" % (weightPath,)
+
+    print >> sys.stderr, "Coadded %d exposures and failed %d" % (numExposuresInCoadd, numExposuresFailed)
+    if numExposuresInCoadd > 1:
+        timePerGoodExposure = accumGoodTime / float(numExposuresInCoadd - 1)
+        print >> sys.stderr, "Processing speed: %.1f seconds/exposure (ignoring first and failed)" % \
+            (timePerGoodExposure,)
+
 if __name__ == "__main__":
-    pexLog.Trace.setVerbosity('lsst.coadd', 5)
-    helpStr = """Usage: warpAndCoadd.py coaddPath indata [policy]
+    pexLog.Trace.setVerbosity('lsst.coadd', 3)
+    helpStr = """Usage: warpAndCoadd.py coaddPath exposureListPath [policy]
 
 where:
 - coaddPath is the desired name or path of the output coadd
-- indata is a file containing a list of:
+- exposureListPath is a file containing a list of:
     pathToExposure
   where:
   - pathToExposure is the path to an Exposure
@@ -69,13 +145,12 @@ The policy dictionary is: policy/%s
     
     coaddPath = sys.argv[1]
     if os.path.exists(coaddPath):
-        print "Coadd file %r already exists" % (coaddPath,)
+        print >> sys.stderr, "Coadd file %s already exists" % (coaddPath,)
         print helpStr
         sys.exit(1)
-    weightPath = os.path.splitext(coaddPath)[0] + "_weight.fits"
     
-    indata = sys.argv[2]
-    
+    exposureListPath = sys.argv[2]
+
     if len(sys.argv) > 3:
         policyPath = sys.argv[3]
         policy = pexPolicy.Policy(policyPath)
@@ -85,46 +160,5 @@ The policy dictionary is: policy/%s
     policyFile = pexPolicy.DefaultPolicyFile(PolicyPackageName, PolicyDictName, "policy")
     defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath(), True)
     policy.mergeDefaults(defPolicy.getDictionary())
-    warpPolicy = policy.getPolicy("warpPolicy")
-    allowedMaskPlanes = policy.getPolicy("coaddPolicy").get("allowedMaskPlanes")
-
-    # process exposures
-    coadd = None
-    with file(indata, "rU") as infile:
-        for lineNum, line in enumerate(infile):
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            filePath = line
-            fileName = os.path.basename(filePath)
-            
-            print "Processing exposure %s" % (filePath,)
-            try:
-                exposure = afwImage.ExposureF(filePath)
-            except Exception, e:
-                print "Skipping %s: %s" % (filePath, e)
-                continue
-            
-            if not coadd:
-                print "Create warper and coadd with size and WCS matching the first exposure"
-                warper = coaddUtils.Warp.fromPolicy(warpPolicy)
-                coadd = coaddUtils.Coadd(
-                    bbox = coaddUtils.bboxFromImage(exposure),
-                    wcs = exposure.getWcs(),
-                    allowedMaskPlanes = allowedMaskPlanes)
-                
-                coadd.addExposure(exposure)
-            else:
-                warpedExposure = warper.warpExposure(
-                    bbox = coadd.getBBox(),
-                    wcs = coadd.getWcs(),
-                    exposure = exposure)
-                if SaveDebugImages:
-                    warpedExposure.writeFits("warped%s" % (fileName,))
-                    
-                coadd.addExposure(warpedExposure)
-
-    weightMap = coadd.getWeightMap()
-    weightMap.writeFits(weightPath)
-    coaddExposure = coadd.getCoadd()
-    coaddExposure.writeFits(coaddPath)
+    
+    warpAndCoadd(coaddPath, exposureListPath, policy)
