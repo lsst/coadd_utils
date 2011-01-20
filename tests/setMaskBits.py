@@ -24,16 +24,12 @@
 
 """Test lsst.coadd.utils.setMaskBits
 """
-import os
-import math
 import pdb # we may want to say pdb.set_trace()
-import sys
 import unittest
 
 import lsst.afw.image as afwImage
 import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
-import lsst.pex.exceptions as pexEx
 import lsst.coadd.utils as coaddUtils
 
 Verbosity = 0

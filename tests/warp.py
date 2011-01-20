@@ -23,8 +23,8 @@
 """Basic test of Warp (the warping algorithm is thoroughly tested in lsst.afw.math)
 """
 import os
-
 import unittest
+import warnings
 
 import numpy
 
@@ -32,23 +32,23 @@ import eups
 import lsst.afw.image as afwImage
 import lsst.afw.image.testUtils as imageTestUtils
 import lsst.utils.tests as utilsTests
-import lsst.pex.logging as logging
+import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 
 VERBOSITY = 0                       # increase to see trace
 
-logging.Debug("lsst.afw.math", VERBOSITY)
+pexLog.Debug("lsst.afw.math", VERBOSITY)
 
 dataDir = eups.productDir("afwdata")
-if not dataDir:
-    raise RuntimeError("Must set up afwdata to run these tests")
-
-originalExposureName = "med"
-originalExposurePath = os.path.join(dataDir, originalExposureName)
-subExposureName = "medsub"
-subExposurePath = os.path.join(dataDir, originalExposureName)
-originalFullExposureName = os.path.join("CFHT", "D4", "cal-53535-i-797722_1")
-originalFullExposurePath = os.path.join(dataDir, originalFullExposureName)
+if dataDir == None:
+    warnings.warn("skipping all tests because afwdata is not setup")
+else:
+    originalExposureName = "med"
+    originalExposurePath = os.path.join(dataDir, originalExposureName)
+    subExposureName = "medsub"
+    subExposurePath = os.path.join(dataDir, originalExposureName)
+    originalFullExposureName = os.path.join("CFHT", "D4", "cal-53535-i-797722_1")
+    originalFullExposurePath = os.path.join(dataDir, originalFullExposureName)
 
 class WarpExposureTestCase(unittest.TestCase):
     """Test case for Warp
@@ -149,6 +149,8 @@ def suite():
 
 def run(doExit=False):
     """Run the tests"""
+    if dataDir == None:
+        return
     utilsTests.run(suite(), doExit)
 
 if __name__ == "__main__":

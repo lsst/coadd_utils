@@ -31,10 +31,8 @@ import unittest
 
 import numpy
 
-import eups
 import lsst.afw.image as afwImage
 import lsst.afw.image.testUtils as imTestUtils
-import lsst.afw.math as afwMath
 import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils

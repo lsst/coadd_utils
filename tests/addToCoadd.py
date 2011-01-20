@@ -25,10 +25,9 @@
 """Test lsst.coadd.utils.addToCoadd
 """
 import os
-import math
 import pdb # we may want to say pdb.set_trace()
-import sys
 import unittest
+import warnings
 
 import numpy
 
@@ -39,7 +38,6 @@ import lsst.afw.math as afwMath
 import lsst.afw.display.ds9 as ds9
 import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
-import lsst.pex.exceptions as pexEx
 import lsst.coadd.utils as coaddUtils
 
 try:
@@ -51,9 +49,7 @@ except NameError:
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
 dataDir = eups.productDir("afwdata")
-if not dataDir:
-    print >> sys.stderr, "Must set up afwdata to run these tests"
-else:
+if dataDir != None:
     medMIPath = os.path.join(dataDir, "med")
     
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -234,6 +230,8 @@ def suite():
 
     if dataDir:
         suites += unittest.makeSuite(AddToCoaddAfwdataTestCase)
+    else:
+        warnings.warn("Skipping some tests because afwdata is not setup")
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
 
     return unittest.TestSuite(suites)
