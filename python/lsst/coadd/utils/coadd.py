@@ -118,6 +118,11 @@ class Coadd(object):
         scaledMaskedImage /= self._weightMap
         
         return afwImage.makeExposure(scaledMaskedImage, self._wcs)
+    
+    def getBadPixelMask(self):
+        """Return the bad pixel mask
+        """
+        return self._badPixelMask
 
     def getBBox(self):
         """Return the bounding box of the coadd

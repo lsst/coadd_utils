@@ -81,7 +81,7 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
                         bbox = coaddUtils.bboxFromImage(exposure),
                         wcs = exposure.getWcs(),
                         policy = coaddPolicy)
-                    print "badPixelMask=", coadd._badPixelMask
+                    print "badPixelMask=", coadd.getBadPixelMask()
                     if SaveDebugImages:
                         exposure.writeFits("warped%s" % (fileName,))
                     
