@@ -35,8 +35,6 @@ import lsst.pex.policy as pexPolicy
 import lsst.afw.image as afwImage
 import lsst.coadd.utils as coaddUtils
 
-SaveDebugImages = False
-
 PolicyPackageName = "coadd_utils"
 PolicyDictName = "WarpAndCoaddDictionary.paf"
 
@@ -56,23 +54,32 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
 
     warpPolicy = policy.getPolicy("warpPolicy")
     coaddPolicy = policy.getPolicy("coaddPolicy")
+    saveDebugImages = policy.get("saveDebugImages")
+    bboxMin = policy.getArray("bboxMin")
+    bboxSize = policy.getArray("bboxSize")
+    bbox = afwImage.BBox(afwImage.PointI(bboxMin[0], bboxMin[1]), bboxSize[0], bboxSize[1])
+    print "SaveDebugImages =", saveDebugImages
+    print "BBox =", bbox
 
     # process exposures
+    accumGoodTime = 0
     coadd = None
+    expNum = 0
     numExposuresInCoadd = 0
     numExposuresFailed = 0
-    accumGoodTime = 0
     with file(exposureListPath, "rU") as infile:
-        for filePath in infile:
-            filePath = filePath.strip()
-            if not filePath or filePath.startswith("#"):
+        for exposurePath in infile:
+            exposurePath = exposurePath.strip()
+            if not exposurePath or exposurePath.startswith("#"):
                 continue
-            fileName = os.path.basename(filePath)
+            expNum += 1
 
             try:
-                print >> sys.stderr, "Processing exposure: %s" % (filePath,)
+                print >> sys.stderr, "Processing exposure: %s" % (exposurePath,)
                 startTime = time.time()
-                exposure = afwImage.ExposureF(filePath)
+                exposure = afwImage.ExposureF(exposurePath, 0, bbox)
+                if saveDebugImages:
+                    exposure.writeFits("exposure%s.fits" % (expNum,))
 
                 if not coadd:
                     print >> sys.stderr, "Create warper and coadd with size and WCS matching the first/reference exposure"
@@ -82,8 +89,6 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
                         wcs = exposure.getWcs(),
                         policy = coaddPolicy)
                     print "badPixelMask=", coadd.getBadPixelMask()
-                    if SaveDebugImages:
-                        exposure.writeFits("warped%s" % (fileName,))
                     
                     print >> sys.stderr, "Add reference exposure to coadd (without warping)"
                     coadd.addExposure(exposure)
@@ -93,8 +98,8 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
                         bbox = coadd.getBBox(),
                         wcs = coadd.getWcs(),
                         exposure = exposure)
-                    if SaveDebugImages:
-                        warpedExposure.writeFits("warped%s" % (fileName,))
+                    if saveDebugImages:
+                        warpedExposure.writeFits("warped%s.fits" % (expNum,))
 
                     print >> sys.stderr, "Add warped exposure to coadd"
                     coadd.addExposure(warpedExposure)
@@ -105,7 +110,7 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
                     accumGoodTime += deltaTime
                 numExposuresInCoadd += 1
             except Exception, e:
-                print >> sys.stderr, "Exposure %s failed: %s" % (filePath, e)
+                print >> sys.stderr, "Exposure %s failed: %s" % (exposurePath, e)
                 traceback.print_exc(file=sys.stderr)
                 numExposuresFailed += 1
                 continue
