@@ -37,19 +37,21 @@ class Coadd(object):
     This class may be subclassed to implement other coadd techniques.
     Typically this is done by overriding addExposure.
     """
-    def __init__(self, bbox, wcs, allowedMaskPlanes, logName="coadd.utils.Coadd"):
+    def __init__(self, bbox, wcs, badMaskPlanes, logName="coadd.utils.Coadd"):
         """Create a coadd
         
         Inputs:
         - bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.BoxI):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
         - wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
-        - allowedMaskePlanes: mask planes to allow (ignore) when rejecting masked pixels.
-            Specify as a single string containing space-separated names
+        - badMaskPlanes: mask planes to pay attention to when rejecting masked pixels.
+            Specify as a collection of names.
+            badMaskPlanes should always include "EDGE".
+        - logName: name by which messages are logged
         """
         self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
 
-        self._badPixelMask = makeBitMask.makeBitMask(allowedMaskPlanes.split(), doInvert=True)
+        self._badPixelMask = makeBitMask.makeBitMask(badMaskPlanes)
 
         self._bbox = bbox
         self._wcs = wcs
@@ -62,6 +64,20 @@ class Coadd(object):
         self._statsControl.setNumSigmaClip(3.0)
         self._statsControl.setNumIter(2)
         self._statsControl.setAndMask(self._badPixelMask)
+    
+    @classmethod
+    def fromPolicy(cls, bbox, wcs, policy, logName="coadd.utils.Coadd"):
+        """Create a coadd
+        
+        Inputs:
+        - bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.BoxI):
+            coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
+        - wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
+        - policy: coadd policy; see policy/CoaddPolicyDictionary.paf
+        - logName: name by which messages are logged
+        """
+        badMaskPlanes = policy.getArray("badMaskPlanes")
+        return cls(bbox, wcs, badMaskPlanes, logName)
 
     def addExposure(self, exposure, weightFactor=1.0):
         """Add an Exposure to the coadd

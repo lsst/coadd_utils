@@ -55,7 +55,7 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
     weightPath = os.path.splitext(coaddPath)[0] + "_weight.fits"
 
     warpPolicy = policy.getPolicy("warpPolicy")
-    allowedMaskPlanes = policy.getPolicy("coaddPolicy").get("allowedMaskPlanes")
+    coaddPolicy = policy.getPolicy("coaddPolicy")
 
     # process exposures
     coadd = None
@@ -77,10 +77,11 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
                 if not coadd:
                     print >> sys.stderr, "Create warper and coadd with size and WCS matching the first/reference exposure"
                     warper = coaddUtils.Warp.fromPolicy(warpPolicy)
-                    coadd = coaddUtils.Coadd(
+                    coadd = coaddUtils.Coadd.fromPolicy(
                         bbox = coaddUtils.bboxFromImage(exposure),
                         wcs = exposure.getWcs(),
-                        allowedMaskPlanes = allowedMaskPlanes)
+                        policy = coaddPolicy)
+                    print "badPixelMask=", coadd._badPixelMask
                     if SaveDebugImages:
                         exposure.writeFits("warped%s" % (fileName,))
                     
@@ -146,7 +147,6 @@ The policy dictionary is: policy/%s
     coaddPath = sys.argv[1]
     if os.path.exists(coaddPath):
         print >> sys.stderr, "Coadd file %s already exists" % (coaddPath,)
-        print helpStr
         sys.exit(1)
     
     exposureListPath = sys.argv[2]

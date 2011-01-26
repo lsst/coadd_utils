@@ -1,11 +1,11 @@
 #<?cfg paf dictionary ?>
 
 definitions: {
-    allowedMaskPlanes: {
+    badMaskPlanes: {
         type: string
-        description: "Mask planes to allow (ignore) when rejecting masked pixels.
-            Specify as a single string containing space-separated names"
-        maxOccurs: 1
-        default: "BAD SAT INTRP CR DETECTED DETECTED_NEGATIVE"
+        description: "Mask planes to pay attention to when rejecting masked pixels.
+            It should always include EDGE."
+        minOccurs: 0
+        default: "EDGE"
     }
 }
