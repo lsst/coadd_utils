@@ -28,6 +28,7 @@ import os
 import pdb # we may want to say pdb.set_trace()
 import unittest
 import warnings
+import sys
 
 import numpy
 
@@ -37,6 +38,7 @@ import lsst.afw.image.testUtils as imTestUtils
 import lsst.afw.math as afwMath
 import lsst.afw.display.ds9 as ds9
 import lsst.utils.tests as utilsTests
+import lsst.pex.exceptions as pexExcept
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 
@@ -54,35 +56,67 @@ if dataDir != None:
     
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+def slicesFromBox(box, image):
+    """Computes the numpy slice in x and y associated with a parent bounding box
+    given an image/maskedImage/exposure
+    """
+    startInd = (box.getMinX() - image.getX0(), box.getMinY() - image.getY0())
+    stopInd = (startInd[0] + box.getWidth(), startInd[1] + box.getHeight())
+#     print "slicesFromBox: box=(min=%s, dim=%s), imxy0=%s, imdim=%s, startInd=%s, stopInd=%s" %\
+#         (box.getMin(), box.getDimensions(), image.getXY0(), image.getDimensions(), startInd, stopInd)
+    return (
+        slice(startInd[0], stopInd[0]),
+        slice(startInd[1], stopInd[1]),
+    )
 
 def referenceAddToCoadd(coadd, weightMap, maskedImage, badPixelMask, weight):
     """Reference implementation of lsst.coadd.utils.addToCoadd
     
-    Unlike lsst.coadd.utils.addToCoadd this one does not change the inputs.
+    Unlike lsst.coadd.utils.addToCoadd this one does not update the input coadd and weightMap,
+    but instead returns the new versions (as numpy arrays).
     
     Inputs:
-    - coadd: coadd before adding maskedImage
-    - weightMap: weight map before adding maskedImage
-    - maskedImage: masked image to add to coadd
-    - badPixelMask: mask of bad pixels to ignore
-    - weight: relative weight of this maskedImage
+    - coadd: coadd before adding maskedImage (a MaskedImage)
+    - weightMap: weight map before adding maskedImage (an Image)
+    - maskedImage: masked image to add to coadd (a MaskedImage)
+    - badPixelMask: mask of bad pixels to ignore (an int)
+    - weight: relative weight of this maskedImage (a float)
 
-    Returns two items:
+    Returns three items:
+    - overlapBox: the overlap region relative to the parent (afwGeom::BoxI)
     - coaddArrayList: new coadd as a list of image, mask, variance numpy arrays
     - weightMapArray: new weight map, as a numpy array
     """
-    maskedImageArrayList = imTestUtils.arraysFromMaskedImage(maskedImage)
+    overlapBox = coaddUtils.bboxFromImage(coadd)
+    overlapBox.clip(coaddUtils.bboxFromImage(maskedImage))
+
     coaddArrayList = imTestUtils.arraysFromMaskedImage(coadd)
     weightMapArray = imTestUtils.arrayFromImage(weightMap)
-
+    
+    if overlapBox.isEmpty():
+        return (overlapBox, coaddArrayList, weightMapArray)
+    
+    maskedImageArrayList = imTestUtils.arraysFromMaskedImage(maskedImage)
     badMaskArr = (maskedImageArrayList[1] & badPixelMask) != 0
-    for ind in (0, 2):
-        coaddArray = coaddArrayList[ind]
-        coaddArray += numpy.where(badMaskArr, 0, maskedImageArrayList[ind])*(weight if ind == 0 else weight**2)
-    coaddArray = coaddArrayList[1]
-    coaddArray |= numpy.where(badMaskArr, 0, maskedImageArrayList[1])
-    weightMapArray += numpy.where(badMaskArr, 0, 1)*weight
-    return coaddArrayList, weightMapArray
+    
+    coaddSlices = slicesFromBox(overlapBox, coadd)
+    imageSlices = slicesFromBox(overlapBox, maskedImage)
+
+    badMaskView = badMaskArr[imageSlices[0], imageSlices[1]]
+    for ind in range(3):
+        coaddView = coaddArrayList[ind][coaddSlices[0], coaddSlices[1]]
+        maskedImageView = maskedImageArrayList[ind][imageSlices[0], imageSlices[1]]
+        if ind == 1: # mask plane
+            coaddView |= numpy.where(badMaskView, 0, maskedImageView)
+        else: # image or variance plane
+            if ind == 0: # image
+                weightFac = weight
+            else: # variance
+                weightFac = weight**2
+            coaddView += numpy.where(badMaskView, 0, maskedImageView)*weightFac
+    weightMapView = weightMapArray[coaddSlices[0], coaddSlices[1]]
+    weightMapView += numpy.where(badMaskView, 0, 1)*weight
+    return overlapBox, coaddArrayList, weightMapArray
 
 
 class AddToCoaddTestCase(unittest.TestCase):
@@ -139,54 +173,41 @@ class AddToCoaddTestCase(unittest.TestCase):
 
         return [trueImageValue, stats.getValue(afwMath.MEAN), 0.0, stats.getValue(afwMath.STDEV)]
 
-    def testAddToCoaddMaskUniformWeight(self):
-        """Test coadded MaskedImages with uniform weights"""
+    def testAddToCoaddMask(self):
+        """Test coadded MaskedImages"""
 
-        uniformWeight = True
-        truth_mean, mean, truth_stdev, stdev = self._testAddToCoaddImpl(True, uniformWeight)
+        for uniformWeight in (False, True):
+            truth_mean, mean, truth_stdev, stdev = self._testAddToCoaddImpl(True, uniformWeight)
+    
+            self.assertEqual(truth_mean, mean)
+            self.assertEqual(truth_stdev, stdev)
 
-        self.assertEqual(truth_mean, mean)
-        self.assertEqual(truth_stdev, stdev)
+    def testAddToCoaddNaN(self):
+        """Test coadded Images with NaN"""
 
-    def testAddToCoaddMaskNonUniformWeight(self):
-        """Test coadded MaskedImages with non-uniform weights"""
+        for uniformWeight in (False, True):
+            truth_mean, mean, truth_stdev, stdev = self._testAddToCoaddImpl(False, uniformWeight)
 
-        uniformWeight = False
-        truth_mean, mean, truth_stdev, stdev = self._testAddToCoaddImpl(True, uniformWeight)
-
-        self.assertEqual(truth_mean, mean)
-        self.assertEqual(truth_stdev, stdev)
-
-    def testAddToCoaddNaNUniformWeight(self):
-        """Test coadded Images with uniform weights and NaN"""
-
-        uniformWeight = True
-        truth_mean, mean, truth_stdev, stdev = self._testAddToCoaddImpl(False, uniformWeight)
-
-        self.assertEqual(truth_mean, mean)
-        self.assertEqual(truth_stdev, stdev)
-
-    def testAddToCoaddNaNNonUniformWeight(self):
-        """Test coadded Images with non-uniform weights"""
-
-        uniformWeight = False
-        truth_mean, mean, truth_stdev, stdev = self._testAddToCoaddImpl(False, uniformWeight)
-
-        self.assertAlmostEqual(truth_mean, mean)
-        self.assertEqual(truth_stdev, stdev)
+            self.assertEqual(truth_mean, mean)
+            self.assertEqual(truth_stdev, stdev)
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 class AddToCoaddAfwdataTestCase(unittest.TestCase):
     """A test case for addToCoadd using afwdata
     """
-
     def referenceTest(self, coadd, weightMap, image, badPixelMask, weight):
         """Compare lsst implemenation of addToCoadd to a reference implementation.
+        
+        Returns the overlap bounding box
         """
-        refCoaddArrayList, refweightMapArray = \
+        # this call leaves coadd and weightMap alone:
+        overlapBox, refCoaddArrayList, refweightMapArray = \
             referenceAddToCoadd(coadd, weightMap, image, badPixelMask, weight)
-        coaddUtils.addToCoadd(coadd, weightMap, image, badPixelMask, weight) # changes the inputs
+        # this updated coadd and weightMap:
+        afwOverlapBox = coaddUtils.addToCoadd(coadd, weightMap, image, badPixelMask, weight)
+        self.assertEquals(overlapBox, afwOverlapBox)
+        
         coaddArrayList = imTestUtils.arraysFromMaskedImage(coadd)
         maskArr = coaddArrayList[1]
         weightMapArray = imTestUtils.arrayFromImage(weightMap)
@@ -208,17 +229,77 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
             )
             errMsg = "\n".join(errMsgList)
             self.fail(errMsg)
+        return overlapBox
         
     def testMed(self):
         """Test addToCoadd by adding an image with known bad pixels using varying masks
         """
-        image = afwImage.MaskedImageF(medMIPath)
-        coadd = image.Factory(image.getDimensions())
-        coadd.set(0, 0x0, 0)
-        weightMap = image.getImage().Factory(image.getDimensions(), 0)
+        medBBox = afwImage.BBox(afwImage.PointI(130, 315), 20, 21)
+        maskedImage = afwImage.MaskedImageF(afwImage.MaskedImageF(medMIPath), medBBox)
+        coadd = afwImage.MaskedImageF(maskedImage.getDimensions())
+        coadd.setXY0(maskedImage.getXY0())
+        weightMap = afwImage.ImageF(maskedImage.getDimensions())
+        weightMap.setXY0(maskedImage.getXY0())
         weight = 0.9
-        for badPixelMask in (0x01, 0x03):
-            self.referenceTest(coadd, weightMap, image, badPixelMask, weight)
+        for badPixelMask in (0x00, 0xFF):
+            self.referenceTest(coadd, weightMap, maskedImage, badPixelMask, weight)
+    
+    def testMultSizes(self):
+        """Test addToCoadd by adding various subregions of the med image
+        to a coadd that's a slightly different shape
+        """
+        bbox = afwImage.BBox(afwImage.PointI(130, 315), 30, 31)
+        fullMaskedImage = afwImage.MaskedImageF(medMIPath)
+        maskedImage = afwImage.MaskedImageF(fullMaskedImage, bbox)
+        coadd = afwImage.MaskedImageF(maskedImage.getWidth() + 10, maskedImage.getHeight() - 10)
+        coadd.setXY0(maskedImage.getX0() - 6, maskedImage.getY0() + 4)
+        weightMap = afwImage.ImageF(coadd.getDimensions())
+        weightMap.setXY0(coadd.getXY0())
+        badPixelMask = 0x0
+        
+        # add masked image that extends beyond coadd in y
+        overlapBox = self.referenceTest(coadd, weightMap, maskedImage, badPixelMask, 0.5)
+        self.assertFalse(overlapBox.isEmpty())
+
+        # add masked image that extends beyond coadd in x
+        bbox = afwImage.BBox(afwImage.PointI(120, 320), 50, 10)
+        maskedImage = afwImage.MaskedImageF(fullMaskedImage, bbox)
+        overlapBox = self.referenceTest(coadd, weightMap, maskedImage, badPixelMask, 0.5)
+        self.assertFalse(overlapBox.isEmpty())
+        
+        # add masked image that is fully within the coadd
+        bbox = afwImage.BBox(afwImage.PointI(130, 320), 10, 10)
+        maskedImage = afwImage.MaskedImageF(fullMaskedImage, bbox)
+        overlapBox = self.referenceTest(coadd, weightMap, maskedImage, badPixelMask, 0.5)
+        self.assertFalse(overlapBox.isEmpty())
+        
+        # add masked image that does not overlap coadd
+        bbox = afwImage.BBox(afwImage.PointI(0, 0), 10, 10)
+        maskedImage = afwImage.MaskedImageF(fullMaskedImage, bbox)
+        overlapBox = self.referenceTest(coadd, weightMap, maskedImage, badPixelMask, 0.5)
+        self.assertTrue(overlapBox.isEmpty())
+    
+    def testAssertions(self):
+        """Test that addToCoadd requires coadd and weightMap to have the same dimensions and xy0"""
+        maskedImage = afwImage.MaskedImageF(10, 10)
+        coadd = afwImage.MaskedImageF(11, 11)
+        coadd.setXY0(5, 6)
+        for dw, dh in (1, 0), (0, 1), (-1, 0), (0, -1):
+            weightMap = afwImage.ImageF(coadd.getWidth() + dw, coadd.getHeight() + dh)
+            weightMap.setXY0(coadd.getXY0())
+            try:
+                coaddUtils.addToCoadd(coadd, weightMap, maskedImage, 0x0, 0.1)
+                self.fail("should have raised exception")
+            except pexExcept.LsstCppException, e:
+                pass
+        for dx0, dy0 in (1, 0), (0, 1), (-1, 0), (0, -1):
+            weightMap = afwImage.ImageF(coadd.getWidth(), coadd.getHeight())
+            weightMap.setXY0(coadd.getX0() + dx0, coadd.getY0() + dy0)
+            try:
+                coaddUtils.addToCoadd(coadd, weightMap, maskedImage, 0x0, 0.1)
+                self.fail("should have raised exception")
+            except pexExcept.LsstCppException, e:
+                pass
 
 def suite():
     """Return a suite containing all the test cases in this module.

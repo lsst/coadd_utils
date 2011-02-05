@@ -21,6 +21,7 @@
 #
 import sys
 import lsst.pex.logging as pexLog
+import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import bboxFromImage
@@ -48,9 +49,8 @@ class Warp(object):
     def fromPolicy(cls, policy, logName="coadd.utils.WarpExposure"):
         """Create a Warp from a policy
         
-        Inputs:
-        - policy: see policy/WarpDictionary.paf
-        - logName: name by which messages are logged
+        @param policy: see policy/WarpDictionary.paf
+        @param logName: name by which messages are logged
         """
         return cls(
             warpingKernelName = policy.getString("warpingKernelName"),
@@ -58,21 +58,53 @@ class Warp(object):
             cacheSize = policy.getInt("cacheSize"),
             logName = logName,
         )
+    
+    def overlappingBBox(self, wcs, exposure):
+        """Compute the bounding box of the exposure that results from warping an exposure to a new wcs
+        
+        The bounding box must include all warped pixels; it may be a bit oversize.
+        
+        @param wcs: WCS of warped exposure
+        @param Exposure to warp
+        @return bbox: bounding box of warped exposure
+        """
+        inWcs = exposure.getWcs()
+        inBBox = bboxFromImage.bboxFromImage(exposure)
+        inPosBox = afwGeom.BoxD(inBBox)
+        inCornerPosList = (
+            inPosBox.getMin(),
+            afwGeom.makePointD(inPosBox.getMinX(), inPosBox.getMaxY()),
+            afwGeom.makePointD(inPosBox.getMaxX(), inPosBox.getMinY()),
+            inPosBox.getMax(),
+        )
+        outCornerPosList = [wcs.skyToPixel(inWcs.pixelToSky(inPos)) for inPos in inCornerPosList]
+        outPosBox = afwGeom.BoxD()
+        for outCornerPos in outCornerPosList:
+            outPosBox.include(outCornerPos)
+        outBBox = afwGeom.BoxI(outPosBox, afwGeom.BoxI.EXPAND)
+        return outBBox
 
-    def warpExposure(self, bbox, wcs, exposure):
+    def warpExposure(self, wcs, exposure, border=0, maxBBox=None):
         """Warp an exposure
         
-        Inputs:
-        - bbox: bounding box of warped exposure with respect to parent (lsst.afw.geom.BoxI):
-            exposure dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
-        - wcs: WCS of warped exposure
-        - exposure: Exposure to warp
-            
-        Returns:
-        - warpedExposure: warped exposure
+        @param wcs: WCS of warped exposure
+        @param Exposure to warp
+        @param border grow bbox of warped exposure by this amount in all directions (pixels);
+            if negative then the bbox is shrunk;
+            border is applied before maxBBox
+        @param maxBBox: maximum allowed bbox of warped exposure (an afwGeom.BoxI);
+            if None then the warped exposure will be just big enough to contain all warped pixels;
+            if provided then the warped exposure may be smaller, and so missing some warped pixels
+        @return warpedExposure: warped exposure
         """
         self._log.log(pexLog.Log.INFO, "warp exposure")
-        warpedExposure = bboxFromImage.imageFromBBox(bbox, type(exposure))
+        
+        outBBox = self.overlappingBBox(wcs, exposure)
+        if border:
+            outBBox.grow(border)
+        if maxBBox:
+            outBBox.clip(maxBBox)
+        warpedExposure = bboxFromImage.imageFromBBox(outBBox, type(exposure))
         warpedExposure.setWcs(wcs)
         afwMath.warpExposure(warpedExposure, exposure, self._warpingKernel, self._interpLength)
         return warpedExposure

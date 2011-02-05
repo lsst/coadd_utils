@@ -29,6 +29,7 @@ import warnings
 import numpy
 
 import eups
+import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.image.testUtils as imageTestUtils
 import lsst.utils.tests as utilsTests
@@ -63,6 +64,61 @@ class WarpExposureTestCase(unittest.TestCase):
         """
         for useDeepCopy in (False, True):
             self.compareToSwarp("lanczos2", useSubregion=True, useDeepCopy=useDeepCopy)
+    
+    def testBBox(self):
+        """Test that the default bounding box includes all warped pixels
+        """
+        kernelName = "lanczos2"
+        warper = coaddUtils.Warp(kernelName)
+        originalExposure, swarpedImage, swarpedWcs = self.getSwarpedImage(
+            kernelName=kernelName, useSubregion=True, useDeepCopy=False)
+
+        warpedExposure1 = warper.warpExposure(wcs=swarpedWcs, exposure=originalExposure)
+        # the default size must include all good pixels, so growing the bbox should not add any
+        warpedExposure2 = warper.warpExposure(wcs=swarpedWcs, exposure=originalExposure, border=1)
+        # a bit of excess border is allowed, but surely not as much as 10 (in fact it is approx. 5)
+        warpedExposure3 = warper.warpExposure(wcs=swarpedWcs, exposure=originalExposure, border=-10)
+        # assert that warpedExposure and warpedExposure2 have the same number of non-edge pixels
+        edgeMask = 1 << afwImage.MaskU.getMaskPlane("EDGE")
+        mask1Arr = imageTestUtils.arrayFromMask(warpedExposure1.getMaskedImage().getMask())
+        mask2Arr = imageTestUtils.arrayFromMask(warpedExposure2.getMaskedImage().getMask())
+        mask3Arr = imageTestUtils.arrayFromMask(warpedExposure3.getMaskedImage().getMask())
+        nGood1 = (mask1Arr & edgeMask == 0).sum()
+        nGood2 = (mask2Arr & edgeMask == 0).sum()
+        nGood3 = (mask3Arr & edgeMask == 0).sum()
+        self.assertTrue(nGood1 == nGood2)
+        self.assertTrue(nGood3 < nGood1)
+    
+    def getSwarpedImage(self, kernelName, useSubregion=False, useDeepCopy=False):
+        """
+        Inputs:
+        - kernelName: name of kernel in the form used by afwImage.makeKernel
+        - useSubregion: if True then the original source exposure (from which the usual
+            test exposure was extracted) is read and the correct subregion extracted
+        - useDeepCopy: if True then the copy of the subimage is a deep copy,
+            else it is a shallow copy; ignored if useSubregion is False
+        
+        Returns:
+        - originalExposure
+        - swarpedImage
+        - swarpedWcs
+        """
+        if useSubregion:
+            originalFullExposure = afwImage.ExposureF(originalExposurePath)
+            # "medsub" is a subregion of med starting at 0-indexed pixel (40, 150) of size 145 x 200
+            bbox = afwImage.BBox(afwImage.PointI(40, 150), 145, 200)
+            originalExposure = afwImage.ExposureF(originalFullExposure, bbox, useDeepCopy)
+            swarpedImageName = "medsubswarp1%s.fits" % (kernelName,)
+        else:
+            originalExposure = afwImage.ExposureF(originalExposurePath)
+            swarpedImageName = "medswarp1%s.fits" % (kernelName,)
+
+        swarpedImagePath = os.path.join(dataDir, swarpedImageName)
+        swarpedDecoratedImage = afwImage.DecoratedImageF(swarpedImagePath)
+        swarpedImage = swarpedDecoratedImage.getImage()
+        swarpedMetadata = swarpedDecoratedImage.getMetadata()
+        swarpedWcs = afwImage.makeWcs(swarpedMetadata)
+        return (originalExposure, swarpedImage, swarpedWcs)
 
     def compareToSwarp(self, kernelName, 
                        useSubregion=False, useDeepCopy=False,
@@ -88,31 +144,20 @@ class WarpExposureTestCase(unittest.TestCase):
         """
         warper = coaddUtils.Warp(kernelName)
 
-        if useSubregion:
-            originalFullExposure = afwImage.ExposureF(originalExposurePath)
-            # "medsub" is a subregion of med starting at 0-indexed pixel (40, 150) of size 145 x 200
-            bbox = afwImage.BBox(afwImage.PointI(40, 150), 145, 200)
-            originalExposure = afwImage.ExposureF(originalFullExposure, bbox, useDeepCopy)
-            swarpedImageName = "medsubswarp1%s.fits" % (kernelName,)
-        else:
-            originalExposure = afwImage.ExposureF(originalExposurePath)
-            swarpedImageName = "medswarp1%s.fits" % (kernelName,)
-
-        swarpedImagePath = os.path.join(dataDir, swarpedImageName)
-        swarpedDecoratedImage = afwImage.DecoratedImageF(swarpedImagePath)
-        swarpedImage = swarpedDecoratedImage.getImage()
-        swarpedMetadata = swarpedDecoratedImage.getMetadata()
-        warpedWcs = afwImage.makeWcs(swarpedMetadata)
-        destWidth = swarpedImage.getWidth()
-        destHeight = swarpedImage.getHeight()
-        
+        originalExposure, swarpedImage, swarpedWcs = self.getSwarpedImage(
+            kernelName=kernelName, useSubregion=useSubregion, useDeepCopy=useDeepCopy)
+        maxBBox = afwGeom.BoxI(
+            afwGeom.makePointI(swarpedImage.getX0(), swarpedImage.getY0()),
+            afwGeom.makeExtentI(swarpedImage.getWidth(), swarpedImage.getHeight()))
         # path for saved afw-warped image
         afwWarpedImagePath = "afwWarpedExposure1%s" % (kernelName,)
 
+        # warning: this test assumes that the swarped image is smaller than it needs to be
+        # to hold all of the warped pixels
         afwWarpedExposure = warper.warpExposure(
-            bbox = coaddUtils.bboxFromImage(swarpedImage),
-            wcs = warpedWcs,
+            wcs = swarpedWcs,
             exposure = originalExposure,
+            maxBBox = maxBBox,
         )
         afwWarpedMaskedImage = afwWarpedExposure.getMaskedImage()
 
