@@ -40,14 +40,13 @@ class Coadd(object):
     def __init__(self, bbox, wcs, badMaskPlanes, logName="coadd.utils.Coadd"):
         """Create a coadd
         
-        Inputs:
-        - bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.BoxI):
+        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.BoxI):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
-        - wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
-        - badMaskPlanes: mask planes to pay attention to when rejecting masked pixels.
+        @param wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
+        @param badMaskPlanes: mask planes to pay attention to when rejecting masked pixels.
             Specify as a collection of names.
             badMaskPlanes should always include "EDGE".
-        - logName: name by which messages are logged
+        @param logName: name by which messages are logged
         """
         self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
 
@@ -69,12 +68,11 @@ class Coadd(object):
     def fromPolicy(cls, bbox, wcs, policy, logName="coadd.utils.Coadd"):
         """Create a coadd
         
-        Inputs:
-        - bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.BoxI):
+        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.BoxI):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
-        - wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
-        - policy: coadd policy; see policy/CoaddPolicyDictionary.paf
-        - logName: name by which messages are logged
+        @param wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
+        @param policy: coadd policy; see policy/CoaddPolicyDictionary.paf
+        @param logName: name by which messages are logged
         """
         badMaskPlanes = policy.getArray("badMaskPlanes")
         return cls(bbox, wcs, badMaskPlanes, logName)
@@ -82,9 +80,11 @@ class Coadd(object):
     def addExposure(self, exposure, weightFactor=1.0):
         """Add an Exposure to the coadd
         
-        Inputs:
-        - exposure: Exposure to add to coadd; must be background-subtracted and warped to match the coadd.
-        - weightFactor: extra weight factor for this exposure; weight = weightFactor / clipped mean variance
+        TO DO: allow mis-matched size; shift and truncate as required;
+        consider returning overlap x,y or truncated x,y
+        
+        @param exposure: Exposure to add to coadd; must be background-subtracted and warped to match the coadd.
+        @param weightFactor: extra weight factor for this exposure; weight = weightFactor / clipped mean variance
         
         Subclasses may override to preprocess the exposure or change the way it is added to the coadd.
         """
@@ -104,7 +104,7 @@ class Coadd(object):
     def getCoadd(self):
         """Get the coadd Exposure, as computed so far
         
-        Return the coadd Exposure consisting of the reference exposure and all exposures
+        The coadd Exposure consisting of the reference exposure and all exposures
         you have added so far. You may call addExposure and getCoadd as often as you like.
         """
         # make a deep copy so I can scale it
@@ -135,10 +135,9 @@ class Coadd(object):
         return self._wcs
         
     def getWeightMap(self):
-        """Get the weight map
+        """Return the weight map
         
-        The weight map is a float Image of the same dimensions as the coadd;
-        the value of each pixel is the number of input images
-        that contributed to the associated pixel of the coadd.
+        The weight map is a float Image of the same dimensions as the coadd; the value of each pixel
+        is the sum of the weights of all the images that contributed to that pixel.
         """
         return self._weightMap
