@@ -95,9 +95,10 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
                 else:
                     print >> sys.stderr, "Warp exposure"
                     warpedExposure = warper.warpExposure(
-                        bbox = coadd.getBBox(),
                         wcs = coadd.getWcs(),
-                        exposure = exposure)
+                        exposure = exposure,
+                        maxBBox = coadd.getBBox(),
+                    )
                     if saveDebugImages:
                         warpedExposure.writeFits("warped%s.fits" % (expNum,))
 
