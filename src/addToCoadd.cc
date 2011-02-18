@@ -139,7 +139,7 @@ static lsst::afw::geom::BoxI addToCoaddImpl(
 } // anonymous namespace
 
 /**
-* @brief add good pixels from an image to a coadd and associated weight map
+* @brief add good pixels from a masked image to a coadd image and associated weight map
 *
 * The images are assumed to be registered to the same wcs and parent origin, thus:
 * coadd[i+coadd.x0, j+coadd.y0] += image[i+image.x0, j+image.y0]
@@ -147,7 +147,7 @@ static lsst::afw::geom::BoxI addToCoaddImpl(
 * for all good image pixels that overlap a coadd pixel.
 * Good pixels are those for which mask & badPixelMask == 0.
 *
-* @return overlapBBox: overlapping bounding box, relative to parent image (hence XY0 is taken into account)
+* @return overlapBBox: overlapping bounding box, relative to parent image (hence xy0 is taken into account)
 *
 * @throw pexExcept::InvalidParameterException if coadd and weightMap dimensions or xy0 do not match.
 */
@@ -176,7 +176,7 @@ lsst::afw::geom::BoxI coaddUtils::addToCoadd(
 * for all good image pixels that overlap a coadd pixel.
 * Good pixels are those that are not NaN (thus they do include +/- inf).
 *
-* @return overlapBBox: overlapping bounding box, relative to parent image (hence XY0 is taken into account)
+* @return overlapBBox: overlapping bounding box, relative to parent image (hence xy0 is taken into account)
 *
 * @throw pexExcept::InvalidParameterException if coadd and weightMap dimensions or xy0 do not match.
 */
@@ -185,7 +185,7 @@ lsst::afw::geom::BoxI coaddUtils::addToCoadd(
     // spell out lsst:afw::image to make Doxygen happy
     lsst::afw::image::Image<CoaddPixelT> &coadd,       ///< [in,out] coadd to be modified
     lsst::afw::image::Image<WeightPixelT> &weightMap,  ///< [in,out] weight map to be modified
-    lsst::afw::image::Image<CoaddPixelT> const &image, ///< masked image to add to coadd;
+    lsst::afw::image::Image<CoaddPixelT> const &image, ///< image to add to coadd;
         ///< this is the sum of weights of all images contributing each pixel of the coadd
     WeightPixelT weight                                ///< relative weight of this image
 ) {
