@@ -79,11 +79,11 @@ struct CheckKnownValue {
  */
 template <typename CoaddT, typename WeightPixelT, typename isValidPixel>
 static lsst::afw::geom::BoxI addToCoaddImpl(
-    CoaddT &coadd,                                      // [in,out] coadd to be modified
-    lsst::afw::image::Image<WeightPixelT> &weightMap,   // [in,out] weight map to be modified
-    CoaddT const &image,                                // image to add to coadd
-    lsst::afw::image::MaskPixel const badPixelMask,     // bad pixel mask; may be ignored
-    WeightPixelT weight                                 // relative weight of this image
+    CoaddT &coadd,                                      ///< [in,out] coadd to be modified
+    lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< [in,out] weight map to be modified
+    CoaddT const &image,                                ///< image to add to coadd
+    lsst::afw::image::MaskPixel const badPixelMask,     ///< bad pixel mask; may be ignored
+    WeightPixelT weight                                 ///< relative weight of this image
 ) {
     typedef typename afwImage::Image<WeightPixelT> WeightMapT;
     

@@ -66,6 +66,7 @@ class Warp(object):
         
         @param wcs: WCS of warped exposure
         @param Exposure to warp
+
         @return bbox: bounding box of warped exposure
         """
         inWcs = exposure.getWcs()
@@ -95,6 +96,7 @@ class Warp(object):
         @param maxBBox: maximum allowed bbox of warped exposure (an afwGeom.BoxI);
             if None then the warped exposure will be just big enough to contain all warped pixels;
             if provided then the warped exposure may be smaller, and so missing some warped pixels
+
         @return warpedExposure: warped exposure
         """
         self._log.log(pexLog.Log.INFO, "warp exposure")

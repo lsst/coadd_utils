@@ -27,9 +27,8 @@ __all__ = ["makeBitMask"]
 def makeBitMask(maskPlaneNameList, doInvert=False):
     """Generate a bit mask consisting of ORed together Mask bit planes
     
-    Inputs:
-    - maskPlaneNameList: list of mask plane names
-    - doInvert: if True then invert the result
+    @input[in] maskPlaneNameList: list of mask plane names
+    @input[in] doInvert: if True then invert the result
     
     @return a bit mask consisting of the named bit planes ORed together (with the result possibly inverted)
     """

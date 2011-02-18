@@ -44,7 +44,7 @@ namespace coaddUtils = lsst::coadd::utils;
 template<typename WeightPixelT>
 void coaddUtils::setCoaddEdgeBits(
     // spell out lsst:afw::image to make Doxygen happy
-    lsst::afw::image::Mask<lsst::afw::image::MaskPixel> &coaddMask, ///< mask of coadd
+    lsst::afw::image::Mask<lsst::afw::image::MaskPixel> &coaddMask, ///< [in,out] mask of coadd
     lsst::afw::image::Image<WeightPixelT> const &weightMap  ///< weight map
 ) {
     typedef afwImage::Mask<afwImage::MaskPixel>::x_iterator MaskXIter;
