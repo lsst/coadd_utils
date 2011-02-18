@@ -81,10 +81,10 @@ class Coadd(object):
         """Add an Exposure to the coadd
         
         @param exposure: Exposure to add to coadd; must be background-subtracted and warped to match the coadd.
-        @param weightFactor: extra weight factor for this exposure; weight = weightFactor / clipped mean variance
+        @param weightFactor: extra weight factor for this exposure
         @return
         - overlapBBox: region of overlap between exposure and coadd in parent coordinates (afwGeom.BoxI)
-        - weight: weight factor
+        - weight: weight with which exposure was added to coadd; weight = weightFactor / clipped mean variance
         
         Subclasses may override to preprocess the exposure or change the way it is added to the coadd.
         """
