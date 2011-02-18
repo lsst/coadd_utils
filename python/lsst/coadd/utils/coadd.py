@@ -80,11 +80,11 @@ class Coadd(object):
     def addExposure(self, exposure, weightFactor=1.0):
         """Add an Exposure to the coadd
         
-        TO DO: allow mis-matched size; shift and truncate as required;
-        consider returning overlap x,y or truncated x,y
-        
         @param exposure: Exposure to add to coadd; must be background-subtracted and warped to match the coadd.
         @param weightFactor: extra weight factor for this exposure; weight = weightFactor / clipped mean variance
+        @return
+        - overlapBBox: region of overlap between exposure and coadd in parent coordinates (afwGeom.BoxI)
+        - weight: weight factor
         
         Subclasses may override to preprocess the exposure or change the way it is added to the coadd.
         """
@@ -96,10 +96,10 @@ class Coadd(object):
 
         self._log.log(pexLog.Log.INFO, "add masked image to coadd; weight=%0.3g" % (weight,))
 
-        utilsLib.addToCoadd(self._coadd.getMaskedImage(), self._weightMap,
+        overlapBBox = utilsLib.addToCoadd(self._coadd.getMaskedImage(), self._weightMap,
             maskedImage, self._badPixelMask, weight)
 
-        return weight
+        return overlapBBox, weight
 
     def getCoadd(self):
         """Get the coadd Exposure, as computed so far
