@@ -19,14 +19,6 @@
 # the GNU General Public License along with this program.  If not, 
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-
-"""Utilities for coadd generation
-"""
-import math
-
-import numpy
-
-import lsst.daf.base as dafBase
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 
@@ -44,15 +36,18 @@ def bboxFromImage(image):
     return afwGeom.BoxI(afwGeom.makePointI(image.getX0(), image.getY0()),
         afwGeom.makeExtentI(image.getWidth(), image.getHeight()))
 
-def imageFromBBox(bbox, imageClass):
-    """Return an image or similar object with the specified bounding box relative to its parent image
+def imageFromBBox(bbox, imageFactory):
+    """Return an image-like object with the specified bounding box relative to its parent image
+    
+    Can construct an Image, MaskedImage, Mask, Exposure or similar object
+    that can be constructed from (width, eight) and supports setXY0.
     
     @param[in] bbox bounding box of image with respect to parent (lsst.afw.geom.BoxI):
         image dimensions = bbox dimensions; image xy0 = bbox min position
-    @param[in] imageClass class of desired image, e.g. lsst.afw.image.MaskedImageF;
-        must support construction from (width, height) and setXY0(x, y)
+    @param[in] imageFactory factory for desired image-like object, e.g. image.Factory.
+        May also be a type, but type(image) but that does not work for butler-unpersisted data.
     """
-    image = imageClass(bbox.getWidth(), bbox.getHeight())
+    image = imageFactory(bbox.getWidth(), bbox.getHeight())
     image.setXY0(bbox.getMinX(), bbox.getMinY())
     return image
 

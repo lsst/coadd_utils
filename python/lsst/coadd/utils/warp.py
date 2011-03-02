@@ -106,7 +106,7 @@ class Warp(object):
             outBBox.grow(border)
         if maxBBox:
             outBBox.clip(maxBBox)
-        warpedExposure = bboxFromImage.imageFromBBox(outBBox, type(exposure))
+        warpedExposure = bboxFromImage.imageFromBBox(outBBox, exposure.Factory)
         warpedExposure.setWcs(wcs)
         afwMath.warpExposure(warpedExposure, exposure, self._warpingKernel, self._interpLength)
         return warpedExposure
