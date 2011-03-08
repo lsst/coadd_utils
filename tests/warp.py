@@ -80,9 +80,9 @@ class WarpExposureTestCase(unittest.TestCase):
         warpedExposure3 = warper.warpExposure(wcs=swarpedWcs, exposure=originalExposure, border=-10)
         # assert that warpedExposure and warpedExposure2 have the same number of non-edge pixels
         edgeMask = 1 << afwImage.MaskU.getMaskPlane("EDGE")
-        mask1Arr = imageTestUtils.arrayFromMask(warpedExposure1.getMaskedImage().getMask())
-        mask2Arr = imageTestUtils.arrayFromMask(warpedExposure2.getMaskedImage().getMask())
-        mask3Arr = imageTestUtils.arrayFromMask(warpedExposure3.getMaskedImage().getMask())
+        mask1Arr = warpedExposure1.getMaskedImage().getMask().getArray()
+        mask2Arr = warpedExposure2.getMaskedImage().getMask().getArray()
+        mask3Arr = warpedExposure3.getMaskedImage().getMask().getArray()
         nGood1 = (mask1Arr & edgeMask == 0).sum()
         nGood2 = (mask2Arr & edgeMask == 0).sum()
         nGood3 = (mask3Arr & edgeMask == 0).sum()
@@ -106,7 +106,7 @@ class WarpExposureTestCase(unittest.TestCase):
         if useSubregion:
             originalFullExposure = afwImage.ExposureF(originalExposurePath)
             # "medsub" is a subregion of med starting at 0-indexed pixel (40, 150) of size 145 x 200
-            bbox = afwImage.BBox(afwImage.PointI(40, 150), 145, 200)
+            bbox = afwGeom.Box2I(afwGeom.Point2I(40, 150), afwGeom.Extent2I(145, 200))
             originalExposure = afwImage.ExposureF(originalFullExposure, bbox, useDeepCopy)
             swarpedImageName = "medsubswarp1%s.fits" % (kernelName,)
         else:
@@ -146,9 +146,9 @@ class WarpExposureTestCase(unittest.TestCase):
 
         originalExposure, swarpedImage, swarpedWcs = self.getSwarpedImage(
             kernelName=kernelName, useSubregion=useSubregion, useDeepCopy=useDeepCopy)
-        maxBBox = afwGeom.BoxI(
-            afwGeom.makePointI(swarpedImage.getX0(), swarpedImage.getY0()),
-            afwGeom.makeExtentI(swarpedImage.getWidth(), swarpedImage.getHeight()))
+        maxBBox = afwGeom.Box2I(
+            afwGeom.Point2I(swarpedImage.getX0(), swarpedImage.getY0()),
+            afwGeom.Extent2I(swarpedImage.getWidth(), swarpedImage.getHeight()))
         # path for saved afw-warped image
         afwWarpedImagePath = "afwWarpedExposure1%s" % (kernelName,)
 
@@ -165,15 +165,13 @@ class WarpExposureTestCase(unittest.TestCase):
         edgeBitMask = afwWarpedMask.getPlaneBitMask("EDGE")
         if edgeBitMask == 0:
             self.fail("warped mask has no EDGE bit")
-        afwWarpedMaskedImageArrSet = imageTestUtils.arraysFromMaskedImage(afwWarpedMaskedImage)
-        afwWarpedMaskArr = afwWarpedMaskedImageArrSet[1]
+        afwWarpedImagArr = afwWarpedMaskedImage.getImage().getArray()
+        afwWarpedMaskArr = afwWarpedMaskedImage.getMask().getArray()
 
-        swarpedMaskedImage = afwImage.MaskedImageF(swarpedImage)
-        swarpedMaskedImageArrSet = imageTestUtils.arraysFromMaskedImage(swarpedMaskedImage)
+        swarpedImageArr = swarpedImage.getArray()
 
-        errStr = imageTestUtils.maskedImagesDiffer(afwWarpedMaskedImageArrSet, swarpedMaskedImageArrSet,
-            doImage=True, doMask=False, doVariance=False, skipMaskArr=afwWarpedMaskArr,
-            rtol=rtol, atol=atol)
+        errStr = imageTestUtils.imagesDiffer(afwWarpedImagArr, swarpedImage.getArray(),
+            skipMaskArr=afwWarpedMaskArr, rtol=rtol, atol=atol)
         if errStr:
             self.fail("afw and swarp %s-warped %s (ignoring bad pixels)" % (kernelName, errStr))
         

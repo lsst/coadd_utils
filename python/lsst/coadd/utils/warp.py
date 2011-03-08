@@ -24,7 +24,6 @@ import lsst.pex.logging as pexLog
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
-import bboxFromImage
 
 __all__ = ["Warp"]
 
@@ -70,19 +69,19 @@ class Warp(object):
         @return bbox: bounding box of warped exposure
         """
         inWcs = exposure.getWcs()
-        inBBox = bboxFromImage.bboxFromImage(exposure)
-        inPosBox = afwGeom.BoxD(inBBox)
+        inBBox = exposure.getBBox(afwImage.PARENT)
+        inPosBox = afwGeom.Box2D(inBBox)
         inCornerPosList = (
             inPosBox.getMin(),
-            afwGeom.makePointD(inPosBox.getMinX(), inPosBox.getMaxY()),
-            afwGeom.makePointD(inPosBox.getMaxX(), inPosBox.getMinY()),
+            afwGeom.Point2D(inPosBox.getMinX(), inPosBox.getMaxY()),
+            afwGeom.Point2D(inPosBox.getMaxX(), inPosBox.getMinY()),
             inPosBox.getMax(),
         )
         outCornerPosList = [wcs.skyToPixel(inWcs.pixelToSky(inPos)) for inPos in inCornerPosList]
-        outPosBox = afwGeom.BoxD()
+        outPosBox = afwGeom.Box2D()
         for outCornerPos in outCornerPosList:
             outPosBox.include(outCornerPos)
-        outBBox = afwGeom.BoxI(outPosBox, afwGeom.BoxI.EXPAND)
+        outBBox = afwGeom.Box2I(outPosBox, afwGeom.Box2I.EXPAND)
         return outBBox
 
     def warpExposure(self, wcs, exposure, border=0, maxBBox=None):
@@ -93,7 +92,7 @@ class Warp(object):
         @param border grow bbox of warped exposure by this amount in all directions (pixels);
             if negative then the bbox is shrunk;
             border is applied before maxBBox
-        @param maxBBox: maximum allowed bbox of warped exposure (an afwGeom.BoxI);
+        @param maxBBox: maximum allowed bbox of warped exposure (an afwGeom.Box2I);
             if None then the warped exposure will be just big enough to contain all warped pixels;
             if provided then the warped exposure may be smaller, and so missing some warped pixels
 
@@ -106,7 +105,6 @@ class Warp(object):
             outBBox.grow(border)
         if maxBBox:
             outBBox.clip(maxBBox)
-        warpedExposure = bboxFromImage.imageFromBBox(outBBox, exposure.Factory)
-        warpedExposure.setWcs(wcs)
+        warpedExposure = exposure.Factory(outBBox, wcs)
         afwMath.warpExposure(warpedExposure, exposure, self._warpingKernel, self._interpLength)
         return warpedExposure

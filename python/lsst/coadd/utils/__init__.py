@@ -19,7 +19,6 @@
 # the GNU General Public License along with this program.  If not, 
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-from bboxFromImage import *
 from makeBitMask import *
 from utilsLib import *
 from warp import *

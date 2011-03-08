@@ -22,7 +22,6 @@
 import lsst.pex.logging as pexLog
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
-import bboxFromImage
 import makeBitMask
 import utilsLib
 
@@ -40,7 +39,7 @@ class Coadd(object):
     def __init__(self, bbox, wcs, badMaskPlanes, logName="coadd.utils.Coadd"):
         """Create a coadd
         
-        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.BoxI):
+        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
         @param wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
         @param badMaskPlanes: mask planes to pay attention to when rejecting masked pixels.
@@ -54,10 +53,10 @@ class Coadd(object):
 
         self._bbox = bbox
         self._wcs = wcs
-        blankMaskedImage = bboxFromImage.imageFromBBox(bbox, afwImage.MaskedImageF)
+        blankMaskedImage = afwImage.MaskedImageF(bbox, afwImage.PARENT)
         self._coadd = afwImage.ExposureF(blankMaskedImage, wcs)
 
-        self._weightMap = bboxFromImage.imageFromBBox(bbox, afwImage.ImageF)
+        self._weightMap = afwImage.ImageF(bbox, afwImage.PARENT)
         
         self._statsControl = afwMath.StatisticsControl()
         self._statsControl.setNumSigmaClip(3.0)
@@ -68,7 +67,7 @@ class Coadd(object):
     def fromPolicy(cls, bbox, wcs, policy, logName="coadd.utils.Coadd"):
         """Create a coadd
         
-        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.BoxI):
+        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
         @param wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
         @param policy: coadd policy; see policy/CoaddPolicyDictionary.paf
@@ -84,7 +83,7 @@ class Coadd(object):
         @param weightFactor: extra weight factor for this exposure
 
         @return
-        - overlapBBox: region of overlap between exposure and coadd in parent coordinates (afwGeom.BoxI)
+        - overlapBBox: region of overlap between exposure and coadd in parent coordinates (afwGeom.Box2I)
         - weight: weight with which exposure was added to coadd; weight = weightFactor / clipped mean variance
         
         Subclasses may override to preprocess the exposure or change the way it is added to the coadd.

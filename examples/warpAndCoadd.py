@@ -57,9 +57,9 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
     saveDebugImages = policy.get("saveDebugImages")
     bboxMin = policy.getArray("bboxMin")
     bboxSize = policy.getArray("bboxSize")
-    bbox = afwImage.BBox(afwImage.PointI(bboxMin[0], bboxMin[1]), bboxSize[0], bboxSize[1])
+    bbox = afwGeom.Box2I(afwGeom.Point2I(bboxMin[0], bboxMin[1]), afwGeom.Extent2I(bboxSize[0], bboxSize[1]))
     print "SaveDebugImages =", saveDebugImages
-    print "BBox =", bbox
+    print "bbox =", bbox
 
     # process exposures
     accumGoodTime = 0
@@ -85,7 +85,7 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
                     print >> sys.stderr, "Create warper and coadd with size and WCS matching the first/reference exposure"
                     warper = coaddUtils.Warp.fromPolicy(warpPolicy)
                     coadd = coaddUtils.Coadd.fromPolicy(
-                        bbox = coaddUtils.bboxFromImage(exposure),
+                        bbox = exposure.getBBox(afwImage.PARENT),
                         wcs = exposure.getWcs(),
                         policy = coaddPolicy)
                     print "badPixelMask=", coadd.getBadPixelMask()
