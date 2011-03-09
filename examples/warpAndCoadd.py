@@ -32,6 +32,7 @@ import traceback
 
 import lsst.pex.logging as pexLog
 import lsst.pex.policy as pexPolicy
+import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.coadd.utils as coaddUtils
 
@@ -77,7 +78,7 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
             try:
                 print >> sys.stderr, "Processing exposure: %s" % (exposurePath,)
                 startTime = time.time()
-                exposure = afwImage.ExposureF(exposurePath, 0, bbox)
+                exposure = afwImage.ExposureF(exposurePath, 0, bbox, afwImage.LOCAL)
                 if saveDebugImages:
                     exposure.writeFits("exposure%s.fits" % (expNum,))
 
