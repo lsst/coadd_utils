@@ -53,8 +53,7 @@ class Coadd(object):
 
         self._bbox = bbox
         self._wcs = wcs
-        blankMaskedImage = afwImage.MaskedImageF(bbox, afwImage.PARENT)
-        self._coadd = afwImage.ExposureF(blankMaskedImage, wcs)
+        self._coadd = afwImage.ExposureF(bbox, wcs)
 
         self._weightMap = afwImage.ImageF(bbox, afwImage.PARENT)
         
