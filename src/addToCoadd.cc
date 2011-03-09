@@ -88,10 +88,9 @@ static lsst::afw::geom::Box2I addToCoaddImpl(
     typedef typename afwImage::Image<WeightPixelT> WeightMapT;
     
     if (coadd.getBBox(afwImage::PARENT) != weightMap.getBBox(afwImage::PARENT)) {
-        throw LSST_EXCEPT(pexExcept::InvalidParameterException, "coadd and weightMap parent bboxes differ");
-// this would be better but it's not supported yet and I'm being lazy:       
-//             (boost::format("coadd and weightMap parent bboxes differ: %s != %s") %
-//             coadd.getBBox(afwImage::PARENT) % weightMap.getBBox(afwImage::PARENT)).str());
+        throw LSST_EXCEPT(pexExcept::InvalidParameterException,
+            (boost::format("coadd and weightMap parent bboxes differ: %s != %s") %
+            coadd.getBBox(afwImage::PARENT) % weightMap.getBBox(afwImage::PARENT)).str());
     }
     
     afwGeom::Box2I overlapBBox = coadd.getBBox(afwImage::PARENT);
