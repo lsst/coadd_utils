@@ -108,7 +108,7 @@ class Coadd(object):
         """
         # make a deep copy so I can scale it
         coaddMaskedImage = self._coadd.getMaskedImage()
-        scaledMaskedImage = coaddMaskedImage.__class__(coaddMaskedImage, True)
+        scaledMaskedImage = coaddMaskedImage.Factory(coaddMaskedImage, True)
 
         # set the edge pixels
         utilsLib.setCoaddEdgeBits(scaledMaskedImage.getMask(), self._weightMap)
