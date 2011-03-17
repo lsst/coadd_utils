@@ -179,7 +179,7 @@ lsst::afw::geom::Box2I coaddUtils::addToCoadd(
 
 //
 // Explicit instantiations
-// \cond
+/// \cond
 #define MASKEDIMAGE(IMAGEPIXEL) afwImage::MaskedImage<IMAGEPIXEL, \
     afwImage::MaskPixel, afwImage::VariancePixel>
 #define INSTANTIATE(COADDPIXEL, WEIGHTPIXEL) \
@@ -206,4 +206,4 @@ INSTANTIATE(float, double);
 INSTANTIATE(float, float);
 INSTANTIATE(float, int);
 INSTANTIATE(float, boost::uint16_t);
-/* \endcond */
+/// \endcond

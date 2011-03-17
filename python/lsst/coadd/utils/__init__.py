@@ -21,5 +21,4 @@
 #
 from makeBitMask import *
 from utilsLib import *
-from warp import *
 from coadd import *

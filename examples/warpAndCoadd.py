@@ -34,6 +34,7 @@ import lsst.pex.logging as pexLog
 import lsst.pex.policy as pexPolicy
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
+import lsst.afw.math as afwMath
 import lsst.coadd.utils as coaddUtils
 
 PolicyPackageName = "coadd_utils"
@@ -84,7 +85,7 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
 
                 if not coadd:
                     print >> sys.stderr, "Create warper and coadd with size and WCS matching the first/reference exposure"
-                    warper = coaddUtils.Warp.fromPolicy(warpPolicy)
+                    warper = afwMath.Warper.fromPolicy(warpPolicy)
                     coadd = coaddUtils.Coadd.fromPolicy(
                         bbox = exposure.getBBox(afwImage.PARENT),
                         wcs = exposure.getWcs(),
@@ -96,8 +97,8 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
                 else:
                     print >> sys.stderr, "Warp exposure"
                     warpedExposure = warper.warpExposure(
-                        wcs = coadd.getWcs(),
-                        exposure = exposure,
+                        destWcs = coadd.getWcs(),
+                        srcExposure = exposure,
                         maxBBox = coadd.getBBox(),
                     )
                     if saveDebugImages:

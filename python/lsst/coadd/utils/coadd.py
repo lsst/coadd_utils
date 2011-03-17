@@ -28,10 +28,7 @@ import utilsLib
 __all__ = ["Coadd"]
 
 class Coadd(object):
-    """Basic coadd.
-    
-    Exposures are (by default) warped to the coadd WCS and then added to the coadd
-    with a weight of 1 / clipped mean variance.
+    """Coadd by weighted addition
     
     This class may be subclassed to implement other coadd techniques.
     Typically this is done by overriding addExposure.
@@ -101,10 +98,7 @@ class Coadd(object):
         return overlapBBox, weight
 
     def getCoadd(self):
-        """Get the coadd Exposure, as computed so far
-        
-        The coadd Exposure consisting of the reference exposure and all exposures
-        you have added so far. You may call addExposure and getCoadd as often as you like.
+        """Get the coadd exposure for all exposures you have coadded so far
         """
         # make a deep copy so I can scale it
         coaddMaskedImage = self._coadd.getMaskedImage()
@@ -134,9 +128,9 @@ class Coadd(object):
         return self._wcs
         
     def getWeightMap(self):
-        """Return the weight map
+        """Return the weight map for all exposures you have coadded so far
         
         The weight map is a float Image of the same dimensions as the coadd; the value of each pixel
-        is the sum of the weights of all the images that contributed to that pixel.
+        is the sum of the weights of all exposures that contributed to that pixel.
         """
         return self._weightMap
