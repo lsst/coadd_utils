@@ -54,7 +54,7 @@ class SetCoaddEdgeBitsTestCase(unittest.TestCase):
         coaddMask = afwImage.MaskU(imDim)
 
         numpy.random.seed(12345)
-        depthMapArray = numpy.random.randint(0, 3, list((imDim[1], imDim[0])))
+        depthMapArray = numpy.random.randint(0, 3, list((imDim[1], imDim[0]))).astype(numpy.uint16)
         depthMap = afwImage.makeImageFromArray(depthMapArray)
         
         refCoaddMaskArray = coaddMask.getArray()
