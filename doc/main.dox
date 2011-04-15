@@ -10,11 +10,8 @@ Functions available from C++ and Python:
 @li lsst::coadd::utils::addToCoadd: add good pixels from an Image or MaskedImage to a %coadd
 @li lsst::coadd::utils::setCoaddEdgeBits: set edge bits of a %coadd's mask based on the %coadd's weight map
 
-Functions available only from Python:
+Classes available only from Python:
 
-@li @link coadd::utils::makeBlankCoadd::makeBlankCoadd lsst.coadd.utils.makeBlankCoadd@endlink:
-    create a blank %coadd Exposure based on a given Exposure
-@li @link coadd::utils::makeBlankCoadd::makeBlankExposure lsst.coadd.utils.makeBlankExposure@endlink:
-    create a blank Exposure whose size and WCS match a given Exposure
+@li @link coadd::utils::coadd::Coadd@endlink: a coadd with a method to add additional exposures
 */
 }}}

@@ -22,17 +22,13 @@
 import lsst.pex.logging as pexLog
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
-import bboxFromImage
 import makeBitMask
 import utilsLib
 
 __all__ = ["Coadd"]
 
 class Coadd(object):
-    """Basic coadd.
-    
-    Exposures are (by default) warped to the coadd WCS and then added to the coadd
-    with a weight of 1 / clipped mean variance.
+    """Coadd by weighted addition
     
     This class may be subclassed to implement other coadd techniques.
     Typically this is done by overriding addExposure.
@@ -40,7 +36,7 @@ class Coadd(object):
     def __init__(self, bbox, wcs, badMaskPlanes, logName="coadd.utils.Coadd"):
         """Create a coadd
         
-        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.BoxI):
+        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
         @param wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
         @param badMaskPlanes: mask planes to pay attention to when rejecting masked pixels.
@@ -54,10 +50,9 @@ class Coadd(object):
 
         self._bbox = bbox
         self._wcs = wcs
-        blankMaskedImage = bboxFromImage.imageFromBBox(bbox, afwImage.MaskedImageF)
-        self._coadd = afwImage.ExposureF(blankMaskedImage, wcs)
+        self._coadd = afwImage.ExposureF(bbox, wcs)
 
-        self._weightMap = bboxFromImage.imageFromBBox(bbox, afwImage.ImageF)
+        self._weightMap = afwImage.ImageF(bbox, afwImage.PARENT)
         
         self._statsControl = afwMath.StatisticsControl()
         self._statsControl.setNumSigmaClip(3.0)
@@ -68,7 +63,7 @@ class Coadd(object):
     def fromPolicy(cls, bbox, wcs, policy, logName="coadd.utils.Coadd"):
         """Create a coadd
         
-        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.BoxI):
+        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
         @param wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
         @param policy: coadd policy; see policy/CoaddPolicyDictionary.paf
@@ -84,7 +79,7 @@ class Coadd(object):
         @param weightFactor: extra weight factor for this exposure
 
         @return
-        - overlapBBox: region of overlap between exposure and coadd in parent coordinates (afwGeom.BoxI)
+        - overlapBBox: region of overlap between exposure and coadd in parent coordinates (afwGeom.Box2I)
         - weight: weight with which exposure was added to coadd; weight = weightFactor / clipped mean variance
         
         Subclasses may override to preprocess the exposure or change the way it is added to the coadd.
@@ -103,14 +98,11 @@ class Coadd(object):
         return overlapBBox, weight
 
     def getCoadd(self):
-        """Get the coadd Exposure, as computed so far
-        
-        The coadd Exposure consisting of the reference exposure and all exposures
-        you have added so far. You may call addExposure and getCoadd as often as you like.
+        """Get the coadd exposure for all exposures you have coadded so far
         """
         # make a deep copy so I can scale it
         coaddMaskedImage = self._coadd.getMaskedImage()
-        scaledMaskedImage = coaddMaskedImage.__class__(coaddMaskedImage, True)
+        scaledMaskedImage = coaddMaskedImage.Factory(coaddMaskedImage, True)
 
         # set the edge pixels
         utilsLib.setCoaddEdgeBits(scaledMaskedImage.getMask(), self._weightMap)
@@ -136,9 +128,9 @@ class Coadd(object):
         return self._wcs
         
     def getWeightMap(self):
-        """Return the weight map
+        """Return the weight map for all exposures you have coadded so far
         
         The weight map is a float Image of the same dimensions as the coadd; the value of each pixel
-        is the sum of the weights of all the images that contributed to that pixel.
+        is the sum of the weights of all exposures that contributed to that pixel.
         """
         return self._weightMap

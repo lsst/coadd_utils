@@ -31,6 +31,7 @@ import unittest
 
 import numpy
 
+import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.image.testUtils as imTestUtils
 import lsst.utils.tests as utilsTests
@@ -49,23 +50,22 @@ class SetCoaddEdgeBitsTestCase(unittest.TestCase):
     def testRandomMap(self):
         """Test setCoaddEdgeBits using a random depth map
         """
-        imShape = (50, 50)
-        coaddMask = afwImage.MaskU(imShape[0], imShape[1], 0)
-        
+        imDim = afwGeom.Extent2I(50, 55)
+        coaddMask = afwImage.MaskU(imDim)
 
         numpy.random.seed(12345)
-        depthMapArray = numpy.random.randint(0, 3, list(imShape))
-        depthMap = imTestUtils.imageFromArray(depthMapArray, afwImage.ImageU)
+        depthMapArray = numpy.random.randint(0, 3, list((imDim[1], imDim[0]))).astype(numpy.uint16)
+        depthMap = afwImage.makeImageFromArray(depthMapArray)
         
-        refCoaddMaskArray = imTestUtils.arrayFromMask(coaddMask)
+        refCoaddMaskArray = coaddMask.getArray()
         edgeMask = afwImage.MaskU.getPlaneBitMask("EDGE")
         refCoaddMaskArray |= numpy.where(depthMapArray > 0, 0, edgeMask)
         
         coaddUtils.setCoaddEdgeBits(coaddMask, depthMap)
-        coaddMaskArray = imTestUtils.arrayFromMask(coaddMask)
+        coaddMaskArray = coaddMask.getArray()
         if numpy.any(refCoaddMaskArray != coaddMaskArray):
             errMsgList = (
-                "Coadd mask does not match reference=%s:" % (badPixelMask,),
+                "Coadd mask does not match reference:",
                 "computed=  %s" % (coaddMaskArray,),
                 "reference= %s" % (refCoaddMaskArray,),
             )
