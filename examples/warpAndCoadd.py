@@ -82,7 +82,7 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
                 exposure = afwImage.ExposureF(exposurePath, 0, bbox, afwImage.LOCAL)
                 if saveDebugImages:
                     exposure.writeFits("exposure%s.fits" % (expNum,))
-
+                
                 if not coadd:
                     print >> sys.stderr, "Create warper and coadd with size and WCS matching the first/reference exposure"
                     warper = afwMath.Warper.fromPolicy(warpPolicy)

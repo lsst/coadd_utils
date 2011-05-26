@@ -8,4 +8,10 @@ definitions: {
         minOccurs: 0
         default: "EDGE"
     }
+    coaddZeroPoint: {
+        type: double
+        description: "Photometric zero point of coadd (mag)."
+        minOccurs: 0
+        default: 27.0
+    }
 }

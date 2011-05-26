@@ -33,7 +33,7 @@ class Coadd(object):
     This class may be subclassed to implement other coadd techniques.
     Typically this is done by overriding addExposure.
     """
-    def __init__(self, bbox, wcs, badMaskPlanes, logName="coadd.utils.Coadd"):
+    def __init__(self, bbox, wcs, badMaskPlanes, coaddZeroPoint, logName="coadd.utils.Coadd"):
         """Create a coadd
         
         @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
@@ -42,15 +42,25 @@ class Coadd(object):
         @param badMaskPlanes: mask planes to pay attention to when rejecting masked pixels.
             Specify as a collection of names.
             badMaskPlanes should always include "EDGE".
+        @param coaddZeroPoint: photometric zero point of coadd (mag)
         @param logName: name by which messages are logged
         """
         self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
 
         self._badPixelMask = makeBitMask.makeBitMask(badMaskPlanes)
+        self._coaddZeroPoint = float(coaddZeroPoint)
 
         self._bbox = bbox
         self._wcs = wcs
         self._coadd = afwImage.ExposureF(bbox, wcs)
+
+        coddFluxMag0 = 10**(0.4 * coaddZeroPoint)
+        calib = afwImage.Calib()
+        calib.setFluxMag0(coddFluxMag0)
+        if abs(calib.getMagnitude(1.0) - self._coaddZeroPoint) < 1.0e-4:
+            raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4d != %0.4d = coaddZeroPoint" % \
+                (calib.getMagnitude(1.0), self._coaddZeroPoint)
+        self._coadd.setCalib(calib)
 
         self._weightMap = afwImage.ImageF(bbox, afwImage.PARENT)
         
@@ -69,13 +79,21 @@ class Coadd(object):
         @param policy: coadd policy; see policy/CoaddPolicyDictionary.paf
         @param logName: name by which messages are logged
         """
-        badMaskPlanes = policy.getArray("badMaskPlanes")
-        return cls(bbox, wcs, badMaskPlanes, logName)
+        return cls(
+            bbox = bbox,
+            wcs = wcs,
+            badMaskPlanes = policy.getArray("badMaskPlanes"),
+            coaddZeroPoint = policy.get("coaddZeroPoint"),
+            logName = logName,
+        )
 
     def addExposure(self, exposure, weightFactor=1.0):
         """Add an Exposure to the coadd
         
-        @param exposure: Exposure to add to coadd; must be background-subtracted and warped to match the coadd.
+        @param exposure: Exposure to add to coadd; this must be:
+            - background-subtracted
+            - warped to match the coadd
+            - photometrically calibrated (have a Calib object with nonzero fluxMag0)
         @param weightFactor: extra weight factor for this exposure
 
         @return
@@ -84,13 +102,21 @@ class Coadd(object):
         
         Subclasses may override to preprocess the exposure or change the way it is added to the coadd.
         """
+        # normalize a deep copy of the masked image so flux is 1 at the coadd zero point;
+        # use a deep copy to avoid altering the input exposure
+        fluxAtZeropoint = exposure.getCalib().getFlux(self._coaddZeroPoint)
         maskedImage = exposure.getMaskedImage()
+        maskedImage = maskedImage.Factory(maskedImage, True)
+        maskedImage *= (1.0 / fluxAtZeropoint)
+        
+        # compute the weight
         statObj = afwMath.makeStatistics(maskedImage.getVariance(), maskedImage.getMask(),
             afwMath.MEANCLIP, self._statsControl)
         meanVar, meanVarErr = statObj.getResult(afwMath.MEANCLIP);
         weight = weightFactor / float(meanVar)
 
-        self._log.log(pexLog.Log.INFO, "add masked image to coadd; weight=%0.3g" % (weight,))
+        self._log.log(pexLog.Log.INFO, "add masked image to coadd; scaled by %0.3g; weight=%0.3g" % \
+            (scaleFac, weight,))
 
         overlapBBox = utilsLib.addToCoadd(self._coadd.getMaskedImage(), self._weightMap,
             maskedImage, self._badPixelMask, weight)
@@ -111,6 +137,13 @@ class Coadd(object):
         scaledMaskedImage /= self._weightMap
         
         return afwImage.makeExposure(scaledMaskedImage, self._wcs)
+    
+    def getCoaddZeroPoint(self):
+        """Return the coadd photometric zero point.
+        
+        getCoaddFluxMag0 gives the same information in different units.
+        """
+        return self._coaddZeroPoint
     
     def getBadPixelMask(self):
         """Return the bad pixel mask
@@ -134,3 +167,4 @@ class Coadd(object):
         is the sum of the weights of all exposures that contributed to that pixel.
         """
         return self._weightMap
+        
