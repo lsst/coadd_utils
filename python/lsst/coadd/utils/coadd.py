@@ -57,9 +57,9 @@ class Coadd(object):
         coddFluxMag0 = 10**(0.4 * coaddZeroPoint)
         calib = afwImage.Calib()
         calib.setFluxMag0(coddFluxMag0)
-        if abs(calib.getMagnitude(1.0) - self._coaddZeroPoint) < 1.0e-4:
-            raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4d != %0.4d = coaddZeroPoint" % \
-                (calib.getMagnitude(1.0), self._coaddZeroPoint)
+        if abs(calib.getMagnitude(1.0) - self._coaddZeroPoint) > 1.0e-4:
+            raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4f != %0.4f = coaddZeroPoint" % \
+                (calib.getMagnitude(1.0), self._coaddZeroPoint))
         self._coadd.setCalib(calib)
 
         self._weightMap = afwImage.ImageF(bbox, afwImage.PARENT)
@@ -105,9 +105,10 @@ class Coadd(object):
         # normalize a deep copy of the masked image so flux is 1 at the coadd zero point;
         # use a deep copy to avoid altering the input exposure
         fluxAtZeropoint = exposure.getCalib().getFlux(self._coaddZeroPoint)
+        scaleFac = 1.0 / fluxAtZeropoint
         maskedImage = exposure.getMaskedImage()
         maskedImage = maskedImage.Factory(maskedImage, True)
-        maskedImage *= (1.0 / fluxAtZeropoint)
+        maskedImage *= scaleFac
         
         # compute the weight
         statObj = afwMath.makeStatistics(maskedImage.getVariance(), maskedImage.getMask(),
@@ -136,7 +137,9 @@ class Coadd(object):
         # scale non-edge pixels by weight map
         scaledMaskedImage /= self._weightMap
         
-        return afwImage.makeExposure(scaledMaskedImage, self._wcs)
+        scaledExposure = afwImage.makeExposure(scaledMaskedImage, self._wcs)
+        scaledExposure.setCalib(self._coadd.getCalib())
+        return scaledExposure
     
     def getCoaddZeroPoint(self):
         """Return the coadd photometric zero point.
