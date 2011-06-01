@@ -46,24 +46,13 @@ class Coadd(object):
         @param logName: name by which messages are logged
         """
         self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
-
-        self._badPixelMask = makeBitMask.makeBitMask(badMaskPlanes)
-        self._coaddZeroPoint = float(coaddZeroPoint)
-
         self._bbox = bbox
         self._wcs = wcs
+        self._badPixelMask = makeBitMask.makeBitMask(badMaskPlanes)
         self._coadd = afwImage.ExposureF(bbox, wcs)
-
-        coddFluxMag0 = 10**(0.4 * coaddZeroPoint)
-        calib = afwImage.Calib()
-        calib.setFluxMag0(coddFluxMag0)
-        if abs(calib.getMagnitude(1.0) - self._coaddZeroPoint) > 1.0e-4:
-            raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4f != %0.4f = coaddZeroPoint" % \
-                (calib.getMagnitude(1.0), self._coaddZeroPoint))
-        self._coadd.setCalib(calib)
-
         self._weightMap = afwImage.ImageF(bbox, afwImage.PARENT)
-        
+        self._setCalib(coaddZeroPoint)
+
         self._statsControl = afwMath.StatisticsControl()
         self._statsControl.setNumSigmaClip(3.0)
         self._statsControl.setNumIter(2)
@@ -170,4 +159,20 @@ class Coadd(object):
         is the sum of the weights of all exposures that contributed to that pixel.
         """
         return self._weightMap
+    
+    def _setCalib(self, coaddZeroPoint):
+        """Set _coaddZeroPoint and add a Calib object to self._coadd
+        
+        This is a separate method so chi squared coadds can make it a no-op
+        
+        @param coaddZeroPoint: photometric zero point of coadd (mag)
+        """
+        self._coaddZeroPoint = float(coaddZeroPoint)
+        coddFluxMag0 = 10**(0.4 * coaddZeroPoint)
+        calib = afwImage.Calib()
+        calib.setFluxMag0(coddFluxMag0)
+        if abs(calib.getMagnitude(1.0) - self._coaddZeroPoint) > 1.0e-4:
+            raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4f != %0.4f = coaddZeroPoint" % \
+                (calib.getMagnitude(1.0), self._coaddZeroPoint))
+        self._coadd.setCalib(calib)
         
