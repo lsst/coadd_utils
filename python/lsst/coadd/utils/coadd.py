@@ -168,9 +168,9 @@ class Coadd(object):
         @param coaddZeroPoint: photometric zero point of coadd (mag)
         """
         self._coaddZeroPoint = float(coaddZeroPoint)
-        coddFluxMag0 = 10**(0.4 * coaddZeroPoint)
+        coaddFluxMag0 = 10**(0.4 * coaddZeroPoint)
         calib = afwImage.Calib()
-        calib.setFluxMag0(coddFluxMag0)
+        calib.setFluxMag0(coaddFluxMag0)
         if abs(calib.getMagnitude(1.0) - self._coaddZeroPoint) > 1.0e-4:
             raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4f != %0.4f = coaddZeroPoint" % \
                 (calib.getMagnitude(1.0), self._coaddZeroPoint))

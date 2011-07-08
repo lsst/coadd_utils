@@ -6,7 +6,7 @@ definitions: {
         description: "Mask planes to pay attention to when rejecting masked pixels.
             It should always include EDGE."
         minOccurs: 0
-        default: "EDGE"
+        default: "EDGE" "SAT"
     }
     coaddZeroPoint: {
         type: double
