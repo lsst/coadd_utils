@@ -22,7 +22,6 @@
 import lsst.pex.logging as pexLog
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
-import makeBitMask
 import utilsLib
 
 __all__ = ["Coadd"]
@@ -48,7 +47,7 @@ class Coadd(object):
         self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
         self._bbox = bbox
         self._wcs = wcs
-        self._badPixelMask = makeBitMask.makeBitMask(badMaskPlanes)
+        self._badPixelMask = afwImage.MaskU.getPlaneBitMask(badMaskPlanes)
         self._coadd = afwImage.ExposureF(bbox, wcs)
         self._weightMap = afwImage.ImageF(bbox, afwImage.PARENT)
         self._setCalib(coaddZeroPoint)
