@@ -22,7 +22,6 @@
 import lsst.pex.logging as pexLog
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
-import makeBitMask
 import utilsLib
 
 __all__ = ["Coadd"]
@@ -48,7 +47,7 @@ class Coadd(object):
         self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
         self._bbox = bbox
         self._wcs = wcs
-        self._badPixelMask = makeBitMask.makeBitMask(badMaskPlanes)
+        self._badPixelMask = afwImage.MaskU.getPlaneBitMask(badMaskPlanes)
         self._coadd = afwImage.ExposureF(bbox, wcs)
         self._weightMap = afwImage.ImageF(bbox, afwImage.PARENT)
         self._setCalib(coaddZeroPoint)
@@ -168,9 +167,9 @@ class Coadd(object):
         @param coaddZeroPoint: photometric zero point of coadd (mag)
         """
         self._coaddZeroPoint = float(coaddZeroPoint)
-        coddFluxMag0 = 10**(0.4 * coaddZeroPoint)
+        coaddFluxMag0 = 10**(0.4 * coaddZeroPoint)
         calib = afwImage.Calib()
-        calib.setFluxMag0(coddFluxMag0)
+        calib.setFluxMag0(coaddFluxMag0)
         if abs(calib.getMagnitude(1.0) - self._coaddZeroPoint) > 1.0e-4:
             raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4f != %0.4f = coaddZeroPoint" % \
                 (calib.getMagnitude(1.0), self._coaddZeroPoint))

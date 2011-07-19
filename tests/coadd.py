@@ -67,28 +67,34 @@ class CoaddTestCase(unittest.TestCase):
         inExp = afwImage.ExposureF(ImSimFile)
         bbox = inExp.getBBox(afwImage.PARENT)
         wcs = inExp.getWcs()
-        badMaskPlanes = ("EDGE",)
-        coaddZeroPoint = 25.0
-        coadd = coaddUtils.Coadd(
-            bbox = inExp.getBBox(afwImage.PARENT),
-            wcs = inExp.getWcs(),
-            badMaskPlanes = ("EDGE",),
-            coaddZeroPoint = coaddZeroPoint,
-        )
-        coadd.addExposure(inExp)
-        coaddExp = coadd.getCoadd()
-        
-        # the coadd has been scaled, so deal with that
-        inFluxMag0 = inExp.getCalib().getFluxMag0()[0]
-        inMaskedImage = inExp.getMaskedImage()
-        coaddMaskedImage = coaddExp.getMaskedImage()
-        coaddFluxMag0 = coaddExp.getCalib().getFluxMag0()[0]
-        coaddMaskedImage *= inFluxMag0 / coaddFluxMag0
-        
-        errStr = imTestUtils.maskedImagesDiffer(inMaskedImage.getArrays(), coaddMaskedImage.getArrays())
-        if errStr:
-            self.fail("coadd != input exposure: %s" % (errStr,))
+        for coaddZeroPoint, badMaskPlanes in (
+            (25.0, ()),
+            (20.0, ("EDGE", "BAD"))):
+            coadd = coaddUtils.Coadd(
+                bbox = inExp.getBBox(afwImage.PARENT),
+                wcs = inExp.getWcs(),
+                badMaskPlanes = badMaskPlanes,
+                coaddZeroPoint = coaddZeroPoint,
+            )
+            coadd.addExposure(inExp)
+            coaddExp = coadd.getCoadd()
+            
+            # the coadd has been scaled, so deal with that
+            inFluxMag0 = inExp.getCalib().getFluxMag0()[0]
+            inMaskedImage = inExp.getMaskedImage()
+            coaddMaskedImage = coaddExp.getMaskedImage()
+            coaddFluxMag0 = coaddExp.getCalib().getFluxMag0()[0]
+            coaddMaskedImage *= inFluxMag0 / coaddFluxMag0
+            
+            inMaskArr = inMaskedImage.getMask().getArray()
+            badMask = coadd.getBadPixelMask()
+            skipMaskArr = inMaskArr & badMask != 0
     
+            errStr = imTestUtils.maskedImagesDiffer(inMaskedImage.getArrays(), coaddMaskedImage.getArrays(),
+                skipMaskArr=skipMaskArr)
+            if errStr:
+                self.fail("coadd != input exposure: %s" % (errStr,))
+
     def assertWcsSame(self, wcs1, wcs2):
         for xPixPos in (0, 1000, 2000):
             for yPixPos in (0, 1000, 2000):
