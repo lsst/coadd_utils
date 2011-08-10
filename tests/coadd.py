@@ -176,7 +176,8 @@ class CoaddTestCase(unittest.TestCase):
     def assertEqualFilters(self, f1, f2):
         """Compare two filters
         
-        Right now compares only the name, but if == ever works for Filters then use that instead
+        Right now compares only the name, but if == ever works for Filters (ticket #1744)
+        then use == instead
         """
         self.assertEquals(f1.getName(), f2.getName())
     
