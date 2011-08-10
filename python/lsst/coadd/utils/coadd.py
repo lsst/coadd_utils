@@ -51,6 +51,7 @@ class Coadd(object):
         self._coadd = afwImage.ExposureF(bbox, wcs)
         self._weightMap = afwImage.ImageF(bbox, afwImage.PARENT)
         self._setCalib(coaddZeroPoint)
+        self._filterDict = dict() # dict of filter name: filter object for all filters seen so far
 
         self._statsControl = afwMath.StatisticsControl()
         self._statsControl.setNumSigmaClip(3.0)
@@ -103,8 +104,12 @@ class Coadd(object):
             afwMath.MEANCLIP, self._statsControl)
         meanVar, meanVarErr = statObj.getResult(afwMath.MEANCLIP);
         weight = weightFactor / float(meanVar)
+        
+        # save filter info
+        filter = exposure.getFilter()
+        self._filterDict.setdefault(filter.getName(), filter)
 
-        self._log.log(pexLog.Log.INFO, "add masked image to coadd; scaled by %0.3g; weight=%0.3g" % \
+        self._log.log(pexLog.Log.INFO, "add exposure to coadd; scaled by %0.3g; weight=%0.3g" % \
             (scaleFac, weight,))
 
         overlapBBox = utilsLib.addToCoadd(self._coadd.getMaskedImage(), self._weightMap,
@@ -114,6 +119,9 @@ class Coadd(object):
 
     def getCoadd(self):
         """Get the coadd exposure for all exposures you have coadded so far
+        
+        If all exposures in this coadd have the same-named filter then that filter is set in the coadd.
+        Otherwise the coadd will have the default unknown filter.
         """
         # make a deep copy so I can scale it
         coaddMaskedImage = self._coadd.getMaskedImage()
@@ -127,7 +135,14 @@ class Coadd(object):
         
         scaledExposure = afwImage.makeExposure(scaledMaskedImage, self._wcs)
         scaledExposure.setCalib(self._coadd.getCalib())
+        if len(self._filterDict) == 1:
+            scaledExposure.setFilter(self._filterDict.values()[0])
         return scaledExposure
+    
+    def getFilters(self):
+        """Return a collection of all the filters seen so far in in addExposure
+        """
+        return self._filterDict.values()
     
     def getCoaddZeroPoint(self):
         """Return the coadd photometric zero point.

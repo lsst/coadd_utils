@@ -35,6 +35,7 @@ import numpy
 import eups
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
+import lsst.afw.image.utils as imageUtils
 import lsst.afw.image.testUtils as imTestUtils
 import lsst.afw.math as afwMath
 import lsst.afw.display.ds9 as ds9
@@ -42,6 +43,7 @@ import lsst.utils.tests as utilsTests
 import lsst.pex.exceptions as pexExcept
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
+import lsst.pex.policy as pexPolicy
 
 try:
     display
@@ -113,7 +115,7 @@ class CoaddTestCase(unittest.TestCase):
                     self.fail("wcs do not match at fromPixPos=%s, sky1=%s: toPixPos1=%s != toPixPos2=%s" % \
                         (fromPixPos, sky1, toPixPos1, toPixPos2))
     
-    def xtestGetters(self):
+    def testGetters(self):
         """Test getters for coadd
         """
         inExp = afwImage.ExposureF(ImSimFile)
@@ -139,6 +141,49 @@ class CoaddTestCase(unittest.TestCase):
             self.assertEquals(coaddZeroPoint, coadd.getCoaddZeroPoint())
             self.assertWcsSame(wcs, coadd.getWcs())
 
+    def testFilters(self):
+        """Test that the coadd filter is set correctly
+        """
+        filterPolicyFile = pexPolicy.DefaultPolicyFile("afw", "SdssFilters.paf", "tests")
+        filterPolicy = pexPolicy.Policy.createPolicy(filterPolicyFile, filterPolicyFile.getRepositoryPath(), True)
+        imageUtils.defineFiltersFromPolicy(filterPolicy, reset=True)
+        
+        unkFilter = afwImage.Filter()
+        gFilter = afwImage.Filter("g")
+        rFilter = afwImage.Filter("r")
+        
+        inExp = afwImage.ExposureF(ImSimFile, 0, afwGeom.Box2I(afwGeom.Point2I(0,0), afwGeom.Extent2I(10, 10)))
+        coadd = coaddUtils.Coadd(
+            bbox = inExp.getBBox(afwImage.PARENT),
+            wcs = inExp.getWcs(),
+            badMaskPlanes = ("EDGE", "BAD"),
+            coaddZeroPoint = 25.0,
+        )
+
+        inExp.setFilter(gFilter)
+        coadd.addExposure(inExp)
+        self.assertEqualFilters(coadd.getCoadd().getFilter(), gFilter)
+        self.assertEqualFilterSets(coadd.getFilters(), (gFilter,))
+        coadd.addExposure(inExp)
+        self.assertEqualFilters(coadd.getCoadd().getFilter(), gFilter)
+        self.assertEqualFilterSets(coadd.getFilters(), (gFilter,))
+        
+        inExp.setFilter(rFilter)
+        coadd.addExposure(inExp)
+        self.assertEqualFilters(coadd.getCoadd().getFilter(), unkFilter)
+        self.assertEqualFilterSets(coadd.getFilters(), (gFilter, rFilter))
+    
+    def assertEqualFilters(self, f1, f2):
+        """Compare two filters
+        
+        Right now compares only the name, but if == ever works for Filters then use that instead
+        """
+        self.assertEquals(f1.getName(), f2.getName())
+    
+    def assertEqualFilterSets(self, fs1, fs2):
+        """Assert that two collections of filters are equal, ignoring order
+        """
+        self.assertEquals(set(f.getName() for f in fs1), set(f.getName() for f in fs2))
 
 def suite():
     """Return a suite containing all the test cases in this module.
