@@ -1,0 +1,17 @@
+#<?cfg paf dictionary ?>
+
+definitions: {
+    badMaskPlanes: {
+        type: string
+        description: "Mask planes to pay attention to when rejecting masked pixels.
+            It should always include EDGE."
+        minOccurs: 0
+        default: "EDGE" "SAT"
+    }
+    coaddZeroPoint: {
+        type: double
+        description: "Photometric zero point of coadd (mag)."
+        minOccurs: 0
+        default: 27.0
+    }
+}
