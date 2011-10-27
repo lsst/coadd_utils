@@ -36,16 +36,11 @@ namespace pexExcept = lsst::pex::exceptions;
 namespace afwImage = lsst::afw::image;
 namespace coaddUtils = lsst::coadd::utils;
 
-/**
-* @brief set edge bits of coadd mask based on weight map
-*
-* @throw pexExcept::InvalidParameterException if the dimensions of coaddMask and weightMap do not match.
-*/
 template<typename WeightPixelT>
 void coaddUtils::setCoaddEdgeBits(
     // spell out lsst:afw::image to make Doxygen happy
-    lsst::afw::image::Mask<lsst::afw::image::MaskPixel> &coaddMask, ///< [in,out] mask of coadd
-    lsst::afw::image::Image<WeightPixelT> const &weightMap  ///< weight map
+    lsst::afw::image::Mask<lsst::afw::image::MaskPixel> &coaddMask,
+    lsst::afw::image::Image<WeightPixelT> const &weightMap
 ) {
     typedef afwImage::Mask<afwImage::MaskPixel>::x_iterator MaskXIter;
     typedef typename afwImage::Image<WeightPixelT>::const_x_iterator WeightMapConstXIter;
@@ -75,6 +70,7 @@ void coaddUtils::setCoaddEdgeBits(
 //
 // Explicit instantiations
 //
+/// \cond
 #define INSTANTIATE(WEIGHTPIXEL) \
     template void coaddUtils::setCoaddEdgeBits<WEIGHTPIXEL>( \
         afwImage::Mask<afwImage::MaskPixel> &coaddMask, \
@@ -85,3 +81,4 @@ INSTANTIATE(double);
 INSTANTIATE(float);
 INSTANTIATE(int);
 INSTANTIATE(boost::uint16_t);
+/// \endcond

@@ -37,10 +37,18 @@ namespace lsst {
 namespace coadd {
 namespace utils {
     
+    /**
+    * @brief set edge bits of coadd mask based on weight map
+    *
+    * Set pixels in the image to the edge pixel when the corresponding pixel in the weight map is zero.
+    * The edge pixel is image=nan, variance=inf, mask=EDGE for masked images and image=nan for plain images.
+    *
+    * @throw pexExcept::InvalidParameterException if the dimensions of coaddMask and weightMap do not match.
+    */
     template<typename WeightPixelT>
     void setCoaddEdgeBits(
-        lsst::afw::image::Mask<lsst::afw::image::MaskPixel> &coaddMask,
-        lsst::afw::image::Image<WeightPixelT> const &weightMap
+        lsst::afw::image::Mask<lsst::afw::image::MaskPixel> &coaddMask, ///< [in,out] mask of coadd
+        lsst::afw::image::Image<WeightPixelT> const &weightMap          ///< weight map
     );
 
 }}} // lsst::coadd::utils
