@@ -12,6 +12,6 @@ Functions available from C++ and Python:
 
 Classes available only from Python:
 
-@li @link coadd::utils::coadd::Coadd@endlink: a coadd with a method to add additional exposures
+@li @link coadd::utils::coadd::Coadd@endlink: a mean coadd with a method to add additional exposures
 */
 }}}
