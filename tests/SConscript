@@ -9,4 +9,4 @@ else:
     # copy AFWDATA_DIR to the test's environment
     env["ENV"]["AFWDATA_DIR"] = os.environ["AFWDATA_DIR"]
 
-    scripts.BasicSConscript.tests(args=testArgs)
+    scripts.BasicSConscript.tests()
