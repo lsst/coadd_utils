@@ -1,0 +1,25 @@
+
+# /
+/.scon*
+/config.log
+
+# /doc/
+/doc/htmlDir
+
+# /lib/
+/lib/lib*
+
+# /python/lsst/coadd/
+/python/lsst/coadd/*.pyc
+
+# /python/lsst/coadd/utils/
+/python/lsst/coadd/utils/*_wrap.*
+/python/lsst/coadd/utils/*.so
+/python/lsst/coadd/utils/*Lib.py
+/python/lsst/coadd/utils/*.pyc
+
+# /src/
+/src/*.os
+
+# /tests/
+/tests/.tests
