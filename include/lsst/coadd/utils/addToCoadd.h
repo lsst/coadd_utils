@@ -38,23 +38,51 @@ namespace lsst {
 namespace coadd {
 namespace utils {
 
+    /**
+    * @brief add good pixels from an image to a coadd and associated weight map
+    *
+    * The images are assumed to be registered to the same wcs and parent origin, thus:
+    * coadd[i+coadd.x0, j+coadd.y0] += image[i+image.x0, j+image.y0]
+    * weightMap[i+weightMap.x0, j+weightMap.y0] += weight
+    * for all good image pixels that overlap a coadd pixel.
+    * Good pixels are those that are not NaN (thus they do include +/- inf).
+    *
+    * @return overlapBBox: overlapping bounding box, relative to parent image (hence xy0 is taken into account)
+    *
+    * @throw pexExcept::InvalidParameterException if coadd and weightMap dimensions or xy0 do not match.
+    */
     template<typename CoaddPixelT, typename WeightPixelT>
     lsst::afw::geom::Box2I addToCoadd(
-        lsst::afw::image::Image<CoaddPixelT> &coadd,
-        lsst::afw::image::Image<WeightPixelT> &weightMap,
-        lsst::afw::image::Image<CoaddPixelT> const &maskedImage,
-        WeightPixelT weight
+        lsst::afw::image::Image<CoaddPixelT> &coadd,        ///< [in,out] coadd to be modified
+        lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< [in,out] weight map to be modified;
+            ///< this is the sum of weights of all images contributing each pixel of the coadd
+        lsst::afw::image::Image<CoaddPixelT> const &image,  ///< image to add to coadd
+        WeightPixelT weight                                 ///< relative weight of this image
     );
 
+    /**
+    * @brief add good pixels from a masked image to a coadd image and associated weight map
+    *
+    * The images are assumed to be registered to the same wcs and parent origin, thus:
+    * coadd[i+coadd.x0, j+coadd.y0] += image[i+image.x0, j+image.y0]
+    * weightMap[i+weightMap.x0, j+weightMap.y0] += weight
+    * for all good image pixels that overlap a coadd pixel.
+    * Good pixels are those for which mask & badPixelMask == 0.
+    *
+    * @return overlapBBox: overlapping bounding box, relative to parent image (hence xy0 is taken into account)
+    *
+    * @throw pexExcept::InvalidParameterException if coadd and weightMap dimensions or xy0 do not match.
+    */
     template<typename CoaddPixelT, typename WeightPixelT>
     lsst::afw::geom::Box2I addToCoadd(
         lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
-            lsst::afw::image::VariancePixel> &coadd,
-        lsst::afw::image::Image<WeightPixelT> &weightMap,
+            lsst::afw::image::VariancePixel> &coadd,        ///< [in,out] coadd to be modified
+        lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< [in,out] weight map to be modified;
+            ///< this is the sum of weights of all images contributing each pixel of the coadd
         lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
-            lsst::afw::image::VariancePixel> const &maskedImage,
-        lsst::afw::image::MaskPixel const badPixelMask,
-        WeightPixelT weight
+            lsst::afw::image::VariancePixel> const &maskedImage, ///< masked image to add to coadd
+        lsst::afw::image::MaskPixel const badPixelMask, ///< skip input pixel if input mask & badPixelMask !=0
+        WeightPixelT weight                             ///< relative weight of this image
     );
 
 }}} // lsst::coadd::utils

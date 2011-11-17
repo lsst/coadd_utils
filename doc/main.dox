@@ -1,7 +1,7 @@
 /**
 \mainpage lsst::coadd::utils;  Support for coadds
 
-\section secIntro Introduction
+\section coaddUtils_introduction Introduction
 
 Functions to support coaddition of images.
 
@@ -12,6 +12,6 @@ Functions available from C++ and Python:
 
 Classes available only from Python:
 
-@li @link coadd::utils::coadd::Coadd@endlink: a coadd with a method to add additional exposures
+@li lsst.coaddutils.Coadd: a mean coadd with a method to add additional exposures
 */
 }}}

@@ -1,14 +1,12 @@
 # -*- python -*-
-Import("env")
+import os
+from lsst.sconsUtils import scripts, env
 
-import eups
-import lsst.tests
-
-tests = lsst.tests.Control(env, ignoreList=[])
-
-dataDir = eups.productDir("afwdata")
+dataDir = env.ProductDir("afwdata")
 if not dataDir:
-    print "Warning: afwdata is not set up; not running the tests that use it"
+    print "Warning: afwdata is not set up; not running the tests!"
+else:    
+    # copy AFWDATA_DIR to the test's environment
+    env["ENV"]["AFWDATA_DIR"] = os.environ["AFWDATA_DIR"]
 
-for target in tests.run("*.py"):
-    env.Depends(target, "../python/lsst/coadd/utils/_utilsLib%s" % (env["LDMODULESUFFIX"]))
+    scripts.BasicSConscript.tests()

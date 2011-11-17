@@ -41,144 +41,116 @@ namespace afwImage = lsst::afw::image;
 namespace coaddUtils = lsst::coadd::utils;
 
 namespace {
-/*
- * A boolean functor to test if a MaskedImage pixel is valid (mask & badPixel == 0)
- */
-struct CheckMask {
-    CheckMask(lsst::afw::image::MaskPixel badPixel) : _badPixel(badPixel) {}
+    /*
+     * A boolean functor to test if a MaskedImage pixel is valid (mask & badPixel == 0)
+     */
+    struct CheckMask {
+        CheckMask(lsst::afw::image::MaskPixel badPixel) : _badPixel(badPixel) {}
+        
+        template<typename T>
+        bool operator()(T val) const {
+            return ((val.mask() & _badPixel) == 0) ? true : false;
+        }
+    private:
+        lsst::afw::image::MaskPixel _badPixel;
+    };
     
-    template<typename T>
-    bool operator()(T val) const {
-        return ((val.mask() & _badPixel) == 0) ? true : false;
-    }
-private:
-    lsst::afw::image::MaskPixel _badPixel;
-};
-
-/*
- * A boolean functor to test if an Image pixel has known value (not NaN)
- */    
-struct CheckKnownValue {
-    CheckKnownValue(lsst::afw::image::MaskPixel) {}
-
-    template<typename T>
-    bool operator()(T val) const {
-        return !std::isnan(static_cast<float>(*val));
-    }
-};
-
-/* 
- * Implementation of addToCoadd
- *
- * The template parameter isValidPixel is a functor with operator()
- * which returns true if a given image pixel is valid.
- * This allows us to support multiple image types including
- * MaskedImage with a mask bit and Image with a check for NaN.
- *
- * @return overlapping bounding box, relative to parent image
- */
-template <typename CoaddT, typename WeightPixelT, typename isValidPixel>
-static lsst::afw::geom::Box2I addToCoaddImpl(
-    CoaddT &coadd,                                      ///< [in,out] coadd to be modified
-    lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< [in,out] weight map to be modified
-    CoaddT const &image,                                ///< image to add to coadd
-    lsst::afw::image::MaskPixel const badPixelMask,     ///< bad pixel mask; may be ignored
-    WeightPixelT weight                                 ///< relative weight of this image
-) {
-    typedef typename afwImage::Image<WeightPixelT> WeightMapT;
+    /*
+     * A boolean functor to test if an Image pixel has known value (not NaN)
+     */    
+    struct CheckKnownValue {
+        CheckKnownValue(lsst::afw::image::MaskPixel) {}
     
-    if (coadd.getBBox(afwImage::PARENT) != weightMap.getBBox(afwImage::PARENT)) {
-        throw LSST_EXCEPT(pexExcept::InvalidParameterException,
-            (boost::format("coadd and weightMap parent bboxes differ: %s != %s") %
-            coadd.getBBox(afwImage::PARENT) % weightMap.getBBox(afwImage::PARENT)).str());
-    }
+        template<typename T>
+        bool operator()(T val) const {
+            return !std::isnan(static_cast<float>(*val));
+        }
+    };
     
-    afwGeom::Box2I overlapBBox = coadd.getBBox(afwImage::PARENT);
-    overlapBBox.clip(image.getBBox(afwImage::PARENT));
-    if (overlapBBox.isEmpty()) {
-        return overlapBBox;
-    }
-
-    CoaddT coaddView(coadd, overlapBBox, afwImage::PARENT, false);
-    WeightMapT weightMapView(weightMap, overlapBBox, afwImage::PARENT, false);
-    CoaddT imageView(image, overlapBBox, afwImage::PARENT, false);
-
-    isValidPixel const isValid(badPixelMask); // functor to check if a pixel is good
-    for (int y = 0, endY = imageView.getHeight(); y != endY; ++y) {
-        typename CoaddT::const_x_iterator imageIter = imageView.row_begin(y);
-        typename CoaddT::const_x_iterator const imageEndIter = imageView.row_end(y);
-        typename CoaddT::x_iterator coaddIter = coaddView.row_begin(y);
-        typename WeightMapT::x_iterator weightMapIter = weightMapView.row_begin(y);
-        for (; imageIter != imageEndIter; ++imageIter, ++coaddIter, ++weightMapIter) {
-            if (isValid(imageIter)) {
-                typename CoaddT::SinglePixel pix = *imageIter;
-                pix *= typename CoaddT::Pixel(weight);
-                *coaddIter += pix;
-                *weightMapIter += weight;
+    /* 
+     * Implementation of addToCoadd
+     *
+     * The template parameter isValidPixel is a functor with operator()
+     * which returns true if a given image pixel is valid.
+     * This allows us to support multiple image types including
+     * MaskedImage with a mask bit and Image with a check for NaN.
+     *
+     * @return overlapping bounding box, relative to parent image
+     */
+    template <typename CoaddT, typename WeightPixelT, typename isValidPixel>
+    static lsst::afw::geom::Box2I addToCoaddImpl(
+        CoaddT &coadd,                                      ///< [in,out] coadd to be modified
+        lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< [in,out] weight map to be modified
+        CoaddT const &image,                                ///< image to add to coadd
+        lsst::afw::image::MaskPixel const badPixelMask,     ///< bad pixel mask; may be ignored
+        WeightPixelT weight                                 ///< relative weight of this image
+    ) {
+        typedef typename afwImage::Image<WeightPixelT> WeightMapT;
+        
+        if (coadd.getBBox(afwImage::PARENT) != weightMap.getBBox(afwImage::PARENT)) {
+            throw LSST_EXCEPT(pexExcept::InvalidParameterException,
+                (boost::format("coadd and weightMap parent bboxes differ: %s != %s") %
+                coadd.getBBox(afwImage::PARENT) % weightMap.getBBox(afwImage::PARENT)).str());
+        }
+        
+        afwGeom::Box2I overlapBBox = coadd.getBBox(afwImage::PARENT);
+        overlapBBox.clip(image.getBBox(afwImage::PARENT));
+        if (overlapBBox.isEmpty()) {
+            return overlapBBox;
+        }
+    
+        CoaddT coaddView(coadd, overlapBBox, afwImage::PARENT, false);
+        WeightMapT weightMapView(weightMap, overlapBBox, afwImage::PARENT, false);
+        CoaddT imageView(image, overlapBBox, afwImage::PARENT, false);
+    
+        isValidPixel const isValid(badPixelMask); // functor to check if a pixel is good
+        for (int y = 0, endY = imageView.getHeight(); y != endY; ++y) {
+            typename CoaddT::const_x_iterator imageIter = imageView.row_begin(y);
+            typename CoaddT::const_x_iterator const imageEndIter = imageView.row_end(y);
+            typename CoaddT::x_iterator coaddIter = coaddView.row_begin(y);
+            typename WeightMapT::x_iterator weightMapIter = weightMapView.row_begin(y);
+            for (; imageIter != imageEndIter; ++imageIter, ++coaddIter, ++weightMapIter) {
+                if (isValid(imageIter)) {
+                    typename CoaddT::SinglePixel pix = *imageIter;
+                    pix *= typename CoaddT::Pixel(weight);
+                    *coaddIter += pix;
+                    *weightMapIter += weight;
+                }
             }
         }
+        return overlapBBox;
     }
-    return overlapBBox;
-}
 } // anonymous namespace
 
-/**
-* @brief add good pixels from a masked image to a coadd image and associated weight map
-*
-* The images are assumed to be registered to the same wcs and parent origin, thus:
-* coadd[i+coadd.x0, j+coadd.y0] += image[i+image.x0, j+image.y0]
-* weightMap[i+weightMap.x0, j+weightMap.y0] += weight
-* for all good image pixels that overlap a coadd pixel.
-* Good pixels are those for which mask & badPixelMask == 0.
-*
-* @return overlapBBox: overlapping bounding box, relative to parent image (hence xy0 is taken into account)
-*
-* @throw pexExcept::InvalidParameterException if coadd and weightMap dimensions or xy0 do not match.
-*/
 template <typename CoaddPixelT, typename WeightPixelT>
 lsst::afw::geom::Box2I coaddUtils::addToCoadd(
     // spell out lsst:afw::image to make Doxygen happy
-    lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
-        lsst::afw::image::VariancePixel> &coadd,        ///< [in,out] coadd to be modified
-    lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< [in,out] weight map to be modified;
-        ///< this is the sum of weights of all images contributing each pixel of the coadd
-    lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
-        lsst::afw::image::VariancePixel> const &maskedImage, ///< masked image to add to coadd
-    lsst::afw::image::MaskPixel const badPixelMask, ///< skip input pixel if input mask & badPixelMask != 0
-    WeightPixelT weight                             ///< relative weight of this image
-) {
-    typedef lsst::afw::image::MaskedImage<CoaddPixelT> Image;
-    return addToCoaddImpl<Image,WeightPixelT,CheckMask>(coadd, weightMap, maskedImage, badPixelMask, weight);
-}
-
-/**
-* @brief add good pixels from an image to a coadd and associated weight map
-*
-* The images are assumed to be registered to the same wcs and parent origin, thus:
-* coadd[i+coadd.x0, j+coadd.y0] += image[i+image.x0, j+image.y0]
-* weightMap[i+weightMap.x0, j+weightMap.y0] += weight
-* for all good image pixels that overlap a coadd pixel.
-* Good pixels are those that are not NaN (thus they do include +/- inf).
-*
-* @return overlapBBox: overlapping bounding box, relative to parent image (hence xy0 is taken into account)
-*
-* @throw pexExcept::InvalidParameterException if coadd and weightMap dimensions or xy0 do not match.
-*/
-template <typename CoaddPixelT, typename WeightPixelT>
-lsst::afw::geom::Box2I coaddUtils::addToCoadd(
-    // spell out lsst:afw::image to make Doxygen happy
-    lsst::afw::image::Image<CoaddPixelT> &coadd,       ///< [in,out] coadd to be modified
-    lsst::afw::image::Image<WeightPixelT> &weightMap,  ///< [in,out] weight map to be modified
-    lsst::afw::image::Image<CoaddPixelT> const &image, ///< image to add to coadd;
-        ///< this is the sum of weights of all images contributing each pixel of the coadd
-    WeightPixelT weight                                ///< relative weight of this image
+    lsst::afw::image::Image<CoaddPixelT> &coadd,
+    lsst::afw::image::Image<WeightPixelT> &weightMap,
+    lsst::afw::image::Image<CoaddPixelT> const &image,
+    WeightPixelT weight
 ) {
     typedef lsst::afw::image::Image<CoaddPixelT> Image;
     return addToCoaddImpl<Image, WeightPixelT, CheckKnownValue>(coadd, weightMap, image, 0x0, weight);
 }
 
-//
+template <typename CoaddPixelT, typename WeightPixelT>
+lsst::afw::geom::Box2I coaddUtils::addToCoadd(
+    // spell out lsst:afw::image to make Doxygen happy
+    lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
+        lsst::afw::image::VariancePixel> &coadd,
+    lsst::afw::image::Image<WeightPixelT> &weightMap,
+    lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
+        lsst::afw::image::VariancePixel> const &maskedImage,
+    lsst::afw::image::MaskPixel const badPixelMask,
+    WeightPixelT weight
+) {
+    typedef lsst::afw::image::MaskedImage<CoaddPixelT> Image;
+    return addToCoaddImpl<Image,WeightPixelT,CheckMask>(coadd, weightMap, maskedImage, badPixelMask, weight);
+}
+
 // Explicit instantiations
+
 /// \cond
 #define MASKEDIMAGE(IMAGEPIXEL) afwImage::MaskedImage<IMAGEPIXEL, \
     afwImage::MaskPixel, afwImage::VariancePixel>
