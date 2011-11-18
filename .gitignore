@@ -1,29 +1,17 @@
-
-# /
-/.scon*
-/config.log
-
-# /doc/
-/doc/*.tag
-/doc/doxygen.conf
-/doc/html/
-
-ups/*.cfgc
-
-# /lib/
-/lib/lib*
-
-# /python/lsst/coadd/
-/python/lsst/coadd/*.pyc
-
-# /python/lsst/coadd/utils/
-/python/lsst/coadd/utils/*_wrap.*
-/python/lsst/coadd/utils/*.so
-/python/lsst/coadd/utils/*Lib.py
-/python/lsst/coadd/utils/*.pyc
-
-# /src/
-/src/*.os
-
-# /tests/
-/tests/.tests
+.sconsign.dblite
+config.log
+.sconf_temp
+*.o
+*.os
+*.dylib
+*.so
+*.cfgc
+*.pyc
+*_wrap.cc
+*Lib.py
+doc/html
+doc/*.tag
+doc/*.inc
+doc/doxygen.conf
+tests/.tests
+version.py
