@@ -34,6 +34,8 @@ Python interface to lsst::coadd::utils functions and classes
 // Everything we will need in the _wrap.cc file
 %{
 #include "boost/cstdint.hpp"
+#include "lsst/pex/logging.h"
+#include "lsst/afw/cameraGeom.h"
 #include "lsst/coadd/utils.h"
 %}
 
