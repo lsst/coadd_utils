@@ -24,7 +24,7 @@ import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import utilsLib
 
-__all__ = ["Coadd"]
+__all__ = ["Coadd", "makeCalib"]
 
 class Coadd(object):
     """Coadd by weighted addition
@@ -182,11 +182,17 @@ class Coadd(object):
         @param coaddZeroPoint: photometric zero point of coadd (mag)
         """
         self._coaddZeroPoint = float(coaddZeroPoint)
-        coaddFluxMag0 = 10**(0.4 * coaddZeroPoint)
-        calib = afwImage.Calib()
-        calib.setFluxMag0(coaddFluxMag0)
-        if abs(calib.getMagnitude(1.0) - self._coaddZeroPoint) > 1.0e-4:
-            raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4f != %0.4f = coaddZeroPoint" % \
-                (calib.getMagnitude(1.0), self._coaddZeroPoint))
+        calib = makeCalib(self._coaddZeroPoint)
         self._coadd.setCalib(calib)
-        
+
+
+def makeCalib(zeropoint):
+    """Make an afwImage.Calib with the appropriate zeropoint
+    """
+    fluxMag0 = 10**(0.4 * zeropoint)
+    calib = afwImage.Calib()
+    calib.setFluxMag0(fluxMag0)
+    if abs(calib.getMagnitude(1.0) - self._coaddZeroPoint) > 1.0e-4:
+        raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4f != %0.4f = coaddZeroPoint" % \
+            (calib.getMagnitude(1.0), self._coaddZeroPoint))
+    return calib    
