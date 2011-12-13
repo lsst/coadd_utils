@@ -192,7 +192,7 @@ def makeCalib(zeropoint):
     fluxMag0 = 10**(0.4 * zeropoint)
     calib = afwImage.Calib()
     calib.setFluxMag0(fluxMag0)
-    if abs(calib.getMagnitude(1.0) - self._coaddZeroPoint) > 1.0e-4:
+    if abs(calib.getMagnitude(1.0) - zeropoint) > 1.0e-4:
         raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4f != %0.4f = coaddZeroPoint" % \
-            (calib.getMagnitude(1.0), self._coaddZeroPoint))
+            (calib.getMagnitude(1.0), zeropoint))
     return calib    
