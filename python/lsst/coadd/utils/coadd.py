@@ -19,6 +19,7 @@
 # the GNU General Public License along with this program.  If not, 
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
+import lsst.pex.policy as pexConfig
 import lsst.pex.logging as pexLog
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
@@ -26,12 +27,33 @@ import utilsLib
 
 __all__ = ["Coadd", "makeCalib"]
 
+
+# experimental use of Martin's new Config
+class CoaddConfig(pexConfig.Config):
+    """Config for Coadd
+    """
+    badMaskPlanes = pexConfig.ListField(
+        str,
+        doc = "mask planes that, if set, the associated pixel should not be included in the coadd",
+        default = ("EDGE", "SAT"),
+        optional = False,
+    )
+    coaddZeroPoint = pexConfig.Field(
+        doc = "Photometric zero point of coadd (mag).",
+        dtype = float,
+        default = 27.0,
+        optional = False,
+    )
+
+
 class Coadd(object):
     """Coadd by weighted addition
     
     This class may be subclassed to implement other coadd techniques.
     Typically this is done by overriding addExposure.
     """
+    ConfigClass = CoaddConfig
+
     def __init__(self, bbox, wcs, badMaskPlanes, coaddZeroPoint, logName="coadd.utils.Coadd"):
         """Create a coadd
         
@@ -59,20 +81,20 @@ class Coadd(object):
         self._statsControl.setAndMask(self._badPixelMask)
     
     @classmethod
-    def fromPolicy(cls, bbox, wcs, policy, logName="coadd.utils.Coadd"):
+    def fromPolicy(cls, bbox, wcs, config, logName="coadd.utils.Coadd"):
         """Create a coadd
         
         @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
         @param wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
-        @param policy: coadd policy; see policy/CoaddPolicyDictionary.paf
+        @param config: coadd config; an instance of CoaddConfig
         @param logName: name by which messages are logged
         """
         return cls(
             bbox = bbox,
             wcs = wcs,
-            badMaskPlanes = policy.getArray("badMaskPlanes"),
-            coaddZeroPoint = policy.get("coaddZeroPoint"),
+            badMaskPlanes = config.badMaskPlanes,
+            coaddZeroPoint = config.coaddZeroPoint,
             logName = logName,
         )
 
