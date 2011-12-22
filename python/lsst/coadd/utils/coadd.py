@@ -19,7 +19,7 @@
 # the GNU General Public License along with this program.  If not, 
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-import lsst.pex.policy as pexConfig
+import lsst.pex.config as pexConfig
 import lsst.pex.logging as pexLog
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
@@ -33,14 +33,14 @@ class CoaddConfig(pexConfig.Config):
     """Config for Coadd
     """
     badMaskPlanes = pexConfig.ListField(
-        str,
+        dtype = str,
         doc = "mask planes that, if set, the associated pixel should not be included in the coadd",
         default = ("EDGE", "SAT"),
         optional = False,
     )
     coaddZeroPoint = pexConfig.Field(
-        doc = "Photometric zero point of coadd (mag).",
         dtype = float,
+        doc = "Photometric zero point of coadd (mag).",
         default = 27.0,
         optional = False,
     )
