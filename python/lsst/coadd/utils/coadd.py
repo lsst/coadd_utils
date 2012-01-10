@@ -81,7 +81,7 @@ class Coadd(object):
         self._statsControl.setAndMask(self._badPixelMask)
     
     @classmethod
-    def fromPolicy(cls, bbox, wcs, config, logName="coadd.utils.Coadd"):
+    def fromConfig(cls, bbox, wcs, config, logName="coadd.utils.Coadd"):
         """Create a coadd
         
         @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
