@@ -33,13 +33,13 @@ class CoaddConfig(pexConfig.Config):
     """Config for Coadd
     """
     badMaskPlanes = pexConfig.ListField(
-        dtype = str,
+        str,
         doc = "mask planes that, if set, the associated pixel should not be included in the coadd",
         default = ("EDGE", "SAT"),
         optional = False,
     )
     coaddZeroPoint = pexConfig.Field(
-        dtype = float,
+        float,
         doc = "Photometric zero point of coadd (mag).",
         default = 27.0,
         optional = False,
