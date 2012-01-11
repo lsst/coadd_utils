@@ -21,8 +21,6 @@
 # the GNU General Public License along with this program.  If not, 
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-
-from __future__ import with_statement
 """Demonstrate how to create a coadd by warping and adding.
 """
 import os
@@ -30,37 +28,54 @@ import sys
 import time
 import traceback
 
+import lsst.pex.config as pexConfig
 import lsst.pex.logging as pexLog
-import lsst.pex.policy as pexPolicy
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import lsst.coadd.utils as coaddUtils
 
-PolicyPackageName = "coadd_utils"
-PolicyDictName = "WarpAndCoaddDictionary.paf"
+class WarpAndCoaddConfig(pexConfig.Config):
+    saveDebugImages = pexConfig.Field(
+        bool,
+        doc = "Save intermediate images?",
+        default = False,
+    )
+    bboxMin = pexConfig.ListField(
+        int,
+        doc = "Lower left corner of bounding box used to subframe to all input images",
+        default = (0, 0),
+        length = 2,
+    )
+    bboxSize = pexConfig.ListField(
+        int,
+        doc = "Size of bounding box used to subframe all input images; 0 0 for full input images",
+        default = (0, 0),
+        length = 2,
+    )
+    coadd = pexConfig.ConfigField(coaddUtils.Coadd.ConfigClass, doc="")
+    warp = pexConfig.ConfigField(afwMath.Warper.ConfigClass, doc="")
+    
 
-def warpAndCoadd(coaddPath, exposureListPath, policy):
+def warpAndCoadd(coaddPath, exposureListPath, config):
     """Create a coadd by warping and psf-matching
     
     Inputs:
     - coaddPath: path to desired coadd; ovewritten if it exists
     - exposureListPath: a file containing a list of paths to input exposures;
         blank lines and lines that start with # are ignored
-    - policy: policy file; see policy/WarpAndCoaddDictionary.paf
+    - config: an instance of WarpAndCoaddConfig
     
     The first exposure in exposureListPath is used as the reference: all other exposures
     are warped to match to it.
     """
     weightPath = os.path.splitext(coaddPath)[0] + "_weight.fits"
 
-    warpPolicy = policy.getPolicy("warpPolicy")
-    coaddPolicy = policy.getPolicy("coaddPolicy")
-    saveDebugImages = policy.get("saveDebugImages")
-    bboxMin = policy.getArray("bboxMin")
-    bboxSize = policy.getArray("bboxSize")
-    bbox = afwGeom.Box2I(afwGeom.Point2I(bboxMin[0], bboxMin[1]), afwGeom.Extent2I(bboxSize[0], bboxSize[1]))
-    print "SaveDebugImages =", saveDebugImages
+    bbox = afwGeom.Box2I(
+        afwGeom.Point2I(config.bboxMin[0], config.bboxMin[1]),
+        afwGeom.Extent2I(config.bboxSize[0], config.bboxSize[1]),
+    )
+    print "SaveDebugImages =", config.saveDebugImages
     print "bbox =", bbox
 
     # process exposures
@@ -80,16 +95,16 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
                 print >> sys.stderr, "Processing exposure: %s" % (exposurePath,)
                 startTime = time.time()
                 exposure = afwImage.ExposureF(exposurePath, 0, bbox, afwImage.LOCAL)
-                if saveDebugImages:
+                if config.saveDebugImages:
                     exposure.writeFits("exposure%s.fits" % (expNum,))
                 
                 if not coadd:
                     print >> sys.stderr, "Create warper and coadd with size and WCS matching the first/reference exposure"
-                    warper = afwMath.Warper.fromPolicy(warpPolicy)
-                    coadd = coaddUtils.Coadd.fromPolicy(
+                    warper = afwMath.Warper.fromConfig(config.warp)
+                    coadd = coaddUtils.Coadd.fromConfig(
                         bbox = exposure.getBBox(afwImage.PARENT),
                         wcs = exposure.getWcs(),
-                        policy = coaddPolicy)
+                        config = config.coadd)
                     print "badPixelMask=", coadd.getBadPixelMask()
                     
                     print >> sys.stderr, "Add reference exposure to coadd (without warping)"
@@ -101,7 +116,7 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
                         srcExposure = exposure,
                         maxBBox = coadd.getBBox(),
                     )
-                    if saveDebugImages:
+                    if config.saveDebugImages:
                         warpedExposure.writeFits("warped%s.fits" % (expNum,))
 
                     print >> sys.stderr, "Add warped exposure to coadd"
@@ -133,7 +148,7 @@ def warpAndCoadd(coaddPath, exposureListPath, policy):
 
 if __name__ == "__main__":
     pexLog.Trace.setVerbosity('lsst.coadd', 3)
-    helpStr = """Usage: warpAndCoadd.py coaddPath exposureListPath [policy]
+    helpStr = """Usage: warpAndCoadd.py coaddPath exposureListPath
 
 where:
 - coaddPath is the desired name or path of the output coadd
@@ -144,11 +159,8 @@ where:
   - the first exposure listed is taken to be the reference exposure,
     which determines the size and WCS of the coadd
   - empty lines and lines that start with # are ignored.
-- policy: path to a policy file
-
-The policy dictionary is: policy/%s
-""" % (PolicyDictName,)
-    if len(sys.argv) not in (3, 4):
+"""
+    if len(sys.argv) != 3:
         print helpStr
         sys.exit(0)
     
@@ -158,15 +170,7 @@ The policy dictionary is: policy/%s
         sys.exit(1)
     
     exposureListPath = sys.argv[2]
-
-    if len(sys.argv) > 3:
-        policyPath = sys.argv[3]
-        policy = pexPolicy.Policy(policyPath)
-    else:
-        policy = pexPolicy.Policy()
-
-    policyFile = pexPolicy.DefaultPolicyFile(PolicyPackageName, PolicyDictName, "policy")
-    defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath(), True)
-    policy.mergeDefaults(defPolicy.getDictionary())
     
-    warpAndCoadd(coaddPath, exposureListPath, policy)
+    config = WarpAndCoaddConfig()
+    
+    warpAndCoadd(coaddPath, exposureListPath, config)
