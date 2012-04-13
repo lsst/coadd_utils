@@ -46,7 +46,7 @@ def countBits(val):
 
 MaxBitMask = (2**afwImage.MaskU_getNumPlanesMax() - 1)
 
-MaskPlaneNameIDDict = dict(afwImage.MaskU.getMaskPlaneDict())
+MaskPlaneNameIDDict = dict(afwImage.MaskU().getMaskPlaneDict())
 
 class AddToCoaddTestCase(unittest.TestCase):
     """A test case for setMaskBits
