@@ -27,8 +27,6 @@ import utilsLib
 
 __all__ = ["Coadd", "makeCalib"]
 
-
-# experimental use of Martin's new Config
 class CoaddConfig(pexConfig.Config):
     """Config for Coadd
     """
