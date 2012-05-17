@@ -1,6 +1,6 @@
 # 
 # LSST Data Management System
-# Copyright 2008, 2009, 2010 LSST Corporation.
+# Copyright 2008, 2009, 2010, 2011, 2012 LSST Corporation.
 # 
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
@@ -20,12 +20,12 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 import lsst.pex.config as pexConfig
-import lsst.pex.logging as pexLog
+from lsst.pex.logging import Log
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
-import utilsLib
+from .utilsLib import addToCoadd, setCoaddEdgeBits
 
-__all__ = ["Coadd", "makeCalib"]
+__all__ = ["Coadd"]
 
 class CoaddConfig(pexConfig.Config):
     """Config for Coadd
@@ -34,11 +34,6 @@ class CoaddConfig(pexConfig.Config):
         dtype = str,
         doc = "mask planes that, if set, the associated pixel should not be included in the coadd",
         default = ("EDGE", "SAT"),
-    )
-    coaddZeroPoint = pexConfig.Field(
-        dtype = float,
-        doc = "Photometric zero point of coadd (mag).",
-        default = 27.0,
     )
 
 
@@ -50,7 +45,7 @@ class Coadd(object):
     """
     ConfigClass = CoaddConfig
 
-    def __init__(self, bbox, wcs, badMaskPlanes, coaddZeroPoint, logName="coadd.utils.Coadd"):
+    def __init__(self, bbox, wcs, badMaskPlanes, logName="coadd.utils.Coadd"):
         """Create a coadd
         
         @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
@@ -59,16 +54,14 @@ class Coadd(object):
         @param badMaskPlanes: mask planes to pay attention to when rejecting masked pixels.
             Specify as a collection of names.
             badMaskPlanes should always include "EDGE".
-        @param coaddZeroPoint: photometric zero point of coadd (mag)
         @param logName: name by which messages are logged
         """
-        self._log = pexLog.Log(pexLog.Log.getDefaultLog(), logName)
+        self._log = Log(Log.getDefaultLog(), logName)
         self._bbox = bbox
         self._wcs = wcs
         self._badPixelMask = afwImage.MaskU.getPlaneBitMask(badMaskPlanes)
         self._coadd = afwImage.ExposureF(bbox, wcs)
         self._weightMap = afwImage.ImageF(bbox, afwImage.PARENT)
-        self._setCalib(coaddZeroPoint)
         self._filterDict = dict() # dict of filter name: filter object for all filters seen so far
 
         self._statsControl = afwMath.StatisticsControl()
@@ -90,7 +83,6 @@ class Coadd(object):
             bbox = bbox,
             wcs = wcs,
             badMaskPlanes = config.badMaskPlanes,
-            coaddZeroPoint = config.coaddZeroPoint,
             logName = logName,
         )
 
@@ -100,7 +92,7 @@ class Coadd(object):
         @param exposure: Exposure to add to coadd; this must be:
             - background-subtracted
             - warped to match the coadd
-            - photometrically calibrated (have a Calib object with nonzero fluxMag0)
+            - photometrically scaled to the desired flux magnitude
         @param weightFactor: extra weight factor for this exposure
 
         @return
@@ -109,14 +101,8 @@ class Coadd(object):
         
         Subclasses may override to preprocess the exposure or change the way it is added to the coadd.
         """
-        # normalize a deep copy of the masked image so flux is 1 at the coadd zero point;
-        # use a deep copy to avoid altering the input exposure
-        fluxAtZeropoint = exposure.getCalib().getFlux(self._coaddZeroPoint)
-        scaleFac = 1.0 / fluxAtZeropoint
         maskedImage = exposure.getMaskedImage()
-        maskedImage = maskedImage.Factory(maskedImage, True)
-        maskedImage *= scaleFac
-        
+
         # compute the weight
         statObj = afwMath.makeStatistics(maskedImage.getVariance(), maskedImage.getMask(),
             afwMath.MEANCLIP, self._statsControl)
@@ -127,10 +113,9 @@ class Coadd(object):
         filter = exposure.getFilter()
         self._filterDict.setdefault(filter.getName(), filter)
 
-        self._log.log(pexLog.Log.INFO, "add exposure to coadd; scaled by %0.3g; weight=%0.3g" % \
-            (scaleFac, weight,))
+        self._log.log(Log.INFO, "Add exposure to coadd with weight=%0.3g" % (weight,))
 
-        overlapBBox = utilsLib.addToCoadd(self._coadd.getMaskedImage(), self._weightMap,
+        overlapBBox = addToCoadd(self._coadd.getMaskedImage(), self._weightMap,
             maskedImage, self._badPixelMask, weight)
 
         return overlapBBox, weight
@@ -146,7 +131,7 @@ class Coadd(object):
         scaledMaskedImage = coaddMaskedImage.Factory(coaddMaskedImage, True)
 
         # set the edge pixels
-        utilsLib.setCoaddEdgeBits(scaledMaskedImage.getMask(), self._weightMap)
+        setCoaddEdgeBits(scaledMaskedImage.getMask(), self._weightMap)
         
         # scale non-edge pixels by weight map
         scaledMaskedImage /= self._weightMap
@@ -161,13 +146,6 @@ class Coadd(object):
         """Return a collection of all the filters seen so far in in addExposure
         """
         return self._filterDict.values()
-    
-    def getCoaddZeroPoint(self):
-        """Return the coadd photometric zero point.
-        
-        getCoaddFluxMag0 gives the same information in different units.
-        """
-        return self._coaddZeroPoint
     
     def getBadPixelMask(self):
         """Return the bad pixel mask
@@ -191,26 +169,3 @@ class Coadd(object):
         is the sum of the weights of all exposures that contributed to that pixel.
         """
         return self._weightMap
-    
-    def _setCalib(self, coaddZeroPoint):
-        """Set _coaddZeroPoint and add a Calib object to self._coadd
-        
-        This is a separate method so chi squared coadds can make it a no-op
-        
-        @param coaddZeroPoint: photometric zero point of coadd (mag)
-        """
-        self._coaddZeroPoint = float(coaddZeroPoint)
-        calib = makeCalib(self._coaddZeroPoint)
-        self._coadd.setCalib(calib)
-
-
-def makeCalib(zeropoint):
-    """Make an afwImage.Calib with the appropriate zeropoint
-    """
-    fluxMag0 = 10**(0.4 * zeropoint)
-    calib = afwImage.Calib()
-    calib.setFluxMag0(fluxMag0)
-    if abs(calib.getMagnitude(1.0) - zeropoint) > 1.0e-4:
-        raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4f != %0.4f = coaddZeroPoint" % \
-            (calib.getMagnitude(1.0), zeropoint))
-    return calib    

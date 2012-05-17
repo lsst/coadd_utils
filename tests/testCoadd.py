@@ -67,26 +67,21 @@ class CoaddTestCase(unittest.TestCase):
         """Add a single exposure; make sure coadd = input, appropriately scaled
         """
         inExp = afwImage.ExposureF(ImSimFile)
+        inMaskedImage = inExp.getMaskedImage()
         bbox = inExp.getBBox(afwImage.PARENT)
         wcs = inExp.getWcs()
-        for coaddZeroPoint, badMaskPlanes in (
-            (25.0, ()),
-            (20.0, ("EDGE", "BAD"))):
+        for badMaskPlanes in (
+            (),
+            ("EDGE", "BAD"),
+        ):
             coadd = coaddUtils.Coadd(
                 bbox = inExp.getBBox(afwImage.PARENT),
                 wcs = inExp.getWcs(),
                 badMaskPlanes = badMaskPlanes,
-                coaddZeroPoint = coaddZeroPoint,
             )
             coadd.addExposure(inExp)
             coaddExp = coadd.getCoadd()
-            
-            # the coadd has been scaled, so deal with that
-            inFluxMag0 = inExp.getCalib().getFluxMag0()[0]
-            inMaskedImage = inExp.getMaskedImage()
             coaddMaskedImage = coaddExp.getMaskedImage()
-            coaddFluxMag0 = coaddExp.getCalib().getFluxMag0()[0]
-            coaddMaskedImage *= inFluxMag0 / coaddFluxMag0
             
             inMaskArr = inMaskedImage.getMask().getArray()
             badMask = coadd.getBadPixelMask()
@@ -121,24 +116,22 @@ class CoaddTestCase(unittest.TestCase):
         inExp = afwImage.ExposureF(ImSimFile)
         bbox = inExp.getBBox(afwImage.PARENT)
         wcs = inExp.getWcs()
-        for coaddZeroPoint, badMaskPlanes, bbox in (
-            (0.0,  ("EDGE",), afwGeom.Box2I(afwGeom.Point2I(1, 2), afwGeom.Extent2I(100, 102))),
-            (12.3, ("EDGE", "BAD"), afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(100, 102))),
-            (-5.6, ("EDGE",), afwGeom.Box2I(afwGeom.Point2I(104, 0), afwGeom.Extent2I(5, 10))),
-            (25.7, ("EDGE",), afwGeom.Box2I(afwGeom.Point2I(0, 1020), afwGeom.Extent2I(100, 102))),
+        for badMaskPlanes, bbox in (
+            (("EDGE",),         afwGeom.Box2I(afwGeom.Point2I(  1,    2), afwGeom.Extent2I(100, 102))),
+            (("EDGE", "BAD"),   afwGeom.Box2I(afwGeom.Point2I(  0,    0), afwGeom.Extent2I(100, 102))),
+            (("EDGE",),         afwGeom.Box2I(afwGeom.Point2I(104,    0), afwGeom.Extent2I(  5,  10))),
+            (("EDGE",),         afwGeom.Box2I(afwGeom.Point2I(  0, 1020), afwGeom.Extent2I(100, 102))),
         ):
             coadd = coaddUtils.Coadd(
                 bbox = bbox,
                 wcs = wcs,
                 badMaskPlanes = badMaskPlanes,
-                coaddZeroPoint = coaddZeroPoint,
             )
             badPixelMask = 0
             for maskPlaneName in badMaskPlanes:
                 badPixelMask += afwImage.MaskU.getPlaneBitMask(maskPlaneName)
             self.assertEquals(bbox, coadd.getBBox())
             self.assertEquals(badPixelMask, coadd.getBadPixelMask())
-            self.assertEquals(coaddZeroPoint, coadd.getCoaddZeroPoint())
             self.assertWcsSame(wcs, coadd.getWcs())
 
     def testFilters(self):
@@ -157,7 +150,6 @@ class CoaddTestCase(unittest.TestCase):
             bbox = inExp.getBBox(afwImage.PARENT),
             wcs = inExp.getWcs(),
             badMaskPlanes = ("EDGE", "BAD"),
-            coaddZeroPoint = 25.0,
         )
 
         inExp.setFilter(gFilter)
