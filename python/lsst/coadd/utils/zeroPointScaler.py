@@ -21,24 +21,21 @@
 #
 import lsst.afw.image as afwImage
 
-__all__ = ["ZeropointScaler"]
+__all__ = ["ZeroPointScaler"]
 
-class ZeropointScaler(object):
-    """Scale exposures to a desired photometric zeropoint
+class ZeroPointScaler(object):
+    """Scale exposures to a desired photometric zero point
     """
-    def __init__(self, zeropoint):
-        """Construct a zeropoint scaler
+    def __init__(self, zeroPoint):
+        """Construct a zero point scaler
         
-        @param[in] zeropoint: desired photometric zero point (mag)
+        @param[in] zeroPoint: desired photometric zero point (mag)
         """
-        self._zeropoint = float(zeropoint)
+        self._zeroPoint = float(zeroPoint)
 
-        fluxMag0 = 10**(0.4 * self._zeropoint)
+        fluxMag0 = 10**(0.4 * self._zeroPoint)
         self._calib = afwImage.Calib()
         self._calib.setFluxMag0(fluxMag0)
-        if abs(self._calib.getMagnitude(1.0) - self._zeropoint) > 1.0e-4:
-            raise RuntimeError("Bug: calib.getMagnitude(1.0) = %0.4f != %0.4f = coaddZeroPoint" % \
-                (self._calib.getMagnitude(1.0), self._zeropoint))
     
     def getCalib(self):
         """Get desired calibration
@@ -48,16 +45,16 @@ class ZeropointScaler(object):
         return self._calib
     
     def scaleExposure(self, exposure):
-        """Scale exposure to the desired photometric zeropoint, in place
+        """Scale exposure to the desired photometric zeroPoint, in place
         
         @param[in,out] exposure: exposure to scale; it must have a valid Calib;
-            the pixel values and Calib zeropoint are scaled
+            the pixel values and Calib zeroPoint are scaled
         @return scaleFac: scale factor, where new image values = original image values * scaleFac
         """
         exposureCalib = exposure.getCalib()
         exposureFluxMag0Sigma = exposureCalib.getFluxMag0()[1]
-        fluxAtZeropoint = exposureCalib.getFlux(self._zeropoint)
-        scaleFac = 1.0 / fluxAtZeropoint
+        fluxAtZeroPoint = exposureCalib.getFlux(self._zeroPoint)
+        scaleFac = 1.0 / fluxAtZeroPoint
         maskedImage = exposure.getMaskedImage()
         maskedImage *= scaleFac
         exposureFluxMag0Sigma *= scaleFac

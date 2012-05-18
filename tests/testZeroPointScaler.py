@@ -22,7 +22,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
-"""Test lsst.coadd.utils.ZeropointScaler
+"""Test lsst.coadd.utils.ZeroPointScaler
 """
 import os
 import pdb # we may want to say pdb.set_trace()
@@ -43,32 +43,34 @@ import lsst.pex.exceptions as pexExcept
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 import lsst.pex.policy as pexPolicy
-from lsst.coadd.utils import ZeropointScaler
+from lsst.coadd.utils import ZeroPointScaler
     
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-class ZeropointScalerTestCase(unittest.TestCase):
-    """A test case for ZeropointScaler
+class ZeroPointScalerTestCase(unittest.TestCase):
+    """A test case for ZeroPointScaler
     """
     def testBasics(self):
-        for outZeropoint in (23, 24):
-            zpScaler = ZeropointScaler(zeropoint = outZeropoint)
+        for outZeroPoint in (23, 24):
+            zpScaler = ZeroPointScaler(zeroPoint = outZeroPoint)
+
+            self.assertAlmostEqual(zpScaler.getCalib().getMagnitude(1.0), outZeroPoint)
             
-            for inZeropoint in (24, 25.5):
-                inExposure = self.makeExposure(inZeropoint)
+            for inZeroPoint in (24, 25.5):
+                inExposure = self.makeExposure(inZeroPoint)
                 inMaskedImage = inExposure.getMaskedImage()
                 
                 # use a copy to scale, since the operation is "in place"
-                outExposure = self.makeExposure(inZeropoint)
+                outExposure = self.makeExposure(inZeroPoint)
                 outMaskedImage = outExposure.getMaskedImage()
                 scaleFac = zpScaler.scaleExposure(outExposure)
                 
-                predScaleFac = 1.0 / inExposure.getCalib().getFlux(outZeropoint)
+                predScaleFac = 1.0 / inExposure.getCalib().getFlux(outZeroPoint)
                 self.assertAlmostEqual(predScaleFac, scaleFac)
 
-                inFluxAtOutZeropoint = inExposure.getCalib().getFlux(outZeropoint)
-                outFluxAtOutZeropoint = outExposure.getCalib().getFlux(outZeropoint)
-                self.assertAlmostEqual(outFluxAtOutZeropoint / scaleFac, inFluxAtOutZeropoint)
+                inFluxAtOutZeroPoint = inExposure.getCalib().getFlux(outZeroPoint)
+                outFluxAtOutZeroPoint = outExposure.getCalib().getFlux(outZeroPoint)
+                self.assertAlmostEqual(outFluxAtOutZeroPoint / scaleFac, inFluxAtOutZeroPoint)
                 inFluxMag0 = inExposure.getCalib().getFluxMag0()
                 outFluxMag0 = outExposure.getCalib().getFluxMag0()
                 self.assertAlmostEqual(numpy.round(outFluxMag0[0] / scaleFac, 4), numpy.round(inFluxMag0[0], 4))
@@ -78,11 +80,11 @@ class ZeropointScalerTestCase(unittest.TestCase):
                 outImageArr = outMaskedImage.getImage().getArray()
                 self.assertTrue(numpy.allclose(outImageArr / scaleFac, inImageArr))
     
-    def makeExposure(self, zeropoint):
+    def makeExposure(self, zeroPoint):
         maskedImage = afwImage.MaskedImageF(afwGeom.Extent2I(10, 10))
         exposure = afwImage.ExposureF(maskedImage)
         calib = afwImage.Calib()
-        fluxMag0 = 10**(0.4 * zeropoint)
+        fluxMag0 = 10**(0.4 * zeroPoint)
         calib.setFluxMag0(fluxMag0, 1.0)
         exposure.setCalib(calib)
         return exposure
@@ -95,7 +97,7 @@ def suite():
     utilsTests.init()
 
     suites = [
-        unittest.makeSuite(ZeropointScalerTestCase),
+        unittest.makeSuite(ZeroPointScalerTestCase),
         unittest.makeSuite(utilsTests.MemoryTestCase),
     ]
 

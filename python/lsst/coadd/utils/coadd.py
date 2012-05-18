@@ -19,6 +19,8 @@
 # the GNU General Public License along with this program.  If not, 
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
+import math
+
 import lsst.pex.config as pexConfig
 from lsst.pex.logging import Log
 import lsst.afw.image as afwImage
@@ -48,13 +50,13 @@ class Coadd(object):
     def __init__(self, bbox, wcs, badMaskPlanes, logName="coadd.utils.Coadd"):
         """Create a coadd
         
-        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
+        @param[in] bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
-        @param wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
-        @param badMaskPlanes: mask planes to pay attention to when rejecting masked pixels.
+        @param[in] wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
+        @param[in] badMaskPlanes: mask planes to pay attention to when rejecting masked pixels.
             Specify as a collection of names.
             badMaskPlanes should always include "EDGE".
-        @param logName: name by which messages are logged
+        @param[in] logName: name by which messages are logged
         """
         self._log = Log(Log.getDefaultLog(), logName)
         self._bbox = bbox
@@ -73,11 +75,11 @@ class Coadd(object):
     def fromConfig(cls, bbox, wcs, config, logName="coadd.utils.Coadd"):
         """Create a coadd
         
-        @param bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
+        @param[in] bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
-        @param wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
-        @param config: coadd config; an instance of CoaddConfig
-        @param logName: name by which messages are logged
+        @param[in] wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
+        @param[in] config: coadd config; an instance of CoaddConfig
+        @param[in] logName: name by which messages are logged
         """
         return cls(
             bbox = bbox,
@@ -89,11 +91,12 @@ class Coadd(object):
     def addExposure(self, exposure, weightFactor=1.0):
         """Add an Exposure to the coadd
         
-        @param exposure: Exposure to add to coadd; this must be:
-            - background-subtracted
+        @param[in] exposure: Exposure to add to coadd; this should be:
+            - background-subtracted or background-matched to the other images being coadded
+            - psf-matched to the desired PSF model (optional)
             - warped to match the coadd
             - photometrically scaled to the desired flux magnitude
-        @param weightFactor: extra weight factor for this exposure
+        @param[in] weightFactor: extra weight factor for this exposure
 
         @return
         - overlapBBox: region of overlap between exposure and coadd in parent coordinates (afwGeom.Box2I)
@@ -108,6 +111,8 @@ class Coadd(object):
             afwMath.MEANCLIP, self._statsControl)
         meanVar, meanVarErr = statObj.getResult(afwMath.MEANCLIP);
         weight = weightFactor / float(meanVar)
+        if math.isnan(weight):
+            raise RuntimeError("Weight is NaN (weightFactor=%s; mean variance=%s)" % (weightFactor, meanVar))
         
         # save filter info
         filter = exposure.getFilter()
