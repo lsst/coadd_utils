@@ -37,21 +37,26 @@ import lsst.coadd.utils as coaddUtils
 
 class WarpAndCoaddConfig(pexConfig.Config):
     saveDebugImages = pexConfig.Field(
-        dtype = bool,
         doc = "Save intermediate images?",
+        dtype = bool,
         default = False,
     )
     bboxMin = pexConfig.ListField(
-        dtype = int,
         doc = "Lower left corner of bounding box used to subframe to all input images",
+        dtype = int,
         default = (0, 0),
         length = 2,
     )
     bboxSize = pexConfig.ListField(
-        dtype = int,
         doc = "Size of bounding box used to subframe all input images; 0 0 for full input images",
+        dtype = int,
         default = (0, 0),
         length = 2,
+    )
+    coaddZeroPoint = pexConfig.Field(
+        dtype = float,
+        doc = "Photometric zero point of coadd (mag).",
+        default = 27.0,
     )
     coadd = pexConfig.ConfigField(dtype = coaddUtils.Coadd.ConfigClass, doc = "")
     warp = pexConfig.ConfigField(dtype = afwMath.Warper.ConfigClass, doc = "")
@@ -77,6 +82,8 @@ def warpAndCoadd(coaddPath, exposureListPath, config):
     )
     print "SaveDebugImages =", config.saveDebugImages
     print "bbox =", bbox
+    
+    zpScaler = coaddUtils.ZeropointScaler(self.config.coaddZeroPoint)
 
     # process exposures
     accumGoodTime = 0
@@ -118,6 +125,9 @@ def warpAndCoadd(coaddPath, exposureListPath, config):
                     )
                     if config.saveDebugImages:
                         warpedExposure.writeFits("warped%s.fits" % (expNum,))
+                    
+                    print >> sys.stederr, "Scale exposure to desired photometric zeropoint"
+                    zpScaler.scaleExposure(warpedExposure)
 
                     print >> sys.stderr, "Add warped exposure to coadd"
                     coadd.addExposure(warpedExposure)
