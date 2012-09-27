@@ -44,6 +44,15 @@ Python interface to lsst::coadd::utils functions and classes
 
 %lsst_exceptions()
 
+%include "lsst/coadd/utils/copyGoodPixels.h"
+%define %COPYGOODPIXELS(IMAGEPIXEL)
+    %template(copyGoodPixels) lsst::coadd::utils::copyGoodPixels<IMAGEPIXEL>;
+%enddef
+%COPYGOODPIXELS(double);
+%COPYGOODPIXELS(float);
+%COPYGOODPIXELS(int);
+%COPYGOODPIXELS(boost::uint16_t);
+
 %include "lsst/coadd/utils/addToCoadd.h"
 %define %ADDTOCOADD(COADDPIXEL, WEIGHTPIXEL)
     %template(addToCoadd) lsst::coadd::utils::addToCoadd<COADDPIXEL, WEIGHTPIXEL>;

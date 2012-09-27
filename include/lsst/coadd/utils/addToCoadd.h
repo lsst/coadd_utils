@@ -22,8 +22,8 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
  
-#ifndef LSST_COADD_UTILS_ADDTOCOADD_H
-#define LSST_COADD_UTILS_ADDTOCOADD_H
+#ifndef LSST_COADD_UTILS_COPYGOODPIXELS_H
+#define LSST_COADD_UTILS_COPYGOODPIXELS_H
 /**
 * @file
 *
@@ -87,4 +87,4 @@ namespace utils {
 
 }}} // lsst::coadd::utils
 
-#endif // !defined(LSST_COADD_UTILS_ADDTOCOADD_H)
+#endif // !defined(LSST_COADD_UTILS_COPYGOODPIXELS_H)
