@@ -50,10 +50,6 @@ except NameError:
     Verbosity = 0 # increase to see trace
 
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
-
-dataDir = eups.productDir("afwdata")
-if dataDir != None:
-    medMIPath = os.path.join(dataDir, "data", "med")
     
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -80,16 +76,16 @@ def referenceCopyGoodPixelsImage(destImage, srcImage):
     if overlapBBox.isEmpty():
         return (destImageArray, 0)
     
-    destImageView = destImage.Factory(destImage, overlapBBox)
+    destImageView = destImage.Factory(destImage, overlapBBox, afwImage.PARENT, False)
     destImageArray = destImageView.getArray()
 
-    srcImageView = srcImage.Factory(srcImage, overlapBBox)
+    srcImageView = srcImage.Factory(srcImage, overlapBBox, afwImage.PARENT, False)
     srcImageArray = srcImageView.getArray()
     
-    isBadArray = nump.isnan(srcImageView)
+    isBadArray = numpy.isnan(srcImageArray)
 
     destImageArray[:] = numpy.where(isBadArray, destImageArray, srcImageArray)
-    numGoodPix = numpy.sum(isBadArray)
+    numGoodPix = numpy.sum(numpy.logical_not(isBadArray))
     return destImage, numGoodPix
 
 def referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badPixelMask):
@@ -114,10 +110,10 @@ def referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badPixelMask):
     if overlapBBox.isEmpty():
         return (destImageArray, 0)
     
-    destImageView = destImage.Factory(destImage, overlapBBox)
+    destImageView = destImage.Factory(destImage, overlapBBox, afwImage.PARENT, False)
     destImageArrayList = destImageView.getArrays()
 
-    srcImageView = srcImage.Factory(srcImage, overlapBBox)
+    srcImageView = srcImage.Factory(srcImage, overlapBBox, afwImage.PARENT, False)
     srcImageArrayList = srcImageView.getArrays()
     
     isBadArray = (srcImageArrayList[1] & badPixelMask) != 0
@@ -125,151 +121,123 @@ def referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badPixelMask):
     for ind in range(3):
         destImageView = destImageArrayList[ind]
         srcImageView = srcImageArrayList[ind]
-        destImageView = numpy.where(isBadArray, destImageView, srcImageView)
-    numGoodPix = numpy.sum(isBadArray)
+        destImageView[:] = numpy.where(isBadArray, destImageView, srcImageView)
+    numGoodPix = numpy.sum(numpy.logical_not(isBadArray))
     return destImage, numGoodPix
 
+
+MaxMask = 0xFFFF
 
 class CopyGoodPixelsTestCase(unittest.TestCase):
     """A test case for copyGoodPixels
     """
+    def getSolidMaskedImage(self, bbox, val, badMask=0):
+        afwDim = bbox.getDimensions()
+        npShape = (afwDim[1], afwDim[0])
 
-    def _testCopyGoodPixelsImpl(self, testMaskedImage):
-        """Basic test
-        
-        @param[in] testMaskedImage: if True then test with a MaskedImage, else an Image
+        numpy.random.seed(0)
+        maskedImage = afwImage.MaskedImageF(bbox)
+        imageArrays = maskedImage.getArrays()
+        imageArrays[0][:] = val
+        imageArrays[2][:] = val * 0.5
+        imageArrays[1][:, 0:npShape[1]/2] = 0
+        imageArrays[1][:, npShape[1]/2:] = badMask
+        return maskedImage
+
+    def getRandomMaskedImage(self, bbox, excludeMask=0):
+        """Get a randomly generated masked image
         """
-        trueImageValue = 10.0
-        imBBox = afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(10, 20))
-        if testMaskedImage:
-            destImage = afwImage.MaskedImageF(imBBox)
-
-            badBits = 0x1
-            badPixel = (float("NaN"), badBits, 0)
-            zero = (0.0, 0x0, 0)
-            goodPixel = (trueImageValue, 0x0, 0)
-        else:
-            destImage = afwImage.ImageF(imBBox)
-
-            badPixel = float("NaN")
-            zero = 0.0
-            goodPixel = trueImageValue
-
-        for i in range(0, 20, 3):
-            image = destImage.Factory(destImage.getDimensions())
-            image.set(badPixel)
-
-            subBBox = afwGeom.Box2I(afwGeom.Point2I(0, i),
-                image.getDimensions() - afwGeom.Extent2I(0, i))
-            subImage = image.Factory(image, subBBox, afwImage.LOCAL)
-            subImage.set(goodPixel)
-            del subImage
-
-            if testMaskedImage:
-                coaddUtils.copyGoodPixels(destImage, image, badBits)
-            else:
-                coaddUtils.copyGoodPixels(destImage, image)
-
-            self.assertEqual(image.get(image.getWidth() - 1, image.getHeight() - 1), goodPixel)
-
-        if display:
-            ds9.mtv(image, title="image", frame=1)
-            ds9.mtv(destImage, title="destImage", frame=2)
-
-        stats = afwMath.makeStatistics(destImage, afwMath.MEAN | afwMath.STDEV)
-
-        return [trueImageValue, stats.getValue(afwMath.MEAN), 0.0, stats.getValue(afwMath.STDEV)]
-
-    def testCopyGoodPixelsMask(self):
-        """Test MaskedImages"""
-
-        truth_mean, mean, truth_stdev, stdev = self._testCopyGoodPixelsImpl(True)
-
-        self.assertEqual(truth_mean, mean)
-        self.assertEqual(truth_stdev, stdev)
-
-    def testCopyGoodPixelsNaN(self):
-        """Test Images with NaN"""
-        truth_mean, mean, truth_stdev, stdev = self._testCopyGoodPixelsImpl(False)
-
-        self.assertEqual(truth_mean, mean)
-        self.assertEqual(truth_stdev, stdev)
-
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-class CopyGoodPixelsAfwdataTestCase(unittest.TestCase):
-    """A test case for copyGoodPixels using afwdata
-    """
-    def referenceTest(self, destImage, srcImage, badPixelMask):
-        """Compare lsst implemenation of copyGoodPixels to a reference implementation.
+        if excludeMask > MaxMask:
+            raise RuntimeError("excludeMask = %s > %s = MaxMask" % (excludeMask, MaxMask))
         
-        Returns the number of good pixels
+        afwDim = bbox.getDimensions()
+        npShape = (afwDim[1], afwDim[0])
+
+        numpy.random.seed(0)
+        maskedImage = afwImage.MaskedImageF(bbox)
+        imageArrays = maskedImage.getArrays()
+        imageArrays[0][:] = numpy.random.normal(5000, 5000, npShape) # image
+        imageArrays[2][:] = numpy.random.normal(3000, 3000, npShape) # variance
+        imageArrays[1][:] = numpy.logical_and(numpy.random.random_integers(0, 7, npShape), ~excludeMask)
+        return maskedImage
+
+    def getRandomImage(self, bbox, nanSigma=0):
+        """Get a randomly generated image
         """
-        # this call leaves destImage alone:
-        refDestImage, refNumGoodPix = referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badPixelMask)
-        refDestImageArrayList = refDestImage.getArrays()
+        afwDim = bbox.getDimensions()
+        npShape = (afwDim[1], afwDim[0])
 
-        # this updates destImage:
-        afwNumGoodPix = coaddUtils.copyGoodPixels(destImage, srcImage, badPixelMask)
-        self.assertEqual(refNumGoodPix, afwNumGoodPix)
-        
-        destImageArrayList = destImage.getArrays()
-        maskArr = destImageArrayList[1]
-        
-        for name, ind in (("image", 0), ("mask", 1), ("variance", 2)):
-            if not numpy.allclose(destImageArrayList[ind], refDestImageArrayList[ind]):
-                errMsgList = (
-                    "Computed %s does not match reference for badPixelMask=%s:" % (name, badPixelMask),
-                    "computed=  %s" % (destImageArrayList[ind],),
-                    "reference= %s" % (refDestImageArrayList[ind],),
-                )
-                errMsg = "\n".join(errMsgList)
-                self.fail(errMsg)
-        return refNumGoodPix
-        
-    def testMed(self):
-        """Test copyGoodPixels by adding an image with known bad pixels using varying masks
-        """
-        medBBox = afwGeom.Box2I(afwGeom.Point2I(130, 315), afwGeom.Extent2I(20, 21))
-        srcImage = afwImage.MaskedImageF(afwImage.MaskedImageF(medMIPath), medBBox, afwImage.PARENT)
-        destImage = afwImage.MaskedImageF(medBBox)
-        for badPixelMask in (0x00, 0xFF):
-            self.referenceTest(destImage, srcImage, badPixelMask)
+        numpy.random.seed(0)
+        image = afwImage.ImageF(bbox)
+        imageArray = image.getArray()
+        imageArray[:] = numpy.random.normal(5000, 5000, npShape)
+        if nanSigma > 0:
+            # add NaNs at nanSigma above mean of a test array
+            nanTest = numpy.random.normal(0, 1, npShape)
+            imageArray[:] = numpy.where(nanTest > nanSigma, numpy.nan, imageArray)
+        return image
     
-    def testMultSizes(self):
-        """Test copyGoodPixels by adding various subregions of the med image
-        to a destImage that's a slightly different shape
-        """
-        bbox = afwGeom.Box2I(afwGeom.Point2I(130, 315), afwGeom.Extent2I(30, 31))
-        fullMaskedImage = afwImage.MaskedImageF(medMIPath)
-        srcImage = afwImage.MaskedImageF(fullMaskedImage, bbox, afwImage.PARENT)
-        coaddBBox = afwGeom.Box2I(
-            srcImage.getXY0() + afwGeom.Extent2I(-6, +4),
-            srcImage.getDimensions() + afwGeom.Extent2I(10, -10))
-        destImage = afwImage.MaskedImageF(coaddBBox)
-        badPixelMask = 0x0
+    def basicMaskedImageTest(self, srcImage, destImage, badMask):
+        refDestImage, refNumGoodPix = referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badMask)
+        numGoodPix = coaddUtils.copyGoodPixels(destImage, srcImage, badMask)
         
-        # add masked image that extends beyond destImage in y
-        numGoodPix = self.referenceTest(destImage, srcImage, badPixelMask)
-        self.assertNotEqual(maskedImageView, 0)
-
-        # add masked image that extends beyond destImage in x
-        bbox = afwGeom.Box2I(afwGeom.Point2I(120, 320), afwGeom.Extent2I(50, 10))
-        srcImage = afwImage.MaskedImageF(fullMaskedImage, bbox, afwImage.PARENT)
-        numGoodPix = self.referenceTest(destImage, srcImage, badPixelMask)
-        self.assertNotEqual(numGoodPix, 0)
+        self.assertEqual(numGoodPix, refNumGoodPix)
+    
+        errStr = imTestUtils.maskedImagesDiffer(destImage.getArrays(), refDestImage.getArrays())
+        if errStr:
+            destImage.writeFits("destImage.fits")
+            refDestImage.writeFits("refDestImage.fits")
+            self.fail("image != reference image: %s" % (errStr,))
         
-        # add masked image that is fully within the destImage
-        bbox = afwGeom.Box2I(afwGeom.Point2I(130, 320), afwGeom.Extent2I(10, 10))
-        srcImage = afwImage.MaskedImageF(fullMaskedImage, bbox, afwImage.PARENT)
-        numGoodPix = self.referenceTest(destImage, srcImage, badPixelMask)
-        self.assertNotEqual(numGoodPix, 0)
+    def basicImageTest(self, srcImage, destImage):
+        refDestImage, refNumGoodPix = referenceCopyGoodPixelsImage(destImage, srcImage)
+        numGoodPix = coaddUtils.copyGoodPixels(destImage, srcImage)
+    
+        errStr = imTestUtils.imagesDiffer(destImage.getArray(), refDestImage.getArray())
+        if errStr:
+            destImage.writeFits("destImage.fits")
+            refDestImage.writeFits("refDestImage.fits")
+            self.fail("image != reference image: %s" % (errStr,))
         
-        # add masked image that does not overlap destImage
-        bbox = afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(10, 10))
-        srcImage = afwImage.MaskedImageF(fullMaskedImage, bbox, afwImage.PARENT)
-        numGoodPix = self.referenceTest(destImage, srcImage, badPixelMask)
-        self.assertEqual(numGoodPix, 0)
+        self.assertEqual(numGoodPix, refNumGoodPix)
+        
+    def testMaskedImage(self):
+        """Test image version of copyGoodPixels"""
+        srcBBox = afwGeom.Box2I(afwGeom.Point2I(2, 17), afwGeom.Point2I(100, 101))
+        destBBox = afwGeom.Box2I(afwGeom.Point2I(13, 4), afwGeom.Point2I(95, 130))
+        destXY0 = destBBox.getMin()
+        
+        srcImage = self.getRandomMaskedImage(srcBBox)
+        for badMask in (0, 3, MaxMask):
+            destImage = self.getRandomMaskedImage(destBBox, excludeMask=badMask)
+            destBBox = destImage.getBBox(afwImage.PARENT)
+            self.basicMaskedImageTest(srcImage, destImage, badMask)
+            
+            for bboxStart in (destXY0, (50, 51)):
+                for bboxDim in ((25, 36), (200, 200)):
+                    destViewBox = afwGeom.Box2I(afwGeom.Point2I(*bboxStart), afwGeom.Extent2I(*bboxDim))
+                    destViewBox.clip(destBBox)
+                    destView = destImage.Factory(destImage, destViewBox, afwImage.PARENT, False)
+                    self.basicMaskedImageTest(srcImage, destView, badMask)
+    
+    def testImage(self):
+        """Test image version of copyGoodPixels"""
+        srcBBox = afwGeom.Box2I(afwGeom.Point2I(2, 17), afwGeom.Point2I(100, 101))
+        destBBox = afwGeom.Box2I(afwGeom.Point2I(13, 4), afwGeom.Point2I(95, 130))
+        destXY0 = destBBox.getMin()
+        
+        srcImage = self.getRandomImage(srcBBox)
+        for nanSigma in (0, 0.7, 2.0):
+            destImage = self.getRandomImage(destBBox, nanSigma=nanSigma)
+            destBBox = destImage.getBBox(afwImage.PARENT)
+            self.basicImageTest(srcImage, destImage)
+            
+            for bboxStart in (destXY0, (50, 51)):
+                for bboxDim in ((25, 36), (200, 200)):
+                    destViewBox = afwGeom.Box2I(afwGeom.Point2I(*bboxStart), afwGeom.Extent2I(*bboxDim))
+                    destViewBox.clip(destBBox)
+                    destView = destImage.Factory(destImage, destViewBox, afwImage.PARENT, False)
+                    self.basicImageTest(srcImage, destView)
 
 
 def suite():
@@ -277,13 +245,8 @@ def suite():
     """
     utilsTests.init()
 
-    suites = []
-    suites += unittest.makeSuite(CopyGoodPixelsTestCase)
+    suites = [unittest.makeSuite(CopyGoodPixelsTestCase)]
 
-    if dataDir:
-        suites += unittest.makeSuite(CopyGoodPixelsAfwdataTestCase)
-    else:
-        warnings.warn("Skipping some tests because afwdata is not setup")
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
 
     return unittest.TestSuite(suites)
