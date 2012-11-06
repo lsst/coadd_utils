@@ -1,4 +1,5 @@
 setupRequired(afw >= 4.7.3.0)
+setupRequired(pipe_base)
 setupRequired(pex_config)
 setupOptional(afwdata)
 
