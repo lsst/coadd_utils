@@ -52,7 +52,7 @@ class ScaleZeroPointTaskTestCase(unittest.TestCase):
     """
     def testBasics(self):
         for outZeroPoint in (23, 24):
-            config = ScaleZeroPointTask._ConfigClass()
+            config = ScaleZeroPointTask.ConfigClass()
             config.zeroPoint = outZeroPoint
             zpScaler = ScaleZeroPointTask(config=config)
             outCalib = zpScaler.getCalib()

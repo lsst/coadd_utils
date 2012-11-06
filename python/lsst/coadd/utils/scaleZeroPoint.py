@@ -41,7 +41,7 @@ class ScaleZeroPointTask(pipeBase.Task):
     This simple version assumes that the zero point is spatially invariant.
     A fancier version will likely be wanted for cameras with large fields of view.
     """
-    _ConfigClass = ScaleZeroPointConfig
+    ConfigClass = ScaleZeroPointConfig
     _DefaultName = "scaleZeroPoint"
 
     def __init__(self, *args, **kwargs):
