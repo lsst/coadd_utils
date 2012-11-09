@@ -27,43 +27,23 @@ import lsst.afw.math as afwMath
 import lsst.afw.geom as afwGeom
  
 from lsst.obs.sdss.selectSdssImages import SelectSdssfluxMag0Task
-__all__ = ["ScaleZeroPointTask"]
+__all__ = ["ImageScaler", "ScaleZeroPointTask"]
 
 
-class MultiplicativeScaleFactor():
-    def __init__(self, *args, **kwargs):
-        """Construct a multiplicative scale factor. It consists of  a list of points in tract coordinates. 
-           Each point has an X, Y, and a scalefactor.
+class ImageScaler(object):
+    """A class that scales an image
+    
+    This version uses a single scalar. Fancier versions may use a spatially varying scale.
+    """
+    def __init__(self, scale):
+        self._scale = float(scale)
+
+    def scaleMaskedImage(self, maskedImage):
+        """Apply scale correction to the specified masked image
+        
+        @param[in,out] image to scale; scale is applied in place
         """
-        self.xList = []
-        self.yList = []
-        self.scaleList = []
-        #self.scaleErrList = []
-
-    def getInterpImage(self, bbox):
-        """Return an image interpolated in R.A direction covering supplied bounding box
-        
-         Hard-coded to work with obs_sdss only
-        """
-        npoints = len(self.xList)
-        xvec = afwMath.vectorF(self.xList)
-        zvec = afwMath.vectorF(self.scaleList)      
-        height = bbox.getHeight()
-        width = bbox.getWidth()
-        x0, y0 = bbox.getBegin()
-
-        # I can't get makeInterpolate to work "Message: gsl_interp_init failed: invalid argument supplied by user [4]"
-        # interp = afwMath.makeInterpolate(xvec, zvec, afwMath.Interpolate.LINEAR)
-        # interp = afwMath.makeInterpolate(xvec, zvec) won't initialize spline. 
-        # eval = interp.interpolate(range(y0, height))
-        
-        eval = numpy.interp(range(x0, x0 + width), xvec, zvec)
-        
-        evalGrid, _ =   numpy.meshgrid(eval.astype(numpy.float32),range(0, height))
-        image = afwImage.makeImageFromArray(evalGrid)
-        image.setXY0(x0, y0)
-        return image
-     
+        maskedImage *= self._scale
 
 
 class ScaleZeroPointConfig(pexConfig.Config):
@@ -80,9 +60,9 @@ class ScaleZeroPointTask(pipeBase.Task):
     """Compute scale factor to scale exposures to a desired photometric zero point
     
     This simple version assumes that the zero point is spatially invariant.
-    A fancier version will likely be wanted for cameras with large fields of view.
+    Fancier versions will likely be wanted for cameras with large fields of view.
+    Such fancier versions will probably only need to override computeImageScaler.
     """
-    
     ConfigClass = ScaleZeroPointConfig
     _DefaultName = "scaleZeroPoint"
 
@@ -96,6 +76,34 @@ class ScaleZeroPointTask(pipeBase.Task):
         self._calib.setFluxMag0(fluxMag0)
         
         self.selectFluxMag0 = SelectSdssfluxMag0Task()
+    
+    def run(self, exposure, exposureId):
+        """Scale the specified exposure to the desired photometric zeropoint
+        
+        @param[in,out] exposure: exposure to scale; masked image is scaled in place
+        @param[in] exposureId: data ID for exposure
+        
+        @return a pipeBase.Struct containing:
+        - imageScaler: the image scaling object used to scale exposure
+        """
+        imageScaler = self.computeImageScaler(exposure = exposure, exposureId = exposureId)
+        mi = exposure.getMaskedImage()
+        imageScaler.scaleMaskedImage(mi)
+        return pipeBase.Struct(
+            imageScaler = imageScaler,
+        )
+    
+    def computeImageScaler(self, exposure, exposureId):
+        """Compute image scaling object for a given exposure
+        
+        param[in] exposure: exposure for which scaling is desired
+        param[in] exposureId: data ID for exposure; ignored in this simple version
+        
+        @note This implementation only reads exposure.getCalib() and ignores exposureId. Fancier versions may
+        use exposureId and more data from exposure to determine spatial variation in photometric zeropoint.
+        """
+        scale = self.computeScale(exposure.getCalib()).scale
+        return ImageScaler(scale)
         
     def getCalib(self):
         """Get desired Calib
@@ -104,63 +112,33 @@ class ScaleZeroPointTask(pipeBase.Task):
         """
         return self._calib
 
-    def fluxMag0ToScale(self, fluxMag0):
-        """Comput the scale for the specified fluxMag0
+    def scaleFromFluxMag0(self, fluxMag0):
+        """Compute the scale for the specified fluxMag0
+        
+        This is a wrapper around scaleFromCalib, which see for more information
 
-        @param fluxMag0 
-        @return float 
+        @param[in] fluxMag0
+        @return a pipeBase.Struct containing:
+        - scale, as described in scaleFromCalib.
         """
         calib = afwImage.Calib()
         calib.setFluxMag0(fluxMag0)
-        return self.computeScale(calib).scale
+        return self.computeScale(calib)
 
-    def computeScale(self, calib):
+    def scaleFromCalib(self, calib):
         """Compute the scale for the specified Calib
         
-        Compute the scale such that:
-            scale = computeScale(exposure.getCalib())
-            mi = exposure.getMaskedImage()
-            mi *= scale
-        will scale the exposure to the desired photometric zeropoint
-
-        In this case the scale is a scalar, but it may be some sort of spatially varying function
-        for variants of this task.
+        Compute scale, such that if pixelCalib describes the photometric zeropoint of a pixel
+        then the following scales that pixel to the photometric zeropoint specified by config.zeroPoint:
+            scale = computeScale(pixelCalib)
+            pixel *= scale
         
         @return a pipeBase.Struct containing:
         - scale, as described above.
+        
+        @note: returns a struct to leave room for scaleErr in a future implementation.
         """
         fluxAtZeroPoint = calib.getFlux(self.config.zeroPoint)
         return pipeBase.Struct(
             scale = 1.0 / fluxAtZeroPoint,
-
         )
-    
-    def getScaleFromDb(self, patchRef, wcs, bbox):
-        """
-        Query a database for fluxMag0s and return a MultiplicativeScaleFactor
-
-        First, double the width (R.A. direction) of the patch bounding box. Query the database for
-        overlapping fluxMag0s corresponding to the same run and filter.
-        
-        """
-        scaleFactor = MultiplicativeScaleFactor()
-        buffer = bbox.getWidth()//2
-        biggerBbox = afwGeom.Box2I(afwGeom.Point2I(bbox.getBeginX()-buffer, bbox.getBeginY()),
-                                   afwGeom.Extent2I(bbox.getWidth()+buffer, bbox.getHeight()))
-        cornerPosList = afwGeom.Box2D(biggerBbox).getCorners()
-        coordList = [wcs.pixelToSky(pos) for pos in cornerPosList]
-        runArgDict = self.selectFluxMag0._runArgDictFromDataId(patchRef.dataId)
-        fluxMagInfoList = self.selectFluxMag0.run(coordList, **runArgDict).fluxMagInfoList
-
-        for fluxMagInfo in fluxMagInfoList:
-            print fluxMagInfo.dataId, self.fluxMag0ToScale(fluxMagInfo.fluxMag0)
-            raCenter = (fluxMagInfo.coordList[0].getRa() +  fluxMagInfo.coordList[1].getRa() +
-                        fluxMagInfo.coordList[2].getRa() +  fluxMagInfo.coordList[3].getRa())/ 4.
-            decCenter = (fluxMagInfo.coordList[0].getDec() +  fluxMagInfo.coordList[1].getDec() +
-                        fluxMagInfo.coordList[2].getDec() +  fluxMagInfo.coordList[3].getDec())/ 4.
-            x, y = wcs.skyToPixel(raCenter,decCenter)
-            scaleFactor.xList.append(x)
-            scaleFactor.yList.append(y)          
-            scaleFactor.scaleList.append(self.fluxMag0ToScale(fluxMagInfo.fluxMag0))
-            #self.scaleFactor.scaleErrList.append(self.fluxMag0ToScale(fluxMagInfo.fluxMag0Sigma))
-        return scaleFactor
