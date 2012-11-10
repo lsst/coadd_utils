@@ -106,19 +106,6 @@ class ScaleZeroPointTask(pipeBase.Task):
         """
         return self._calib
 
-    def scaleFromFluxMag0(self, fluxMag0):
-        """Compute the scale for the specified fluxMag0
-        
-        This is a wrapper around scaleFromCalib, which see for more information
-
-        @param[in] fluxMag0
-        @return a pipeBase.Struct containing:
-        - scale, as described in scaleFromCalib.
-        """
-        calib = afwImage.Calib()
-        calib.setFluxMag0(fluxMag0)
-        return self.computeScale(calib)
-
     def scaleFromCalib(self, calib):
         """Compute the scale for the specified Calib
         
@@ -136,3 +123,16 @@ class ScaleZeroPointTask(pipeBase.Task):
         return pipeBase.Struct(
             scale = 1.0 / fluxAtZeroPoint,
         )
+
+    def scaleFromFluxMag0(self, fluxMag0):
+        """Compute the scale for the specified fluxMag0
+        
+        This is a wrapper around scaleFromCalib, which see for more information
+
+        @param[in] fluxMag0
+        @return a pipeBase.Struct containing:
+        - scale, as described in scaleFromCalib.
+        """
+        calib = afwImage.Calib()
+        calib.setFluxMag0(fluxMag0)
+        return self.computeScale(calib)
