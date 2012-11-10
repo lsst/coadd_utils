@@ -138,4 +138,4 @@ class ScaleZeroPointTask(pipeBase.Task):
         """
         calib = afwImage.Calib()
         calib.setFluxMag0(fluxMag0)
-        return self.computeScale(calib)
+        return self.scaleFromCalib(calib)
