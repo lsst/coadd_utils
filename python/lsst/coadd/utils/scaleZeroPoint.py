@@ -19,14 +19,10 @@
 # the GNU General Public License along with this program.  If not, 
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-import numpy
 import lsst.afw.image as afwImage
 import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
-import lsst.afw.math as afwMath
-import lsst.afw.geom as afwGeom
  
-from lsst.obs.sdss.selectSdssImages import SelectSdssfluxMag0Task
 __all__ = ["ImageScaler", "ScaleZeroPointTask"]
 
 
@@ -74,8 +70,6 @@ class ScaleZeroPointTask(pipeBase.Task):
         fluxMag0 = 10**(0.4 * self.config.zeroPoint)
         self._calib = afwImage.Calib()
         self._calib.setFluxMag0(fluxMag0)
-        
-        self.selectFluxMag0 = SelectSdssfluxMag0Task()
     
     def run(self, exposure, exposureId):
         """Scale the specified exposure to the desired photometric zeropoint
