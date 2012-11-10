@@ -26,7 +26,6 @@ import lsst.pipe.base as pipeBase
 import lsst.afw.math as afwMath
 import lsst.afw.geom as afwGeom
  
-from lsst.obs.sdss.selectSdssImages import SelectSdssfluxMag0Task
 __all__ = ["ImageScaler", "ScaleZeroPointTask"]
 
 
@@ -55,7 +54,6 @@ class ScaleZeroPointConfig(pexConfig.Config):
         default = 27.0,
     )
 
-
 class ScaleZeroPointTask(pipeBase.Task):
     """Compute scale factor to scale exposures to a desired photometric zero point
     
@@ -75,8 +73,6 @@ class ScaleZeroPointTask(pipeBase.Task):
         self._calib = afwImage.Calib()
         self._calib.setFluxMag0(fluxMag0)
         
-        self.selectFluxMag0 = SelectSdssfluxMag0Task()
-    
     def run(self, exposure, exposureId):
         """Scale the specified exposure to the desired photometric zeropoint
         
@@ -93,7 +89,7 @@ class ScaleZeroPointTask(pipeBase.Task):
             imageScaler = imageScaler,
         )
     
-    def computeImageScaler(self, exposure, exposureId):
+    def computeImageScaler(self, exposure, exposureId, wcs=None):
         """Compute image scaling object for a given exposure
         
         param[in] exposure: exposure for which scaling is desired
@@ -102,7 +98,7 @@ class ScaleZeroPointTask(pipeBase.Task):
         @note This implementation only reads exposure.getCalib() and ignores exposureId. Fancier versions may
         use exposureId and more data from exposure to determine spatial variation in photometric zeropoint.
         """
-        scale = self.computeScale(exposure.getCalib()).scale
+        scale = self.scaleFromCalib(exposure.getCalib()).scale
         return ImageScaler(scale)
         
     def getCalib(self):
@@ -123,7 +119,7 @@ class ScaleZeroPointTask(pipeBase.Task):
         """
         calib = afwImage.Calib()
         calib.setFluxMag0(fluxMag0)
-        return self.computeScale(calib)
+        return self.scaleFromCalib(calib)
 
     def scaleFromCalib(self, calib):
         """Compute the scale for the specified Calib
