@@ -31,13 +31,17 @@ class ImageScaler(object):
     
     This version uses a single scalar. Fancier versions may use a spatially varying scale.
     """
-    def __init__(self, scale):
+    def __init__(self, scale=1.0):
+        """Construct an ImageScaler
+        
+        @param[in] scale: scale correction to apply (see scaleMaskedImage); default is 1, a null scaler
+        """
         self._scale = float(scale)
 
     def scaleMaskedImage(self, maskedImage):
-        """Apply scale correction to the specified masked image
+        """Scale the specified masked image in place: maskedImage *= scale
         
-        @param[in,out] image to scale; scale is applied in place
+        @param[in,out] maskedImage: masked image to scale
         """
         maskedImage *= self._scale
 
