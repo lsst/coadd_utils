@@ -74,7 +74,7 @@ class ScaleZeroPointTask(pipeBase.Task):
         self._calib = afwImage.Calib()
         self._calib.setFluxMag0(fluxMag0)
 
-    def run(self, exposure, exposureId):
+    def run(self, exposure, exposureId = None):
         """Scale the specified exposure to the desired photometric zeropoint
         
         @param[in,out] exposure: exposure to scale; masked image is scaled in place
@@ -90,7 +90,7 @@ class ScaleZeroPointTask(pipeBase.Task):
             imageScaler = imageScaler,
         )
     
-    def computeImageScaler(self, exposure, exposureId, wcs=None):
+    def computeImageScaler(self, exposure, exposureId = None):
         """Compute image scaling object for a given exposure
         
         param[in] exposure: exposure for which scaling is desired
