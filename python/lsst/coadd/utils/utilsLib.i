@@ -21,7 +21,7 @@
  * the GNU General Public License along with this program.  If not, 
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
- 
+
 %define utilsLib_DOCSTRING
 "
 Python interface to lsst::coadd::utils functions and classes
@@ -34,13 +34,13 @@ Python interface to lsst::coadd::utils functions and classes
 // Everything we will need in the _wrap.cc file
 %{
 #include "boost/cstdint.hpp"
-#include "lsst/pex/logging.h"
-#include "lsst/afw/cameraGeom.h"
 #include "lsst/coadd/utils.h"
 %}
 
 %include "lsst/p_lsstSwig.i"
-%import "lsst/afw/image/imageLib.i"
+%import "lsst/afw/image/Image.i"
+%import "lsst/afw/image/MaskedImage.i"
+%import "lsst/afw/geom/geom_fwd.i"
 
 %lsst_exceptions()
 

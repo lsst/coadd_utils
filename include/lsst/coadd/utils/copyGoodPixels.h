@@ -31,8 +31,8 @@
 */
 #include "boost/cstdint.hpp"
 
-#include "lsst/afw/geom.h"
-#include "lsst/afw/image.h"
+#include "lsst/afw/image/Image.h"
+#include "lsst/afw/image/MaskedImage.h"
 
 namespace lsst {
 namespace coadd {
