@@ -145,7 +145,7 @@ class CoaddTestCase(unittest.TestCase):
         gFilter = afwImage.Filter("g")
         rFilter = afwImage.Filter("r")
         
-        inExp = afwImage.ExposureF(ImSimFile, 0, afwGeom.Box2I(afwGeom.Point2I(0,0), afwGeom.Extent2I(10, 10)))
+        inExp = afwImage.ExposureF(ImSimFile, afwGeom.Box2I(afwGeom.Point2I(0,0), afwGeom.Extent2I(10, 10)))
         coadd = coaddUtils.Coadd(
             bbox = inExp.getBBox(afwImage.PARENT),
             wcs = inExp.getWcs(),

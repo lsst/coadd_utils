@@ -53,7 +53,7 @@ pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
 dataDir = eups.productDir("afwdata")
 if dataDir != None:
-    medMIPath = os.path.join(dataDir, "data", "med")
+    medMIPath = os.path.join(dataDir, "data", "med.fits")
     
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
