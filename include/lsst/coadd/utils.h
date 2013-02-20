@@ -25,5 +25,6 @@
 *
 * @file
 */
+#include "lsst/coadd/utils/copyGoodPixels.h"
 #include "lsst/coadd/utils/addToCoadd.h"
 #include "lsst/coadd/utils/setCoaddEdgeBits.h"

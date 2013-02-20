@@ -130,6 +130,8 @@ class Coadd(object):
         
         If all exposures in this coadd have the same-named filter then that filter is set in the coadd.
         Otherwise the coadd will have the default unknown filter.
+        
+        @warning: the Calib is not be set.
         """
         # make a deep copy so I can scale it
         coaddMaskedImage = self._coadd.getMaskedImage()
@@ -142,7 +144,6 @@ class Coadd(object):
         scaledMaskedImage /= self._weightMap
         
         scaledExposure = afwImage.makeExposure(scaledMaskedImage, self._wcs)
-        scaledExposure.setCalib(self._coadd.getCalib())
         if len(self._filterDict) == 1:
             scaledExposure.setFilter(self._filterDict.values()[0])
         return scaledExposure

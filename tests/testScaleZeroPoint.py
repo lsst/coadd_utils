@@ -22,7 +22,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
-"""Test lsst.coadd.utils.ZeroPointScaler
+"""Test lsst.coadd.utils.ScaleZeroPointTask
 """
 import os
 import pdb # we may want to say pdb.set_trace()
@@ -43,52 +43,54 @@ import lsst.pex.exceptions as pexExcept
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 import lsst.pex.policy as pexPolicy
-from lsst.coadd.utils import ZeroPointScaler
+from lsst.coadd.utils import ScaleZeroPointTask
     
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-class ZeroPointScalerTestCase(unittest.TestCase):
-    """A test case for ZeroPointScaler
+class ScaleZeroPointTaskTestCase(unittest.TestCase):
+    """A test case for ScaleZeroPointTask
     """
     def testBasics(self):
         for outZeroPoint in (23, 24):
-            zpScaler = ZeroPointScaler(zeroPoint = outZeroPoint)
+            config = ScaleZeroPointTask.ConfigClass()
+            config.zeroPoint = outZeroPoint
+            zpScaler = ScaleZeroPointTask(config=config)
+            outCalib = zpScaler.getCalib()
 
-            self.assertAlmostEqual(zpScaler.getCalib().getMagnitude(1.0), outZeroPoint)
+            self.assertAlmostEqual(outCalib.getMagnitude(1.0), outZeroPoint)
             
             for inZeroPoint in (24, 25.5):
-                inExposure = self.makeExposure(inZeroPoint)
-                inMaskedImage = inExposure.getMaskedImage()
-                
-                # use a copy to scale, since the operation is "in place"
-                outExposure = self.makeExposure(inZeroPoint)
-                outMaskedImage = outExposure.getMaskedImage()
-                scaleFac = zpScaler.scaleExposure(outExposure)
-                
-                predScaleFac = 1.0 / inExposure.getCalib().getFlux(outZeroPoint)
-                self.assertAlmostEqual(predScaleFac, scaleFac)
+                exposure = afwImage.ExposureF(10,10)
+                mi = exposure.getMaskedImage()
+                mi.set(1.0) 
+                var = mi.getVariance()
+                var.set(1.0)
 
-                inFluxAtOutZeroPoint = inExposure.getCalib().getFlux(outZeroPoint)
-                outFluxAtOutZeroPoint = outExposure.getCalib().getFlux(outZeroPoint)
-                self.assertAlmostEqual(outFluxAtOutZeroPoint / scaleFac, inFluxAtOutZeroPoint)
-                inFluxMag0 = inExposure.getCalib().getFluxMag0()
-                outFluxMag0 = outExposure.getCalib().getFluxMag0()
-                self.assertAlmostEqual(numpy.round(outFluxMag0[0] / scaleFac, 4), numpy.round(inFluxMag0[0], 4))
-                self.assertAlmostEqual(outFluxMag0[1] / scaleFac, inFluxMag0[1])
+                inCalib = self.makeCalib(inZeroPoint)
+                exposure.setCalib(inCalib)
+                imageScaler = zpScaler.computeImageScaler(exposure)
+
+                predScale = 1.0 / inCalib.getFlux(outZeroPoint)
+                self.assertAlmostEqual(predScale, imageScaler._scale)
                 
-                inImageArr = inMaskedImage.getImage().getArray()
-                outImageArr = outMaskedImage.getImage().getArray()
-                self.assertTrue(numpy.allclose(outImageArr / scaleFac, inImageArr))
-    
-    def makeExposure(self, zeroPoint):
-        maskedImage = afwImage.MaskedImageF(afwGeom.Extent2I(10, 10))
-        exposure = afwImage.ExposureF(maskedImage)
+                inFluxAtOutZeroPoint = exposure.getCalib().getFlux(outZeroPoint)
+                outFluxAtOutZeroPoint = outCalib.getFlux(outZeroPoint)
+                self.assertAlmostEqual(outFluxAtOutZeroPoint / imageScaler._scale, inFluxAtOutZeroPoint)
+
+                inFluxMag0 = exposure.getCalib().getFluxMag0()
+                outFluxMag0 = outCalib.getFluxMag0()
+                self.assertAlmostEqual(outFluxMag0[0] / imageScaler._scale, inFluxMag0[0], places=4)
+
+                imageScaler.scaleMaskedImage(mi)
+                self.assertAlmostEqual(mi.get(1,1)[0], predScale) #check image plane scaled
+                self.assertAlmostEqual(mi.get(1,1)[2], predScale**2) #check variance plane scaled
+
+                                
+    def makeCalib(self, zeroPoint):
         calib = afwImage.Calib()
         fluxMag0 = 10**(0.4 * zeroPoint)
         calib.setFluxMag0(fluxMag0, 1.0)
-        exposure.setCalib(calib)
-        return exposure
-        
+        return calib
 
 
 def suite():
@@ -97,7 +99,7 @@ def suite():
     utilsTests.init()
 
     suites = [
-        unittest.makeSuite(ZeroPointScalerTestCase),
+        unittest.makeSuite(ScaleZeroPointTaskTestCase),
         unittest.makeSuite(utilsTests.MemoryTestCase),
     ]
 
