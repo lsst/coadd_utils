@@ -19,11 +19,16 @@
 # the GNU General Public License along with this program.  If not, 
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
+import numpy
+import lsst.afw.geom as afwGeom
+import lsst.afw.image as afwMath
 import lsst.afw.image as afwImage
 import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
- 
-__all__ = ["ImageScaler", "ScaleZeroPointTask"]
+
+from lsst.coadd.utils.selectFluxMag0 import BaseSelectFluxMag0Task
+
+__all__ = ["ImageScaler", "SpatialImageScaler", "ScaleZeroPointTask"]
 
 
 class ImageScaler(object):
@@ -46,6 +51,58 @@ class ImageScaler(object):
         maskedImage *= self._scale
 
 
+class SpatialImageScaler(ImageScaler):
+    """Multiplicative image scaler using interpolation over a grid of points.
+    
+    Contains the x, y positions in tract coordinates and the scale factors.
+    Interpolates only when scaleMaskedImage() or getInterpImage() is called.
+       
+    Currently the only type of 'interpolation' implemented is CONSTANT which calculates the mean.
+    """
+    
+    def __init__(self, interpStyle, xList, yList, scaleList):
+        """Construct an LsstSimImageScaler
+               
+        @param[in] interpStyle: interpolation style (CONSTANT is only option)
+        @param[in] xList: list of X pixel positions
+        @param[in] yList: list of Y pixel positions
+        @param[in] scaleList: list of multiplicative scale factors at (x,y)
+
+        @raise RuntimeError if the lists have different lengths
+        """
+        if len(xList) != len(yList) or len(xList) != len(scaleList):
+            raise RuntimeError(
+                "len(xList)=%s len(yList)=%s, len(scaleList)=%s but all lists must have the same length" % \
+                (len(xList), len(yList), len(scaleList)))
+
+        #Eventually want this do be: self.interpStyle = getattr(afwMath.Interpolate2D, interpStyle)
+        self._xList = xList
+        self._yList = yList
+        self._scaleList = scaleList
+
+    def scaleMaskedImage(self, maskedImage):
+        """Apply scale correction to the specified masked image
+        
+        @param[in,out] image to scale; scale is applied in place
+        """
+        scale = self.getInterpImage(maskedImage.getBBox(afwImage.PARENT))
+        maskedImage *= scale
+
+    def getInterpImage(self, bbox):
+        """Return an image containing the scale correction with same bounding box as supplied.
+        
+        @param[in] bbox: integer bounding box for image (afwGeom.Box2I)
+        """
+        npoints = len(self._xList)
+
+        if npoints < 1:
+            raise RuntimeError("Cannot create scaling image. Found no fluxMag0s to interpolate")
+
+        image = afwImage.ImageF(bbox, numpy.mean(self._scaleList))
+
+        return image
+
+
 class ScaleZeroPointConfig(pexConfig.Config):
     """Config for ScaleZeroPointTask
     """
@@ -55,12 +112,32 @@ class ScaleZeroPointConfig(pexConfig.Config):
         default = 27.0,
     )
 
+    selectFluxMag0 = pexConfig.ConfigurableField(
+        doc = "Task to select data to compute spatially varying photometric zeropoint",
+        target = BaseSelectFluxMag0Task,
+    )
+
+    doInterpScale = pexConfig.Field(
+        dtype = bool,
+        doc = "Compute a spatially varying scaling?  If false, use fluxMag0 in exposure's Calib.",
+        default = False,
+    )
+    
+    interpStyle = pexConfig.ChoiceField(
+        dtype = str,
+        doc = "Algorithm to interpolate the flux scalings;" \
+              "Currently only one choice implemented",
+        default = "CONSTANT",
+        allowed={
+             "CONSTANT" : "Use a single constant value",
+             }
+    )
+
+
 class ScaleZeroPointTask(pipeBase.Task):
     """Compute scale factor to scale exposures to a desired photometric zero point
     
     This simple version assumes that the zero point is spatially invariant.
-    Fancier versions will likely be wanted for cameras with large fields of view.
-    Such fancier versions will probably only need to override computeImageScaler.
     """
     ConfigClass = ScaleZeroPointConfig
     _DefaultName = "scaleZeroPoint"
@@ -69,10 +146,13 @@ class ScaleZeroPointTask(pipeBase.Task):
         """Construct a ScaleZeroPointTask
         """
         pipeBase.Task.__init__(self, *args, **kwargs)
+        self.makeSubtask("selectFluxMag0")
 
+        #flux at mag=0 is 10^(zeroPoint/2.5)   because m = -2.5*log10(F/F0)       
         fluxMag0 = 10**(0.4 * self.config.zeroPoint)
         self._calib = afwImage.Calib()
         self._calib.setFluxMag0(fluxMag0)
+
 
     def run(self, exposure, exposureId = None):
         """Scale the specified exposure to the desired photometric zeropoint
@@ -91,16 +171,53 @@ class ScaleZeroPointTask(pipeBase.Task):
         )
     
     def computeImageScaler(self, exposure, exposureId = None):
-        """Compute image scaling object for a given exposure
+        """Compute image scaling object for a given exposure.
+        Returns ImageScaler if config.doInterpScale=False;
+        Returns SpatialImageScaler if config.doInterpScale=True
         
         param[in] exposure: exposure for which scaling is desired
-        param[in] exposureId: data ID for exposure; ignored in this simple version
-        
-        @note This implementation only reads exposure.getCalib() and ignores exposureId. Fancier versions may
-        use exposureId and more data from exposure to determine spatial variation in photometric zeropoint.
+        param[in] exposureId: data ID of exposure (or a dict containing 'visit' e.g. {'visit': 882820621})
+                              Ignored for doInterpScale=False
+                              Used to retreive surrounding fluxMag0's from a database. 
         """
-        scale = self.scaleFromCalib(exposure.getCalib()).scale
-        return ImageScaler(scale)
+        if not self.config.doInterpScale:
+            #basic default: reads exposure.getCalib() and ignores exposureId
+            scale = self.scaleFromCalib(exposure.getCalib()).scale
+            return ImageScaler(scale)
+        
+        else: #Return SpatialImageScaler
+            wcs = exposure.getWcs()
+            bbox = exposure.getBBox(afwImage.PARENT)
+            runArgDict = self.selectFluxMag0.runArgDictFromDataId(exposureId)
+
+            fluxMagInfoList = self.selectFluxMag0.run(**runArgDict).fluxMagInfoList
+
+            xList = []
+            yList = []
+            scaleList = []
+
+            for fluxMagInfo in fluxMagInfoList:
+                # find center of field in tract coordinates
+                if not fluxMagInfo.coordList:
+                    raise RuntimeError("no x,y data for fluxMagInfo")
+                ctr = afwGeom.Extent2D()
+                for coord in fluxMagInfo.coordList:
+                    ctr += afwGeom.Extent2D(wcs.skyToPixel(coord))
+
+                ctr = afwGeom.Point2D(ctr / len(fluxMagInfo.coordList))
+                xList.append(ctr.getX())
+                yList.append(ctr.getY())          
+                scaleList.append(self.scaleFromFluxMag0(fluxMagInfo.fluxMag0).scale)
+
+
+            self.log.info("Found %d flux scales for interpolation: %s"% (len(scaleList),
+                                                                         ["%0.4f"%(s) for s in scaleList]))
+            return SpatialImageScaler(
+                interpStyle = self.config.interpStyle,
+                xList = xList,
+                yList = yList,
+                scaleList = scaleList,
+                )        
         
     def getCalib(self):
         """Get desired Calib
