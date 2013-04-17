@@ -1,7 +1,7 @@
-# 
+#
 # LSST Data Management System
 # Copyright 2008, 2009, 2010, 2011, 2012 LSST Corporation.
-# 
+#
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
 #
@@ -9,12 +9,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the LSST License Statement and 
 # the GNU General Public License along with this program.  If not, 
 # see <http://www.lsstcorp.org/LegalNotices/>.
@@ -33,19 +33,19 @@ __all__ = ["ImageScaler", "SpatialImageScaler", "ScaleZeroPointTask"]
 
 class ImageScaler(object):
     """A class that scales an image
-    
+
     This version uses a single scalar. Fancier versions may use a spatially varying scale.
     """
     def __init__(self, scale=1.0):
         """Construct an ImageScaler
-        
-        @param[in] scale: scale correction to apply (see scaleMaskedImage); default is 1, a null scaler
+
+        @param[in] scale: scale correction to apply (see scaleMaskedImage); defaults to null scaler
         """
         self._scale = float(scale)
 
     def scaleMaskedImage(self, maskedImage):
         """Scale the specified masked image in place: maskedImage *= scale
-        
+
         @param[in,out] maskedImage: masked image to scale
         """
         maskedImage *= self._scale
@@ -53,16 +53,16 @@ class ImageScaler(object):
 
 class SpatialImageScaler(ImageScaler):
     """Multiplicative image scaler using interpolation over a grid of points.
-    
+
     Contains the x, y positions in tract coordinates and the scale factors.
     Interpolates only when scaleMaskedImage() or getInterpImage() is called.
-       
+
     Currently the only type of 'interpolation' implemented is CONSTANT which calculates the mean.
     """
-    
+
     def __init__(self, interpStyle, xList, yList, scaleList):
-        """Construct an LsstSimImageScaler
-               
+        """Constructor
+
         @param[in] interpStyle: interpolation style (CONSTANT is only option)
         @param[in] xList: list of X pixel positions
         @param[in] yList: list of Y pixel positions
@@ -72,7 +72,7 @@ class SpatialImageScaler(ImageScaler):
         """
         if len(xList) != len(yList) or len(xList) != len(scaleList):
             raise RuntimeError(
-                "len(xList)=%s len(yList)=%s, len(scaleList)=%s but all lists must have the same length" % \
+                "len(xList)=%s len(yList)=%s, len(scaleList)=%s but all lists must have the same length" %
                 (len(xList), len(yList), len(scaleList)))
 
         #Eventually want this do be: self.interpStyle = getattr(afwMath.Interpolate2D, interpStyle)
@@ -82,7 +82,7 @@ class SpatialImageScaler(ImageScaler):
 
     def scaleMaskedImage(self, maskedImage):
         """Apply scale correction to the specified masked image
-        
+
         @param[in,out] image to scale; scale is applied in place
         """
         scale = self.getInterpImage(maskedImage.getBBox(afwImage.PARENT))
@@ -90,7 +90,7 @@ class SpatialImageScaler(ImageScaler):
 
     def getInterpImage(self, bbox):
         """Return an image containing the scale correction with same bounding box as supplied.
-        
+
         @param[in] bbox: integer bounding box for image (afwGeom.Box2I)
         """
         npoints = len(self._xList)
@@ -122,7 +122,7 @@ class ScaleZeroPointConfig(pexConfig.Config):
         doc = "Compute a spatially varying scaling?  If false, use fluxMag0 in exposure's Calib.",
         default = False,
     )
-    
+
     interpStyle = pexConfig.ChoiceField(
         dtype = str,
         doc = "Algorithm to interpolate the flux scalings;" \
@@ -136,7 +136,7 @@ class ScaleZeroPointConfig(pexConfig.Config):
 
 class ScaleZeroPointTask(pipeBase.Task):
     """Compute scale factor to scale exposures to a desired photometric zero point
-    
+
     This simple version assumes that the zero point is spatially invariant.
     """
     ConfigClass = ScaleZeroPointConfig
@@ -148,43 +148,43 @@ class ScaleZeroPointTask(pipeBase.Task):
         pipeBase.Task.__init__(self, *args, **kwargs)
         self.makeSubtask("selectFluxMag0")
 
-        #flux at mag=0 is 10^(zeroPoint/2.5)   because m = -2.5*log10(F/F0)       
+        #flux at mag=0 is 10^(zeroPoint/2.5)   because m = -2.5*log10(F/F0)
         fluxMag0 = 10**(0.4 * self.config.zeroPoint)
         self._calib = afwImage.Calib()
         self._calib.setFluxMag0(fluxMag0)
 
 
-    def run(self, exposure, exposureId = None):
+    def run(self, exposure, exposureId=None):
         """Scale the specified exposure to the desired photometric zeropoint
-        
+
         @param[in,out] exposure: exposure to scale; masked image is scaled in place
         @param[in] exposureId: data ID for exposure
-        
+
         @return a pipeBase.Struct containing:
         - imageScaler: the image scaling object used to scale exposure
         """
-        imageScaler = self.computeImageScaler(exposure = exposure, exposureId = exposureId)
+        imageScaler = self.computeImageScaler(exposure=exposure, exposureId=exposureId)
         mi = exposure.getMaskedImage()
         imageScaler.scaleMaskedImage(mi)
         return pipeBase.Struct(
             imageScaler = imageScaler,
         )
-    
-    def computeImageScaler(self, exposure, exposureId = None):
+
+    def computeImageScaler(self, exposure, exposureId=None):
         """Compute image scaling object for a given exposure.
         Returns ImageScaler if config.doInterpScale=False;
         Returns SpatialImageScaler if config.doInterpScale=True
-        
+
         param[in] exposure: exposure for which scaling is desired
         param[in] exposureId: data ID of exposure (or a dict containing 'visit' e.g. {'visit': 882820621})
                               Ignored for doInterpScale=False
-                              Used to retreive surrounding fluxMag0's from a database. 
+                              Used to retreive surrounding fluxMag0's from a database.
         """
         if not self.config.doInterpScale:
             #basic default: reads exposure.getCalib() and ignores exposureId
             scale = self.scaleFromCalib(exposure.getCalib()).scale
             return ImageScaler(scale)
-        
+
         else: #Return SpatialImageScaler
             wcs = exposure.getWcs()
             bbox = exposure.getBBox(afwImage.PARENT)
@@ -206,7 +206,7 @@ class ScaleZeroPointTask(pipeBase.Task):
 
                 ctr = afwGeom.Point2D(ctr / len(fluxMagInfo.coordList))
                 xList.append(ctr.getX())
-                yList.append(ctr.getY())          
+                yList.append(ctr.getY())
                 scaleList.append(self.scaleFromFluxMag0(fluxMagInfo.fluxMag0).scale)
 
 
@@ -217,26 +217,26 @@ class ScaleZeroPointTask(pipeBase.Task):
                 xList = xList,
                 yList = yList,
                 scaleList = scaleList,
-                )        
-        
+                )
+
     def getCalib(self):
         """Get desired Calib
-        
+
         @return calibration (lsst.afw.image.Calib) with fluxMag0 set appropriately for config.zeroPoint
         """
         return self._calib
 
     def scaleFromCalib(self, calib):
         """Compute the scale for the specified Calib
-        
+
         Compute scale, such that if pixelCalib describes the photometric zeropoint of a pixel
         then the following scales that pixel to the photometric zeropoint specified by config.zeroPoint:
             scale = computeScale(pixelCalib)
             pixel *= scale
-        
+
         @return a pipeBase.Struct containing:
         - scale, as described above.
-        
+
         @note: returns a struct to leave room for scaleErr in a future implementation.
         """
         fluxAtZeroPoint = calib.getFlux(self.config.zeroPoint)
@@ -246,7 +246,7 @@ class ScaleZeroPointTask(pipeBase.Task):
 
     def scaleFromFluxMag0(self, fluxMag0):
         """Compute the scale for the specified fluxMag0
-        
+
         This is a wrapper around scaleFromCalib, which see for more information
 
         @param[in] fluxMag0

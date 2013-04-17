@@ -36,7 +36,7 @@ class SelectFluxMag0Config(SelectImagesConfig):
 
 class BaseFluxMagInfo(BaseExposureInfo):
     """Create exposure information from a query result from a db connection
-    
+
     Data includes:
     - dataId: data ID of exposure (a dict)
     - coordList: a list of corner coordinates of the exposure (list of IcrsCoord)
@@ -45,29 +45,10 @@ class BaseFluxMagInfo(BaseExposureInfo):
 
     Subclasses must provide an __init__  and override getColumnNames.
     """
-    
+
     def __init__(self, result):
         """Set exposure information based on a query result from a db connection
-        Override this in the obs_X package.
-        
-        For example for lsstSim:
-        BaseFluxMagInfo.__init__(self)
-        self.dataId = dict(
-           visit =  result[self._nextInd],
-           raft = result[self._nextInd],
-           ccd = result[self._nextInd],
-           filter = result[self._nextInd],
-        )
-        self.coordList = []
-        for i in range(4):
-            self.coordList.append(
-                IcrsCoord(
-                    afwGeom.Angle(result[self._nextInd], afwGeom.degrees),
-                    afwGeom.Angle(result[self._nextInd], afwGeom.degrees),
-                )
-            )
-        self.fluxMag0 = result[self._nextInd]
-        self.fluxMag0Sigma = result[self._nextInd]
+        Override this in the obs_XXX package.
         """
         BaseExposureInfo.__init__(self)
 
@@ -75,21 +56,13 @@ class BaseFluxMagInfo(BaseExposureInfo):
     @staticmethod
     def getColumnNames():
         """Get database columns to retrieve, in a format useful to the database interface
-        
+
         @return database column names as list of strings
-
-        Override in obs_X package. For example for lsstSim:
-
-        return (
-            "visit raftName ccdName filterName".split() + \
-            "corner1Ra corner1Decl corner2Ra corner2Decl".split() + \
-            "corner3Ra corner3Decl corner4Ra corner4Decl".split() + \
-            "fluxMag0 fluxMag0Sigma".split()
-        )
+        Override in obs_XXX package. See obs_lsstSim for example.
         """
         raise NotImplementedError()
 
-    
+
 class BaseSelectFluxMag0Task(pipeBase.Task):
     """
     """
@@ -99,8 +72,8 @@ class BaseSelectFluxMag0Task(pipeBase.Task):
     def run(self, visit):
         """Select flugMag0's of LsstSim images for a particular visit
 
-        @param[in] visit: visit id 
-        
+        @param[in] visit: visit id
+
         @return a pipeBase Struct containing:
         - fluxMagInfoList: a list of FluxMagInfo objects
         """
@@ -108,7 +81,7 @@ class BaseSelectFluxMag0Task(pipeBase.Task):
 
     def runArgDictFromDataId(self, dataId):
         """Extract keyword arguments for visit (other than coordList) from a data ID
-        
+
         @param[in] dataId: a data ID dict
         @return keyword arguments for visit (other than coordList), as a dict
         """
