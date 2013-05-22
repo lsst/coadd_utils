@@ -147,7 +147,7 @@ class ScaleZeroPointTask(pipeBase.Task):
         self._calib = afwImage.Calib()
         self._calib.setFluxMag0(fluxMag0)
 
-    def run(self, exposure, exposureId=None):
+    def run(self, exposure, dataRef=None):
         """Scale the specified exposure to the desired photometric zeropoint
 
         @param[in,out] exposure: exposure to scale; masked image is scaled in place
@@ -157,14 +157,14 @@ class ScaleZeroPointTask(pipeBase.Task):
         @return a pipeBase.Struct containing:
         - imageScaler: the image scaling object used to scale exposure
         """
-        imageScaler = self.computeImageScaler(exposure=exposure, exposureId=exposureId)
+        imageScaler = self.computeImageScaler(exposure=exposure, dataRef=dataRef)
         mi = exposure.getMaskedImage()
         imageScaler.scaleMaskedImage(mi)
         return pipeBase.Struct(
             imageScaler = imageScaler,
         )
 
-    def computeImageScaler(self, exposure, exposureId=None):
+    def computeImageScaler(self, exposure, dataRef=None):
         """Compute image scaling object for a given exposure.
 
         @param[in] exposure: exposure for which scaling is desired
@@ -225,7 +225,7 @@ class SpatialScaleZeroPointTask(ScaleZeroPointTask):
         ScaleZeroPointTask.__init__(self, *args, **kwargs)
         self.makeSubtask("selectFluxMag0")
 
-    def run(self, exposure, exposureId):
+    def run(self, exposure, dataRef):
         """Scale the specified exposure to the desired photometric zeropoint
 
         @param[in,out] exposure: exposure to scale; masked image is scaled in place
@@ -234,14 +234,14 @@ class SpatialScaleZeroPointTask(ScaleZeroPointTask):
         @return a pipeBase.Struct containing:
         - imageScaler: the image scaling object used to scale exposure
         """
-        imageScaler = self.computeImageScaler(exposure=exposure, exposureId=exposureId)
+        imageScaler = self.computeImageScaler(exposure=exposure, dataRef=dataRef)
         mi = exposure.getMaskedImage()
         imageScaler.scaleMaskedImage(mi)
         return pipeBase.Struct(
             imageScaler = imageScaler,
         )
 
-    def computeImageScaler(self, exposure, exposureId):
+    def computeImageScaler(self, exposure, dataRef):
         """Compute image scaling object for a given exposure.
 
         @param[in] exposure: exposure for which scaling is desired. Only wcs and bbox are used.
@@ -254,7 +254,7 @@ class SpatialScaleZeroPointTask(ScaleZeroPointTask):
         wcs = exposure.getWcs()
         bbox = exposure.getBBox(afwImage.PARENT)
 
-        fluxMagInfoList = self.selectFluxMag0.run(exposureId).fluxMagInfoList
+        fluxMagInfoList = self.selectFluxMag0.run(dataRef.dataId).fluxMagInfoList
 
         xList = []
         yList = []
