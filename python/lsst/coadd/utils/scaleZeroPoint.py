@@ -151,7 +151,7 @@ class ScaleZeroPointTask(pipeBase.Task):
         """Scale the specified exposure to the desired photometric zeropoint
 
         @param[in,out] exposure: exposure to scale; masked image is scaled in place
-        @param[in] exposureId: data ID for exposure.
+        @param[in] dataRef: dataRef for exposure.
                                Not used, but in API so that users can switch between spatially variant
                                and invariant tasks
         @return a pipeBase.Struct containing:
@@ -168,7 +168,7 @@ class ScaleZeroPointTask(pipeBase.Task):
         """Compute image scaling object for a given exposure.
 
         @param[in] exposure: exposure for which scaling is desired
-        @param[in] exposureId: data ID for exposure.
+        @param[in] dataRef: dataRef for exposure.
                                Not used, but in API so that users can switch between spatially variant
                                and invariant tasks
         """
@@ -229,7 +229,7 @@ class SpatialScaleZeroPointTask(ScaleZeroPointTask):
         """Scale the specified exposure to the desired photometric zeropoint
 
         @param[in,out] exposure: exposure to scale; masked image is scaled in place
-        @param[in] exposureId: data ID for exposure
+        @param[in] dataRef: dataRef for exposure
 
         @return a pipeBase.Struct containing:
         - imageScaler: the image scaling object used to scale exposure
@@ -245,9 +245,8 @@ class SpatialScaleZeroPointTask(ScaleZeroPointTask):
         """Compute image scaling object for a given exposure.
 
         @param[in] exposure: exposure for which scaling is desired. Only wcs and bbox are used.
-        @param[in] exposureId: dataId of exposure (or a dict containing at least the visit-level key:
-                              e.g. {'visit': 882820621})
-                              Used to retrieve all applicable fluxMag0's from a database.
+        @param[in] dataRef: dataRef of exposure
+                            dataRef.dataId used to retrieve all applicable fluxMag0's from a database.
         @return a SpatialImageScaler
         """
 
