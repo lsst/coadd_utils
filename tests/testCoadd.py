@@ -69,7 +69,7 @@ class CoaddTestCase(unittest.TestCase):
         inMaskedImage = inExp.getMaskedImage()
         for badMaskPlanes in (
             (),
-            ("EDGE", "BAD"),
+            ("NO_DATA", "BAD"),
         ):
             coadd = coaddUtils.Coadd(
                 bbox = inExp.getBBox(),
@@ -114,10 +114,10 @@ class CoaddTestCase(unittest.TestCase):
         bbox = inExp.getBBox()
         wcs = inExp.getWcs()
         for badMaskPlanes, bbox in (
-            (("EDGE",),         afwGeom.Box2I(afwGeom.Point2I(  1,    2), afwGeom.Extent2I(100, 102))),
-            (("EDGE", "BAD"),   afwGeom.Box2I(afwGeom.Point2I(  0,    0), afwGeom.Extent2I(100, 102))),
-            (("EDGE",),         afwGeom.Box2I(afwGeom.Point2I(104,    0), afwGeom.Extent2I(  5,  10))),
-            (("EDGE",),         afwGeom.Box2I(afwGeom.Point2I(  0, 1020), afwGeom.Extent2I(100, 102))),
+            (("NO_DATA",),         afwGeom.Box2I(afwGeom.Point2I(  1,    2), afwGeom.Extent2I(100, 102))),
+            (("NO_DATA", "BAD"),   afwGeom.Box2I(afwGeom.Point2I(  0,    0), afwGeom.Extent2I(100, 102))),
+            (("NO_DATA",),         afwGeom.Box2I(afwGeom.Point2I(104,    0), afwGeom.Extent2I(  5,  10))),
+            (("NO_DATA",),         afwGeom.Box2I(afwGeom.Point2I(  0, 1020), afwGeom.Extent2I(100, 102))),
         ):
             coadd = coaddUtils.Coadd(
                 bbox = bbox,
@@ -147,7 +147,7 @@ class CoaddTestCase(unittest.TestCase):
         coadd = coaddUtils.Coadd(
             bbox = inExp.getBBox(),
             wcs = inExp.getWcs(),
-            badMaskPlanes = ("EDGE", "BAD"),
+            badMaskPlanes = ("NO_DATA", "BAD"),
         )
 
         inExp.setFilter(gFilter)
