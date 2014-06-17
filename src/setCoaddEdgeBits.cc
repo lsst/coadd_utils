@@ -46,7 +46,7 @@ void coaddUtils::setCoaddEdgeBits(
     typedef typename afwImage::Image<WeightPixelT>::const_x_iterator WeightMapConstXIter;
 
     if (coaddMask.getDimensions() != weightMap.getDimensions()) {
-        throw LSST_EXCEPT(pexExcept::InvalidParameterException,
+        throw LSST_EXCEPT(pexExcept::InvalidParameterError,
             (boost::format("coaddMask and weightMap dimensions differ: %dx%d != %dx%d") %
             coaddMask.getWidth() % coaddMask.getHeight() % weightMap.getWidth() % weightMap.getHeight()
             ).str());

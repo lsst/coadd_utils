@@ -49,7 +49,7 @@ namespace utils {
     *
     * @return overlapBBox: overlapping bounding box, relative to parent image (hence xy0 is taken into account)
     *
-    * @throw pexExcept::InvalidParameterException if coadd and weightMap dimensions or xy0 do not match.
+    * @throw pexExcept::InvalidParameterError if coadd and weightMap dimensions or xy0 do not match.
     */
     template<typename CoaddPixelT, typename WeightPixelT>
     lsst::afw::geom::Box2I addToCoadd(
@@ -71,7 +71,7 @@ namespace utils {
     *
     * @return overlapBBox: overlapping bounding box, relative to parent image (hence xy0 is taken into account)
     *
-    * @throw pexExcept::InvalidParameterException if coadd and weightMap dimensions or xy0 do not match.
+    * @throw pexExcept::InvalidParameterError if coadd and weightMap dimensions or xy0 do not match.
     */
     template<typename CoaddPixelT, typename WeightPixelT>
     lsst::afw::geom::Box2I addToCoadd(
