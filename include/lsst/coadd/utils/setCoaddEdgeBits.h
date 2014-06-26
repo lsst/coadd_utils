@@ -43,7 +43,7 @@ namespace utils {
     * Set pixels in the image to the edge pixel when the corresponding pixel in the weight map is zero.
     * The edge pixel is image=nan, variance=inf, mask=EDGE for masked images and image=nan for plain images.
     *
-    * @throw pexExcept::InvalidParameterException if the dimensions of coaddMask and weightMap do not match.
+    * @throw pexExcept::InvalidParameterError if the dimensions of coaddMask and weightMap do not match.
     */
     template<typename WeightPixelT>
     void setCoaddEdgeBits(
