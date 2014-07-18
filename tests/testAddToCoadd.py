@@ -291,7 +291,7 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
             try:
                 coaddUtils.addToCoadd(coadd, weightMap, maskedImage, 0x0, 0.1)
                 self.fail("should have raised exception")
-            except pexExcept.LsstCppException, e:
+            except pexExcept.Exception as e:
                 pass
         for dx0, dy0 in (1, 0), (0, 1), (-1, 0), (0, -1):
             weightMapBBox = afwGeom.Box2I(coadd.getXY0() + afwGeom.Extent2I(dx0, dy0), coadd.getDimensions())
@@ -299,7 +299,7 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
             try:
                 coaddUtils.addToCoadd(coadd, weightMap, maskedImage, 0x0, 0.1)
                 self.fail("should have raised exception")
-            except pexExcept.LsstCppException, e:
+            except pexExcept.Exception as e:
                 pass
 
 def suite():
