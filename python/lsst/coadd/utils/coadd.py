@@ -109,7 +109,7 @@ class Coadd(object):
         # compute the weight
         statObj = afwMath.makeStatistics(maskedImage.getVariance(), maskedImage.getMask(),
             afwMath.MEANCLIP, self._statsControl)
-        meanVar, meanVarErr = statObj.getResult(afwMath.MEANCLIP);
+        meanVar = statObj.getResult(afwMath.MEANCLIP)[0]
         weight = weightFactor / float(meanVar)
         if math.isnan(weight):
             raise RuntimeError("Weight is NaN (weightFactor=%s; mean variance=%s)" % (weightFactor, meanVar))

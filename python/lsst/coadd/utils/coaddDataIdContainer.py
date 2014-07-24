@@ -2,6 +2,8 @@ import lsst.pipe.base as pipeBase
 
 __all__=["CoaddDataIdContainer"]
 
+import argparse
+
 class CoaddDataIdContainer(pipeBase.DataIdContainer):
     """A version of lsst.pipe.base.DataIdContainer specialized for coaddition.
 
