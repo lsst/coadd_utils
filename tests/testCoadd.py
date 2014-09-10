@@ -25,10 +25,8 @@
 """Test lsst.coadd.utils.Coadd
 """
 import os
-import pdb # we may want to say pdb.set_trace()
 import unittest
 import warnings
-import sys
 
 import numpy
 
@@ -37,10 +35,7 @@ import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.image.utils as imageUtils
 import lsst.afw.image.testUtils as imTestUtils
-import lsst.afw.math as afwMath
-import lsst.afw.display.ds9 as ds9
 import lsst.utils.tests as utilsTests
-import lsst.pex.exceptions as pexExcept
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 import lsst.pex.policy as pexPolicy
@@ -68,8 +63,6 @@ class CoaddTestCase(unittest.TestCase):
         """
         inExp = afwImage.ExposureF(ImSimFile)
         inMaskedImage = inExp.getMaskedImage()
-        bbox = inExp.getBBox(afwImage.PARENT)
-        wcs = inExp.getWcs()
         for badMaskPlanes in (
             (),
             ("EDGE", "BAD"),
@@ -105,7 +98,7 @@ class CoaddTestCase(unittest.TestCase):
                 toPixPos2 = wcs2.skyToPixel(sky1)
                 if not numpy.allclose((xPixPos, yPixPos), toPixPos1):
                     self.fail("wcs do not match at sky1=%s: fromPixPos=%s != toPixPos1=%s" % \
-                        (sky1, fromPixPos1, toPixPos1))
+                        (sky1, fromPixPos, toPixPos1))
                 if not numpy.allclose(toPixPos1, toPixPos2):
                     self.fail("wcs do not match at fromPixPos=%s, sky1=%s: toPixPos1=%s != toPixPos2=%s" % \
                         (fromPixPos, sky1, toPixPos1, toPixPos2))
@@ -145,7 +138,8 @@ class CoaddTestCase(unittest.TestCase):
         gFilter = afwImage.Filter("g")
         rFilter = afwImage.Filter("r")
         
-        inExp = afwImage.ExposureF(ImSimFile, afwGeom.Box2I(afwGeom.Point2I(0,0), afwGeom.Extent2I(10, 10)))
+        inExp = afwImage.ExposureF(ImSimFile, afwGeom.Box2I(afwGeom.Point2I(0,0), afwGeom.Extent2I(10, 10)),
+            afwImage.PARENT)
         coadd = coaddUtils.Coadd(
             bbox = inExp.getBBox(afwImage.PARENT),
             wcs = inExp.getWcs(),
