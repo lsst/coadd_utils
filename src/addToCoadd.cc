@@ -87,14 +87,14 @@ namespace {
     ) {
         typedef typename afwImage::Image<WeightPixelT> WeightMapT;
         
-        if (coadd.getBBox(afwImage::PARENT) != weightMap.getBBox(afwImage::PARENT)) {
+        if (coadd.getBBox() != weightMap.getBBox()) {
             throw LSST_EXCEPT(pexExcept::InvalidParameterError,
                 (boost::format("coadd and weightMap parent bboxes differ: %s != %s") %
-                coadd.getBBox(afwImage::PARENT) % weightMap.getBBox(afwImage::PARENT)).str());
+                coadd.getBBox() % weightMap.getBBox()).str());
         }
         
-        afwGeom::Box2I overlapBBox = coadd.getBBox(afwImage::PARENT);
-        overlapBBox.clip(image.getBBox(afwImage::PARENT));
+        afwGeom::Box2I overlapBBox = coadd.getBBox();
+        overlapBBox.clip(image.getBBox());
         if (overlapBBox.isEmpty()) {
             return overlapBBox;
         }

@@ -68,7 +68,7 @@ class CoaddTestCase(unittest.TestCase):
             ("EDGE", "BAD"),
         ):
             coadd = coaddUtils.Coadd(
-                bbox = inExp.getBBox(afwImage.PARENT),
+                bbox = inExp.getBBox(),
                 wcs = inExp.getWcs(),
                 badMaskPlanes = badMaskPlanes,
             )
@@ -107,7 +107,7 @@ class CoaddTestCase(unittest.TestCase):
         """Test getters for coadd
         """
         inExp = afwImage.ExposureF(ImSimFile)
-        bbox = inExp.getBBox(afwImage.PARENT)
+        bbox = inExp.getBBox()
         wcs = inExp.getWcs()
         for badMaskPlanes, bbox in (
             (("EDGE",),         afwGeom.Box2I(afwGeom.Point2I(  1,    2), afwGeom.Extent2I(100, 102))),
@@ -141,7 +141,7 @@ class CoaddTestCase(unittest.TestCase):
         inExp = afwImage.ExposureF(ImSimFile, afwGeom.Box2I(afwGeom.Point2I(0,0), afwGeom.Extent2I(10, 10)),
             afwImage.PARENT)
         coadd = coaddUtils.Coadd(
-            bbox = inExp.getBBox(afwImage.PARENT),
+            bbox = inExp.getBBox(),
             wcs = inExp.getWcs(),
             badMaskPlanes = ("EDGE", "BAD"),
         )

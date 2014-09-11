@@ -83,7 +83,7 @@ def warpAndCoadd(coaddPath, exposureListPath, config):
     print "SaveDebugImages =", config.saveDebugImages
     print "bbox =", bbox
     
-    zpScaler = coaddUtils.ZeropointScaler(self.config.coaddZeroPoint)
+    zpScaler = coaddUtils.ZeropointScaler(config.coaddZeroPoint)
 
     # process exposures
     accumGoodTime = 0
@@ -109,7 +109,7 @@ def warpAndCoadd(coaddPath, exposureListPath, config):
                     print >> sys.stderr, "Create warper and coadd with size and WCS matching the first/reference exposure"
                     warper = afwMath.Warper.fromConfig(config.warp)
                     coadd = coaddUtils.Coadd.fromConfig(
-                        bbox = exposure.getBBox(afwImage.PARENT),
+                        bbox = exposure.getBBox(),
                         wcs = exposure.getWcs(),
                         config = config.coadd)
                     print "badPixelMask=", coadd.getBadPixelMask()
