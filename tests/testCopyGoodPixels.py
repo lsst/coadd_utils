@@ -24,22 +24,14 @@
 
 """Test lsst.coadd.utils.copyGoodPixels
 """
-import os
-import pdb # we may want to say pdb.set_trace()
 import unittest
-import warnings
-import sys
 
 import numpy
 
-import eups
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.image.testUtils as imTestUtils
-import lsst.afw.math as afwMath
-import lsst.afw.display.ds9 as ds9
 import lsst.utils.tests as utilsTests
-import lsst.pex.exceptions as pexExcept
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 
@@ -70,11 +62,11 @@ def referenceCopyGoodPixelsImage(destImage, srcImage):
     """
     destImage = destImage.Factory(destImage, True) # make deep copy
 
-    overlapBBox = destImage.getBBox(afwImage.PARENT)
-    overlapBBox.clip(srcImage.getBBox(afwImage.PARENT))
+    overlapBBox = destImage.getBBox()
+    overlapBBox.clip(srcImage.getBBox())
     
     if overlapBBox.isEmpty():
-        return (destImageArray, 0)
+        return (destImage, 0)
     
     destImageView = destImage.Factory(destImage, overlapBBox, afwImage.PARENT, False)
     destImageArray = destImageView.getArray()
@@ -104,11 +96,11 @@ def referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badPixelMask):
     """
     destImage = destImage.Factory(destImage, True) # make deep copy
 
-    overlapBBox = destImage.getBBox(afwImage.PARENT)
-    overlapBBox.clip(srcImage.getBBox(afwImage.PARENT))
+    overlapBBox = destImage.getBBox()
+    overlapBBox.clip(srcImage.getBBox())
     
     if overlapBBox.isEmpty():
-        return (destImageArray, 0)
+        return (destImage, 0)
     
     destImageView = destImage.Factory(destImage, overlapBBox, afwImage.PARENT, False)
     destImageArrayList = destImageView.getArrays()
@@ -210,7 +202,7 @@ class CopyGoodPixelsTestCase(unittest.TestCase):
         srcImage = self.getRandomMaskedImage(srcBBox)
         for badMask in (0, 3, MaxMask):
             destImage = self.getRandomMaskedImage(destBBox, excludeMask=badMask)
-            destBBox = destImage.getBBox(afwImage.PARENT)
+            destBBox = destImage.getBBox()
             self.basicMaskedImageTest(srcImage, destImage, badMask)
             
             for bboxStart in (destXY0, (50, 51)):
@@ -229,7 +221,7 @@ class CopyGoodPixelsTestCase(unittest.TestCase):
         srcImage = self.getRandomImage(srcBBox)
         for nanSigma in (0, 0.7, 2.0):
             destImage = self.getRandomImage(destBBox, nanSigma=nanSigma)
-            destBBox = destImage.getBBox(afwImage.PARENT)
+            destBBox = destImage.getBBox()
             self.basicImageTest(srcImage, destImage)
             
             for bboxStart in (destXY0, (50, 51)):

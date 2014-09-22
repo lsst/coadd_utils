@@ -83,8 +83,8 @@ namespace {
         ImageT const &srcImage,                             ///< image to copy
         lsst::afw::image::MaskPixel const badPixelMask      ///< bad pixel mask; may be ignored
     ) {
-        afwGeom::Box2I overlapBBox = destImage.getBBox(afwImage::PARENT);
-        overlapBBox.clip(srcImage.getBBox(afwImage::PARENT));
+        afwGeom::Box2I overlapBBox = destImage.getBBox();
+        overlapBBox.clip(srcImage.getBBox());
         if (overlapBBox.isEmpty()) {
             return 0;
         }

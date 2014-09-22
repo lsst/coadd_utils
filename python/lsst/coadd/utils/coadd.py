@@ -63,7 +63,7 @@ class Coadd(object):
         self._wcs = wcs
         self._badPixelMask = afwImage.MaskU.getPlaneBitMask(badMaskPlanes)
         self._coadd = afwImage.ExposureF(bbox, wcs)
-        self._weightMap = afwImage.ImageF(bbox, afwImage.PARENT)
+        self._weightMap = afwImage.ImageF(bbox)
         self._filterDict = dict() # dict of filter name: filter object for all filters seen so far
 
         self._statsControl = afwMath.StatisticsControl()
