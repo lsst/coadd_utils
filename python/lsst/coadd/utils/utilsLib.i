@@ -40,6 +40,8 @@ Python interface to lsst::coadd::utils functions and classes
 %}
 
 %include "lsst/p_lsstSwig.i"
+%initializeNumPy(coadd_utils)
+
 %import "lsst/afw/image/imageLib.i"
 
 %lsst_exceptions()
