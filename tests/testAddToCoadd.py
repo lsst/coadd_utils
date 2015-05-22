@@ -30,7 +30,7 @@ import warnings
 
 import numpy
 
-import eups
+import lsst.utils
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
@@ -48,7 +48,11 @@ except NameError:
 
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
-dataDir = eups.productDir("afwdata")
+try:
+    dataDir = lsst.utils.getPackageDir('afwdata')
+except Exception:
+    dataDir = None
+
 if dataDir != None:
     medMIPath = os.path.join(dataDir, "data", "med.fits")
     

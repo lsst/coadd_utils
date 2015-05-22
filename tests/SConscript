@@ -1,12 +1,13 @@
 # -*- python -*-
 import os
+import lsst.utils
 from lsst.sconsUtils import scripts, env
 
-dataDir = env.ProductDir("afwdata")
-if not dataDir:
+try:
+    afwdataDir = lsst.utils.getPackageDir('afwdata')
+except Exception:
     print "Warning: afwdata is not set up; not running the tests!"
-else:    
+else:
     # copy AFWDATA_DIR to the test's environment
-    env["ENV"]["AFWDATA_DIR"] = os.environ["AFWDATA_DIR"]
-
+    env["ENV"]["AFWDATA_DIR"] = afwdataDir
     scripts.BasicSConscript.tests()
