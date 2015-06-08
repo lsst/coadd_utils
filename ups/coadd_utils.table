@@ -1,6 +1,7 @@
 setupRequired(afw)
 setupRequired(pipe_base)
 setupRequired(pex_config)
+setupRequired(utils)
 setupOptional(afwdata)
 
 envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)

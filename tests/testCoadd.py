@@ -30,7 +30,7 @@ import warnings
 
 import numpy
 
-import eups
+import lsst.utils
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.image.utils as imageUtils
@@ -48,7 +48,11 @@ except NameError:
 
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
-AfwDataDir = eups.productDir("afwdata")
+try:
+    AfwDataDir = lsst.utils.getPackageDir('afwdata')
+except Exception:
+    AfwDataDir = None
+
 if AfwDataDir != None:
     ImSimFile = os.path.join(AfwDataDir, "ImSim/calexp/v85408556-fr/R23/S11.fits")
     
