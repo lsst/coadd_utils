@@ -1,6 +1,6 @@
 import lsst.pipe.base as pipeBase
 
-__all__=["CoaddDataIdContainer"]
+__all__=["CoaddDataIdContainer", "ExistingCoaddDataIdContainer"]
 
 import argparse
 
@@ -48,3 +48,8 @@ class CoaddDataIdContainer(pipeBase.DataIdContainer):
             self.refList += [namespace.butler.dataRef(datasetType=datasetType, dataId=addId)
                              for addId in addList]
 
+class ExistingCoaddDataIdContainer(CoaddDataIdContainer):
+    """A version of CoaddDataIdContainer that only produces references that exist"""
+    def makeDataRefList(self, namespace):
+        super(ExistingCoaddDataIdContainer, self).makeDataRefList(namespace)
+        self.refList = [ref for ref in self.refList if ref.datasetExists()]
