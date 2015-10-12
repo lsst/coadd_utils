@@ -24,16 +24,12 @@
 
 """Test lsst.coadd.utils.setCoaddEdgeBits
 """
-import os
-import math
-import pdb # we may want to say pdb.set_trace()
 import unittest
 
 import numpy
 
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
-import lsst.afw.image.testUtils as imTestUtils
 import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils

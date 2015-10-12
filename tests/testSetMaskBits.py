@@ -24,7 +24,6 @@
 
 """Test lsst.coadd.utils.setMaskBits
 """
-import pdb # we may want to say pdb.set_trace()
 import unittest
 
 import lsst.afw.image as afwImage
