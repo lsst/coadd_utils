@@ -136,14 +136,12 @@ class AddToCoaddTestCase(unittest.TestCase):
 
             badBits = 0x1
             badPixel = (float("NaN"), badBits, 0)
-            zero = (0.0, 0x0, 0)
             truth = (trueImageValue, 0x0, 0)
         else:
             coadd = afwImage.ImageF(imBBox)
             weightMap = coadd.Factory(coadd.getBBox())
 
             badPixel = float("NaN")
-            zero = 0.0
             truth = trueImageValue
 
         for i in range(0, 20, 3):
@@ -211,7 +209,6 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
         self.assertEquals(overlapBBox, afwOverlapBox)
         
         coaddArrayList = coadd.getArrays()
-        maskArr = coaddArrayList[1]
         weightMapArray = weightMap.getArray()
         
         for name, ind in (("image", 0), ("mask", 1), ("variance", 2)):
@@ -292,7 +289,7 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
             try:
                 coaddUtils.addToCoadd(coadd, weightMap, maskedImage, 0x0, 0.1)
                 self.fail("should have raised exception")
-            except pexExcept.Exception as e:
+            except pexExcept.Exception:
                 pass
         for dx0, dy0 in (1, 0), (0, 1), (-1, 0), (0, -1):
             weightMapBBox = afwGeom.Box2I(coadd.getXY0() + afwGeom.Extent2I(dx0, dy0), coadd.getDimensions())
