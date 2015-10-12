@@ -59,7 +59,8 @@ class SetCoaddEdgeBitsTestCase(unittest.TestCase):
         
         refCoaddMaskArray = coaddMask.getArray()
         edgeMask = afwImage.MaskU.getPlaneBitMask("NO_DATA")
-        refCoaddMaskArray |= numpy.where(depthMapArray > 0, 0, edgeMask)
+        refCoaddMaskArray |= numpy.array(numpy.where(depthMapArray > 0, 0, edgeMask),
+            dtype=refCoaddMaskArray.dtype)
         
         coaddUtils.setCoaddEdgeBits(coaddMask, depthMap)
         coaddMaskArray = coaddMask.getArray()
