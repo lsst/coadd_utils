@@ -60,8 +60,6 @@ class CoaddDataIdContainer(pipeBase.DataIdContainer):
                            for tract in self.getSkymap(namespace, datasetType) for patch in tract]
             elif not "patch" in dataId:
                 tract = self.getSkymap(namespace, datasetType)[dataId["tract"]]
-                import pdb
-                pdb.set_trace()
                 addList = [dict(patch="%d,%d" % patch.getIndex(), **dataId) for patch in tract]
             else:
                 addList = [dataId]
