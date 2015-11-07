@@ -34,7 +34,6 @@ import lsst.utils
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.image.utils as imageUtils
-import lsst.afw.image.testUtils as imTestUtils
 import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
@@ -58,7 +57,7 @@ if AfwDataDir != None:
     
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-class CoaddTestCase(unittest.TestCase):
+class CoaddTestCase(utilsTests.TestCase):
     """A test case for Coadd
     """
 
@@ -84,10 +83,8 @@ class CoaddTestCase(unittest.TestCase):
             badMask = coadd.getBadPixelMask()
             skipMaskArr = inMaskArr & badMask != 0
     
-            errStr = imTestUtils.maskedImagesDiffer(inMaskedImage.getArrays(), coaddMaskedImage.getArrays(),
-                skipMaskArr=skipMaskArr)
-            if errStr:
-                self.fail("coadd != input exposure: %s" % (errStr,))
+            msg = "coadd != input exposure"
+            self.assertMaskedImagesNearlyEqual(inMaskedImage, coaddMaskedImage, skipMask=skipMaskArr, msg=msg)
 
     def assertWcsSame(self, wcs1, wcs2):
         for xPixPos in (0, 1000, 2000):
