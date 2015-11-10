@@ -30,7 +30,6 @@ import numpy
 
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
-import lsst.afw.image.testUtils as imTestUtils
 import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
@@ -120,7 +119,7 @@ def referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badPixelMask):
 
 MaxMask = 0xFFFF
 
-class CopyGoodPixelsTestCase(unittest.TestCase):
+class CopyGoodPixelsTestCase(utilsTests.TestCase):
     """A test case for copyGoodPixels
     """
     def getSolidMaskedImage(self, bbox, val, badMask=0):
@@ -175,21 +174,25 @@ class CopyGoodPixelsTestCase(unittest.TestCase):
         
         self.assertEqual(numGoodPix, refNumGoodPix)
     
-        errStr = imTestUtils.maskedImagesDiffer(destImage.getArrays(), refDestImage.getArrays())
-        if errStr:
-            destImage.writeFits("destImage.fits")
-            refDestImage.writeFits("refDestImage.fits")
-            self.fail("image != reference image: %s" % (errStr,))
+        msg = "masked image != reference masked image"
+        try:
+            self.assertMaskedImagesNearlyEqual(destImage, refDestImage, msg=msg)
+        except Exception:
+            destImage.writeFits("destMaskedImage.fits")
+            refDestImage.writeFits("refDestMaskedImage.fits")
+            raise
         
     def basicImageTest(self, srcImage, destImage):
         refDestImage, refNumGoodPix = referenceCopyGoodPixelsImage(destImage, srcImage)
         numGoodPix = coaddUtils.copyGoodPixels(destImage, srcImage)
-    
-        errStr = imTestUtils.imagesDiffer(destImage.getArray(), refDestImage.getArray())
-        if errStr:
+
+        msg = "image != reference image"
+        try:
+            self.assertImagesNearlyEqual(destImage, refDestImage, msg=msg)
+        except Exception:
             destImage.writeFits("destImage.fits")
             refDestImage.writeFits("refDestImage.fits")
-            self.fail("image != reference image: %s" % (errStr,))
+            raise
         
         self.assertEqual(numGoodPix, refNumGoodPix)
         
