@@ -19,11 +19,12 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
+import argparse
+from collections import defaultdict
+
 import lsst.pipe.base as pipeBase
 
-__all__=["CoaddDataIdContainer", "ExistingCoaddDataIdContainer", "TractDataIdContainer"]
-
-import argparse
+__all__ = ["CoaddDataIdContainer", "ExistingCoaddDataIdContainer", "TractDataIdContainer"]
 
 class CoaddDataIdContainer(pipeBase.DataIdContainer):
     """A version of lsst.pipe.base.DataIdContainer specialized for coaddition.
@@ -87,7 +88,7 @@ class TractDataIdContainer(CoaddDataIdContainer):
                                                                   patch="%d,%d" % patch.getIndex()) for
                                          patch in tract]
 
-        tractRefs = {} # Data references for each tract
+        tractRefs = defaultdict(list) # Data references for each tract
         for dataId in self.idList:
             for key in validKeys:
                 if key in ("tract", "patch",):
@@ -100,8 +101,6 @@ class TractDataIdContainer(CoaddDataIdContainer):
 
             if "tract" in dataId:
                 tractId = dataId["tract"]
-                if tractId not in tractRefs:
-                    tractRefs[tractId] = []
                 if "patch" in dataId:
                     tractRefs[tractId].append(namespace.butler.dataRef(datasetType=datasetType, tract=tractId,
                                                                        filter=dataId['filter'],
@@ -109,7 +108,7 @@ class TractDataIdContainer(CoaddDataIdContainer):
                 else:
                     tractRefs[tractId] += getPatchRefList(skymap[tractId])
             else:
-                tractRefs = dict((tract.getId(), tractRefs.get(tract.getId(), []) + getPatchRefList(tract)) for
-                                 tract in skymap)
+                tractRefs = dict((tract.getId(), tractRefs.get(tract.getId(), []) + getPatchRefList(tract))
+                                 for tract in skymap)
 
         self.refList = tractRefs.values()
