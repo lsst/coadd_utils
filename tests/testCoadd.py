@@ -61,6 +61,7 @@ class CoaddTestCase(utilsTests.TestCase):
     """A test case for Coadd
     """
 
+    @unittest.skipUnless(AfwDataDir, "afwdata not available")
     def testAddOne(self):
         """Add a single exposure; make sure coadd = input, appropriately scaled
         """
@@ -103,7 +104,8 @@ class CoaddTestCase(utilsTests.TestCase):
                 if not numpy.allclose(toPixPos1, toPixPos2):
                     self.fail("wcs do not match at fromPixPos=%s, sky1=%s: toPixPos1=%s != toPixPos2=%s" % \
                         (fromPixPos, sky1, toPixPos1, toPixPos2))
-    
+
+    @unittest.skipUnless(AfwDataDir, "afwdata not available")
     def testGetters(self):
         """Test getters for coadd
         """
@@ -128,6 +130,7 @@ class CoaddTestCase(utilsTests.TestCase):
             self.assertEquals(badPixelMask, coadd.getBadPixelMask())
             self.assertWcsSame(wcs, coadd.getWcs())
 
+    @unittest.skipUnless(AfwDataDir, "afwdata not available")
     def testFilters(self):
         """Test that the coadd filter is set correctly
         """
@@ -179,11 +182,7 @@ def suite():
     utilsTests.init()
 
     suites = []
-
-    if AfwDataDir:
-        suites += unittest.makeSuite(CoaddTestCase)
-    else:
-        warnings.warn("Skipping some tests because afwdata is not setup")
+    suites += unittest.makeSuite(CoaddTestCase)
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
 
     return unittest.TestSuite(suites)

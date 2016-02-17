@@ -229,7 +229,8 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
             errMsg = "\n".join(errMsgList)
             self.fail(errMsg)
         return overlapBBox
-        
+
+    @unittest.skipUnless(dataDir, "afwdata not available")
     def testMed(self):
         """Test addToCoadd by adding an image with known bad pixels using varying masks
         """
@@ -240,7 +241,8 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
         weight = 0.9
         for badPixelMask in (0x00, 0xFF):
             self.referenceTest(coadd, weightMap, maskedImage, badPixelMask, weight)
-    
+
+    @unittest.skipUnless(dataDir, "afwdata not available")
     def testMultSizes(self):
         """Test addToCoadd by adding various subregions of the med image
         to a coadd that's a slightly different shape
@@ -307,11 +309,7 @@ def suite():
 
     suites = []
     suites += unittest.makeSuite(AddToCoaddTestCase)
-
-    if dataDir:
-        suites += unittest.makeSuite(AddToCoaddAfwdataTestCase)
-    else:
-        warnings.warn("Skipping some tests because afwdata is not setup")
+    suites += unittest.makeSuite(AddToCoaddAfwdataTestCase)
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
 
     return unittest.TestSuite(suites)
