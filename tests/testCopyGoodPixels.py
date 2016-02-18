@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-# 
+#
 # LSST Data Management System
 # Copyright 2008, 2009, 2010 LSST Corporation.
-# 
+#
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
 #
@@ -11,14 +11,14 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
-# You should have received a copy of the LSST License Statement and 
-# the GNU General Public License along with this program.  If not, 
+#
+# You should have received a copy of the LSST License Statement and
+# the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
@@ -41,15 +41,15 @@ except NameError:
     Verbosity = 0 # increase to see trace
 
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
-    
+
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 def referenceCopyGoodPixelsImage(destImage, srcImage):
     """Reference implementation of lsst.coadd.utils.copyGoodPixels for Images
-    
+
     Unlike lsst.coadd.utils.copyGoodPixels this one does not update the input destImage,
     but instead returns the new version
-    
+
     Inputs:
     - destImage: source image before adding srcImage (a MaskedImage)
     - srcImage: masked image to add to destImage (a MaskedImage)
@@ -63,16 +63,16 @@ def referenceCopyGoodPixelsImage(destImage, srcImage):
 
     overlapBBox = destImage.getBBox()
     overlapBBox.clip(srcImage.getBBox())
-    
+
     if overlapBBox.isEmpty():
         return (destImage, 0)
-    
+
     destImageView = destImage.Factory(destImage, overlapBBox, afwImage.PARENT, False)
     destImageArray = destImageView.getArray()
 
     srcImageView = srcImage.Factory(srcImage, overlapBBox, afwImage.PARENT, False)
     srcImageArray = srcImageView.getArray()
-    
+
     isBadArray = numpy.isnan(srcImageArray)
 
     destImageArray[:] = numpy.where(isBadArray, destImageArray, srcImageArray)
@@ -81,10 +81,10 @@ def referenceCopyGoodPixelsImage(destImage, srcImage):
 
 def referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badPixelMask):
     """Reference implementation of lsst.coadd.utils.copyGoodPixels for MaskedImages
-    
+
     Unlike lsst.coadd.utils.copyGoodPixels this one does not update the input destImage,
     but instead returns an updated copy
-    
+
     @param[in] destImage: source image before adding srcImage (a MaskedImage)
     @param[in] srcImage: masked image to add to destImage (a MaskedImage)
     @param[in] badPixelMask: mask of bad pixels to ignore (an int)
@@ -97,18 +97,18 @@ def referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badPixelMask):
 
     overlapBBox = destImage.getBBox()
     overlapBBox.clip(srcImage.getBBox())
-    
+
     if overlapBBox.isEmpty():
         return (destImage, 0)
-    
+
     destImageView = destImage.Factory(destImage, overlapBBox, afwImage.PARENT, False)
     destImageArrayList = destImageView.getArrays()
 
     srcImageView = srcImage.Factory(srcImage, overlapBBox, afwImage.PARENT, False)
     srcImageArrayList = srcImageView.getArrays()
-    
+
     isBadArray = (srcImageArrayList[1] & badPixelMask) != 0
-    
+
     for ind in range(3):
         destImageView = destImageArrayList[ind]
         srcImageView = srcImageArrayList[ind]
@@ -140,7 +140,7 @@ class CopyGoodPixelsTestCase(utilsTests.TestCase):
         """
         if excludeMask > MaxMask:
             raise RuntimeError("excludeMask = %s > %s = MaxMask" % (excludeMask, MaxMask))
-        
+
         afwDim = bbox.getDimensions()
         npShape = (afwDim[1], afwDim[0])
 
@@ -167,13 +167,13 @@ class CopyGoodPixelsTestCase(utilsTests.TestCase):
             nanTest = numpy.random.normal(0, 1, npShape)
             imageArray[:] = numpy.where(nanTest > nanSigma, numpy.nan, imageArray)
         return image
-    
+
     def basicMaskedImageTest(self, srcImage, destImage, badMask):
         refDestImage, refNumGoodPix = referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badMask)
         numGoodPix = coaddUtils.copyGoodPixels(destImage, srcImage, badMask)
-        
+
         self.assertEqual(numGoodPix, refNumGoodPix)
-    
+
         msg = "masked image != reference masked image"
         try:
             self.assertMaskedImagesNearlyEqual(destImage, refDestImage, msg=msg)
@@ -181,7 +181,7 @@ class CopyGoodPixelsTestCase(utilsTests.TestCase):
             destImage.writeFits("destMaskedImage.fits")
             refDestImage.writeFits("refDestMaskedImage.fits")
             raise
-        
+
     def basicImageTest(self, srcImage, destImage):
         refDestImage, refNumGoodPix = referenceCopyGoodPixelsImage(destImage, srcImage)
         numGoodPix = coaddUtils.copyGoodPixels(destImage, srcImage)
@@ -193,40 +193,40 @@ class CopyGoodPixelsTestCase(utilsTests.TestCase):
             destImage.writeFits("destImage.fits")
             refDestImage.writeFits("refDestImage.fits")
             raise
-        
+
         self.assertEqual(numGoodPix, refNumGoodPix)
-        
+
     def testMaskedImage(self):
         """Test image version of copyGoodPixels"""
         srcBBox = afwGeom.Box2I(afwGeom.Point2I(2, 17), afwGeom.Point2I(100, 101))
         destBBox = afwGeom.Box2I(afwGeom.Point2I(13, 4), afwGeom.Point2I(95, 130))
         destXY0 = destBBox.getMin()
-        
+
         srcImage = self.getRandomMaskedImage(srcBBox)
         for badMask in (0, 3, MaxMask):
             destImage = self.getRandomMaskedImage(destBBox, excludeMask=badMask)
             destBBox = destImage.getBBox()
             self.basicMaskedImageTest(srcImage, destImage, badMask)
-            
+
             for bboxStart in (destXY0, (50, 51)):
                 for bboxDim in ((25, 36), (200, 200)):
                     destViewBox = afwGeom.Box2I(afwGeom.Point2I(*bboxStart), afwGeom.Extent2I(*bboxDim))
                     destViewBox.clip(destBBox)
                     destView = destImage.Factory(destImage, destViewBox, afwImage.PARENT, False)
                     self.basicMaskedImageTest(srcImage, destView, badMask)
-    
+
     def testImage(self):
         """Test image version of copyGoodPixels"""
         srcBBox = afwGeom.Box2I(afwGeom.Point2I(2, 17), afwGeom.Point2I(100, 101))
         destBBox = afwGeom.Box2I(afwGeom.Point2I(13, 4), afwGeom.Point2I(95, 130))
         destXY0 = destBBox.getMin()
-        
+
         srcImage = self.getRandomImage(srcBBox)
         for nanSigma in (0, 0.7, 2.0):
             destImage = self.getRandomImage(destBBox, nanSigma=nanSigma)
             destBBox = destImage.getBBox()
             self.basicImageTest(srcImage, destImage)
-            
+
             for bboxStart in (destXY0, (50, 51)):
                 for bboxDim in ((25, 36), (200, 200)):
                     destViewBox = afwGeom.Box2I(afwGeom.Point2I(*bboxStart), afwGeom.Extent2I(*bboxDim))

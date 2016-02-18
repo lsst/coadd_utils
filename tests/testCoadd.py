@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-# 
+#
 # LSST Data Management System
 # Copyright 2008, 2009, 2010 LSST Corporation.
-# 
+#
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
 #
@@ -11,14 +11,14 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
-# You should have received a copy of the LSST License Statement and 
-# the GNU General Public License along with this program.  If not, 
+#
+# You should have received a copy of the LSST License Statement and
+# the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
@@ -54,13 +54,14 @@ except Exception:
 
 if AfwDataDir != None:
     ImSimFile = os.path.join(AfwDataDir, "ImSim/calexp/v85408556-fr/R23/S11.fits")
-    
+
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 class CoaddTestCase(utilsTests.TestCase):
     """A test case for Coadd
     """
 
+    @unittest.skipUnless(AfwDataDir, "afwdata not available")
     def testAddOne(self):
         """Add a single exposure; make sure coadd = input, appropriately scaled
         """
@@ -78,11 +79,11 @@ class CoaddTestCase(utilsTests.TestCase):
             coadd.addExposure(inExp)
             coaddExp = coadd.getCoadd()
             coaddMaskedImage = coaddExp.getMaskedImage()
-            
+
             inMaskArr = inMaskedImage.getMask().getArray()
             badMask = coadd.getBadPixelMask()
             skipMaskArr = inMaskArr & badMask != 0
-    
+
             msg = "coadd != input exposure"
             self.assertMaskedImagesNearlyEqual(inMaskedImage, coaddMaskedImage, skipMask=skipMaskArr, msg=msg)
 
@@ -103,7 +104,8 @@ class CoaddTestCase(utilsTests.TestCase):
                 if not numpy.allclose(toPixPos1, toPixPos2):
                     self.fail("wcs do not match at fromPixPos=%s, sky1=%s: toPixPos1=%s != toPixPos2=%s" % \
                         (fromPixPos, sky1, toPixPos1, toPixPos2))
-    
+
+    @unittest.skipUnless(AfwDataDir, "afwdata not available")
     def testGetters(self):
         """Test getters for coadd
         """
@@ -128,17 +130,18 @@ class CoaddTestCase(utilsTests.TestCase):
             self.assertEquals(badPixelMask, coadd.getBadPixelMask())
             self.assertWcsSame(wcs, coadd.getWcs())
 
+    @unittest.skipUnless(AfwDataDir, "afwdata not available")
     def testFilters(self):
         """Test that the coadd filter is set correctly
         """
         filterPolicyFile = pexPolicy.DefaultPolicyFile("afw", "SdssFilters.paf", "tests")
         filterPolicy = pexPolicy.Policy.createPolicy(filterPolicyFile, filterPolicyFile.getRepositoryPath(), True)
         imageUtils.defineFiltersFromPolicy(filterPolicy, reset=True)
-        
+
         unkFilter = afwImage.Filter()
         gFilter = afwImage.Filter("g")
         rFilter = afwImage.Filter("r")
-        
+
         inExp = afwImage.ExposureF(ImSimFile, afwGeom.Box2I(afwGeom.Point2I(0,0), afwGeom.Extent2I(10, 10)),
             afwImage.PARENT)
         coadd = coaddUtils.Coadd(
@@ -154,20 +157,20 @@ class CoaddTestCase(utilsTests.TestCase):
         coadd.addExposure(inExp)
         self.assertEqualFilters(coadd.getCoadd().getFilter(), gFilter)
         self.assertEqualFilterSets(coadd.getFilters(), (gFilter,))
-        
+
         inExp.setFilter(rFilter)
         coadd.addExposure(inExp)
         self.assertEqualFilters(coadd.getCoadd().getFilter(), unkFilter)
         self.assertEqualFilterSets(coadd.getFilters(), (gFilter, rFilter))
-    
+
     def assertEqualFilters(self, f1, f2):
         """Compare two filters
-        
+
         Right now compares only the name, but if == ever works for Filters (ticket #1744)
         then use == instead
         """
         self.assertEquals(f1.getName(), f2.getName())
-    
+
     def assertEqualFilterSets(self, fs1, fs2):
         """Assert that two collections of filters are equal, ignoring order
         """
@@ -179,11 +182,7 @@ def suite():
     utilsTests.init()
 
     suites = []
-
-    if AfwDataDir:
-        suites += unittest.makeSuite(CoaddTestCase)
-    else:
-        warnings.warn("Skipping some tests because afwdata is not setup")
+    suites += unittest.makeSuite(CoaddTestCase)
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
 
     return unittest.TestSuite(suites)

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-# 
+#
 # LSST Data Management System
 # Copyright 2008, 2009, 2010 LSST Corporation.
-# 
+#
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
 #
@@ -11,14 +11,14 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
-# You should have received a copy of the LSST License Statement and 
-# the GNU General Public License along with this program.  If not, 
+#
+# You should have received a copy of the LSST License Statement and
+# the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
@@ -52,12 +52,12 @@ class SetCoaddEdgeBitsTestCase(unittest.TestCase):
         numpy.random.seed(12345)
         depthMapArray = numpy.random.randint(0, 3, list((imDim[1], imDim[0]))).astype(numpy.uint16)
         depthMap = afwImage.makeImageFromArray(depthMapArray)
-        
+
         refCoaddMaskArray = coaddMask.getArray()
         edgeMask = afwImage.MaskU.getPlaneBitMask("NO_DATA")
         refCoaddMaskArray |= numpy.array(numpy.where(depthMapArray > 0, 0, edgeMask),
             dtype=refCoaddMaskArray.dtype)
-        
+
         coaddUtils.setCoaddEdgeBits(coaddMask, depthMap)
         coaddMaskArray = coaddMask.getArray()
         if numpy.any(refCoaddMaskArray != coaddMaskArray):
