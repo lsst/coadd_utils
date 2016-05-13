@@ -27,6 +27,7 @@
 *
 * @author Russell Owen
 */
+#include <cstdint>
 #include <limits>
 
 #include "boost/format.hpp"
@@ -154,5 +155,5 @@ int coaddUtils::copyGoodPixels(
 INSTANTIATE(double);
 INSTANTIATE(float);
 INSTANTIATE(int);
-INSTANTIATE(boost::uint16_t);
+INSTANTIATE(std::uint16_t);
 /// \endcond

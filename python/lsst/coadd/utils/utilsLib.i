@@ -33,7 +33,7 @@ Python interface to lsst::coadd::utils functions and classes
 
 // Everything we will need in the _wrap.cc file
 %{
-#include "boost/cstdint.hpp"
+#include <cstdint>
 #include "lsst/pex/logging.h"
 #include "lsst/afw/cameraGeom.h"
 #include "lsst/coadd/utils.h"
@@ -53,7 +53,7 @@ Python interface to lsst::coadd::utils functions and classes
 %COPYGOODPIXELS(double);
 %COPYGOODPIXELS(float);
 %COPYGOODPIXELS(int);
-%COPYGOODPIXELS(boost::uint16_t);
+%COPYGOODPIXELS(std::uint16_t);
 
 %include "lsst/coadd/utils/addToCoadd.h"
 %define %ADDTOCOADD(COADDPIXEL, WEIGHTPIXEL)
@@ -62,11 +62,11 @@ Python interface to lsst::coadd::utils functions and classes
 %ADDTOCOADD(double, double);
 %ADDTOCOADD(double, float);
 %ADDTOCOADD(double, int);
-%ADDTOCOADD(double, boost::uint16_t);
+%ADDTOCOADD(double, std::uint16_t);
 %ADDTOCOADD(float, double);
 %ADDTOCOADD(float, float);
 %ADDTOCOADD(float, int);
-%ADDTOCOADD(float, boost::uint16_t);
+%ADDTOCOADD(float, std::uint16_t);
 
 %include "lsst/coadd/utils/setCoaddEdgeBits.h"
 %define %SETCOADDEDGEBITS(WEIGHTPIXEL)
@@ -75,4 +75,4 @@ Python interface to lsst::coadd::utils functions and classes
 %SETCOADDEDGEBITS(double);
 %SETCOADDEDGEBITS(float);
 %SETCOADDEDGEBITS(int);
-%SETCOADDEDGEBITS(boost::uint16_t);
+%SETCOADDEDGEBITS(std::uint16_t);
