@@ -27,6 +27,8 @@
 *
 * @author Russell Owen
 */
+#include <cstdint>
+
 #include "boost/format.hpp"
 
 #include "lsst/pex/exceptions.h"
@@ -80,5 +82,5 @@ void coaddUtils::setCoaddEdgeBits(
 INSTANTIATE(double);
 INSTANTIATE(float);
 INSTANTIATE(int);
-INSTANTIATE(boost::uint16_t);
+INSTANTIATE(std::uint16_t);
 /// \endcond

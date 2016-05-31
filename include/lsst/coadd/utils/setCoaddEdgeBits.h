@@ -29,8 +29,6 @@
 *
 * @author Russell Owen
 */
-#include "boost/cstdint.hpp"
-
 #include "lsst/afw/image.h"
 
 namespace lsst {

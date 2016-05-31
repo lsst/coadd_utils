@@ -27,6 +27,7 @@
 *
 * @author Russell Owen
 */
+#include <cstdint>
 #include <limits>
 
 #include "boost/format.hpp"
@@ -173,9 +174,9 @@ lsst::afw::geom::Box2I coaddUtils::addToCoadd(
 INSTANTIATE(double, double);
 INSTANTIATE(double, float);
 INSTANTIATE(double, int);
-INSTANTIATE(double, boost::uint16_t);
+INSTANTIATE(double, std::uint16_t);
 INSTANTIATE(float, double);
 INSTANTIATE(float, float);
 INSTANTIATE(float, int);
-INSTANTIATE(float, boost::uint16_t);
+INSTANTIATE(float, std::uint16_t);
 /// \endcond
