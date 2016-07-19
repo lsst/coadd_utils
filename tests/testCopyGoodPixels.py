@@ -32,16 +32,15 @@ import numpy
 import lsst.utils.tests
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
-import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
+from lsst.log import Log
 
 try:
     display
 except NameError:
     display = False
-    Verbosity = 0  # increase to see trace
 
-pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
+Log.getLogger("coadd.utils").setLevel(Log.INFO)
 
 
 def referenceCopyGoodPixelsImage(destImage, srcImage):

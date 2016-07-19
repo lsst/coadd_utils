@@ -37,16 +37,15 @@ import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import lsst.afw.display.ds9 as ds9
 import lsst.pex.exceptions as pexExcept
-import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
+from lsst.log import Log
 
 try:
     display
 except NameError:
     display = False
-    Verbosity = 0  # increase to see trace
 
-pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
+Log.getLogger("coadd.utils").setLevel(Log.INFO)
 
 try:
     AfwdataDir = lsst.utils.getPackageDir('afwdata')

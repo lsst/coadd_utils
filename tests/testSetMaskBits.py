@@ -30,12 +30,10 @@ from builtins import range
 
 import lsst.utils.tests
 import lsst.afw.image as afwImage
-import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
+from lsst.log import Log
 
-Verbosity = 0
-
-pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
+Log.getLogger("coadd.utils").setLevel(Log.INFO)
 
 
 def countBits(val):
