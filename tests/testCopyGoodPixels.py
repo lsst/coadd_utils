@@ -24,6 +24,7 @@
 
 """Test lsst.coadd.utils.copyGoodPixels
 """
+from builtins import range
 import unittest
 
 import numpy

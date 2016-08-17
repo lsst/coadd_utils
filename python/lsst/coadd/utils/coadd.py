@@ -1,3 +1,4 @@
+from builtins import object
 #
 # LSST Data Management System
 # Copyright 2008, 2009, 2010, 2011, 2012 LSST Corporation.
@@ -146,13 +147,13 @@ class Coadd(object):
 
         scaledExposure = afwImage.makeExposure(scaledMaskedImage, self._wcs)
         if len(self._filterDict) == 1:
-            scaledExposure.setFilter(self._filterDict.values()[0])
+            scaledExposure.setFilter(list(self._filterDict.values())[0])
         return scaledExposure
 
     def getFilters(self):
         """Return a collection of all the filters seen so far in in addExposure
         """
-        return self._filterDict.values()
+        return list(self._filterDict.values())
 
     def getBadPixelMask(self):
         """Return the bad pixel mask

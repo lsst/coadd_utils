@@ -24,6 +24,7 @@
 
 """Test lsst.coadd.utils.addToCoadd
 """
+from builtins import range
 import os
 import unittest
 import warnings

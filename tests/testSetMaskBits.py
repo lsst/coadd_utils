@@ -24,6 +24,7 @@
 
 """Test lsst.coadd.utils.setMaskBits
 """
+from builtins import range
 import unittest
 
 import lsst.afw.image as afwImage
@@ -56,7 +57,7 @@ class AddToCoaddTestCase(unittest.TestCase):
     def testBits(self):
         """Test that the bits set are correct"""
 
-        fullPlaneNameList = MaskPlaneNameIDDict.keys()
+        fullPlaneNameList = list(MaskPlaneNameIDDict.keys())
         totNumBits = countBits(MaxBitMask)
         for i in range(len(fullPlaneNameList)):
             numPlanes = i + 1
@@ -64,12 +65,12 @@ class AddToCoaddTestCase(unittest.TestCase):
 
             bitMask = coaddUtils.makeBitMask(setPlaneNameList)
             self.assertEqual(countBits(bitMask), numPlanes)
-            for planeName, planeId in MaskPlaneNameIDDict.iteritems():
+            for planeName, planeId in MaskPlaneNameIDDict.items():
                 self.assertEqual((bitMask & (1 << planeId)) > 0, planeName in setPlaneNameList)
 
             invBitMask = coaddUtils.makeBitMask(setPlaneNameList, doInvert=True)
             self.assertEqual(countBits(invBitMask), totNumBits - numPlanes)
-            for planeName, planeId in MaskPlaneNameIDDict.iteritems():
+            for planeName, planeId in MaskPlaneNameIDDict.items():
                 self.assertEqual((invBitMask & (1 << planeId)) > 0, planeName not in setPlaneNameList)
 
 
