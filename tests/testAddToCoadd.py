@@ -57,8 +57,6 @@ except Exception:
 if dataDir != None:
     medMIPath = os.path.join(dataDir, "data", "med.fits")
 
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
 
 def slicesFromBox(box, image):
     """Computes the numpy slice in x and y associated with a parent bounding box

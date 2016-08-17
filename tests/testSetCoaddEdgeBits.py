@@ -37,8 +37,6 @@ import lsst.coadd.utils as coaddUtils
 Verbosity = 0  # increase to see trace
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
 
 class SetCoaddEdgeBitsTestCase(lsst.utils.tests.TestCase):
     """A test case for setCoaddEdgeBits

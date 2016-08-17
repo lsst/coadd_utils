@@ -43,8 +43,6 @@ except NameError:
 
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
 
 def referenceCopyGoodPixelsImage(destImage, srcImage):
     """Reference implementation of lsst.coadd.utils.copyGoodPixels for Images
