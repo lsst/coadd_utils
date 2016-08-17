@@ -28,9 +28,9 @@ import unittest
 
 import numpy
 
+import lsst.utils.tests
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
-import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 
@@ -76,13 +76,13 @@ class SetCoaddEdgeBitsTestCase(unittest.TestCase):
 def suite():
     """Return a suite containing all the test cases in this module.
     """
-    utilsTests.init()
+    lsst.utils.tests.init()
 
     suites = []
     suites += unittest.makeSuite(SetCoaddEdgeBitsTestCase)
-    suites += unittest.makeSuite(utilsTests.MemoryTestCase)
+    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
 
     return unittest.TestSuite(suites)
 
 if __name__ == "__main__":
-    utilsTests.run(suite())
+    lsst.utils.tests.run(suite())

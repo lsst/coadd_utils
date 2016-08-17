@@ -29,9 +29,9 @@ import unittest
 
 import numpy
 
+import lsst.utils.tests
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
-import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 
@@ -123,7 +123,7 @@ def referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badPixelMask):
 MaxMask = 0xFFFF
 
 
-class CopyGoodPixelsTestCase(utilsTests.TestCase):
+class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
     """A test case for copyGoodPixels
     """
 
@@ -243,18 +243,18 @@ class CopyGoodPixelsTestCase(utilsTests.TestCase):
 def suite():
     """Return a suite containing all the test cases in this module.
     """
-    utilsTests.init()
+    lsst.utils.tests.init()
 
     suites = [unittest.makeSuite(CopyGoodPixelsTestCase)]
 
-    suites += unittest.makeSuite(utilsTests.MemoryTestCase)
+    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
 
     return unittest.TestSuite(suites)
 
 
 def run(shouldExit=False):
     """Run the tests"""
-    utilsTests.run(suite(), shouldExit)
+    lsst.utils.tests.run(suite(), shouldExit)
 
 if __name__ == "__main__":
     run(True)

@@ -32,11 +32,11 @@ import warnings
 import numpy
 
 import lsst.utils
+import lsst.utils.tests
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import lsst.afw.display.ds9 as ds9
-import lsst.utils.tests as utilsTests
 import lsst.pex.exceptions as pexExcept
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
@@ -311,19 +311,19 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
 def suite():
     """Return a suite containing all the test cases in this module.
     """
-    utilsTests.init()
+    lsst.utils.tests.init()
 
     suites = []
     suites += unittest.makeSuite(AddToCoaddTestCase)
     suites += unittest.makeSuite(AddToCoaddAfwdataTestCase)
-    suites += unittest.makeSuite(utilsTests.MemoryTestCase)
+    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
 
     return unittest.TestSuite(suites)
 
 
 def run(shouldExit=False):
     """Run the tests"""
-    utilsTests.run(suite(), shouldExit)
+    lsst.utils.tests.run(suite(), shouldExit)
 
 if __name__ == "__main__":
     run(True)

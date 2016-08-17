@@ -27,8 +27,8 @@
 from builtins import range
 import unittest
 
+import lsst.utils.tests
 import lsst.afw.image as afwImage
-import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 
@@ -77,18 +77,18 @@ class AddToCoaddTestCase(unittest.TestCase):
 def suite():
     """Return a suite containing all the test cases in this module.
     """
-    utilsTests.init()
+    lsst.utils.tests.init()
 
     suites = []
     suites += unittest.makeSuite(AddToCoaddTestCase)
-    suites += unittest.makeSuite(utilsTests.MemoryTestCase)
+    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
 
     return unittest.TestSuite(suites)
 
 
 def run(shouldExit=False):
     """Run the tests"""
-    utilsTests.run(suite(), shouldExit)
+    lsst.utils.tests.run(suite(), shouldExit)
 
 if __name__ == "__main__":
     run(True)
