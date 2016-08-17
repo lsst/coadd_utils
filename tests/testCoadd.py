@@ -43,7 +43,7 @@ try:
     display
 except NameError:
     display = False
-    Verbosity = 0 # increase to see trace
+    Verbosity = 0  # increase to see trace
 
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
@@ -56,6 +56,7 @@ if AfwDataDir != None:
     ImSimFile = os.path.join(AfwDataDir, "ImSim/calexp/v85408556-fr/R23/S11.fits")
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 
 class CoaddTestCase(utilsTests.TestCase):
     """A test case for Coadd
@@ -72,9 +73,9 @@ class CoaddTestCase(utilsTests.TestCase):
             ("NO_DATA", "BAD"),
         ):
             coadd = coaddUtils.Coadd(
-                bbox = inExp.getBBox(),
-                wcs = inExp.getWcs(),
-                badMaskPlanes = badMaskPlanes,
+                bbox=inExp.getBBox(),
+                wcs=inExp.getWcs(),
+                badMaskPlanes=badMaskPlanes,
             )
             coadd.addExposure(inExp)
             coaddExp = coadd.getCoadd()
@@ -94,16 +95,16 @@ class CoaddTestCase(utilsTests.TestCase):
                 sky1 = wcs1.pixelToSky(fromPixPos)
                 sky2 = wcs2.pixelToSky(fromPixPos)
                 if not numpy.allclose(sky1.getPosition(), sky2.getPosition()):
-                    self.fail("wcs do not match at fromPixPos=%s: sky1=%s != sky2=%s" % \
-                        (fromPixPos, sky1, sky2))
+                    self.fail("wcs do not match at fromPixPos=%s: sky1=%s != sky2=%s" %
+                              (fromPixPos, sky1, sky2))
                 toPixPos1 = wcs1.skyToPixel(sky1)
                 toPixPos2 = wcs2.skyToPixel(sky1)
                 if not numpy.allclose((xPixPos, yPixPos), toPixPos1):
-                    self.fail("wcs do not match at sky1=%s: fromPixPos=%s != toPixPos1=%s" % \
-                        (sky1, fromPixPos, toPixPos1))
+                    self.fail("wcs do not match at sky1=%s: fromPixPos=%s != toPixPos1=%s" %
+                              (sky1, fromPixPos, toPixPos1))
                 if not numpy.allclose(toPixPos1, toPixPos2):
-                    self.fail("wcs do not match at fromPixPos=%s, sky1=%s: toPixPos1=%s != toPixPos2=%s" % \
-                        (fromPixPos, sky1, toPixPos1, toPixPos2))
+                    self.fail("wcs do not match at fromPixPos=%s, sky1=%s: toPixPos1=%s != toPixPos2=%s" %
+                              (fromPixPos, sky1, toPixPos1, toPixPos2))
 
     @unittest.skipUnless(AfwDataDir, "afwdata not available")
     def testGetters(self):
@@ -119,9 +120,9 @@ class CoaddTestCase(utilsTests.TestCase):
             (("NO_DATA",),         afwGeom.Box2I(afwGeom.Point2I(  0, 1020), afwGeom.Extent2I(100, 102))),
         ):
             coadd = coaddUtils.Coadd(
-                bbox = bbox,
-                wcs = wcs,
-                badMaskPlanes = badMaskPlanes,
+                bbox=bbox,
+                wcs=wcs,
+                badMaskPlanes=badMaskPlanes,
             )
             badPixelMask = 0
             for maskPlaneName in badMaskPlanes:
@@ -135,19 +136,20 @@ class CoaddTestCase(utilsTests.TestCase):
         """Test that the coadd filter is set correctly
         """
         filterPolicyFile = pexPolicy.DefaultPolicyFile("afw", "SdssFilters.paf", "tests")
-        filterPolicy = pexPolicy.Policy.createPolicy(filterPolicyFile, filterPolicyFile.getRepositoryPath(), True)
+        filterPolicy = pexPolicy.Policy.createPolicy(
+            filterPolicyFile, filterPolicyFile.getRepositoryPath(), True)
         imageUtils.defineFiltersFromPolicy(filterPolicy, reset=True)
 
         unkFilter = afwImage.Filter()
         gFilter = afwImage.Filter("g")
         rFilter = afwImage.Filter("r")
 
-        inExp = afwImage.ExposureF(ImSimFile, afwGeom.Box2I(afwGeom.Point2I(0,0), afwGeom.Extent2I(10, 10)),
-            afwImage.PARENT)
+        inExp = afwImage.ExposureF(ImSimFile, afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(10, 10)),
+                                   afwImage.PARENT)
         coadd = coaddUtils.Coadd(
-            bbox = inExp.getBBox(),
-            wcs = inExp.getWcs(),
-            badMaskPlanes = ("NO_DATA", "BAD"),
+            bbox=inExp.getBBox(),
+            wcs=inExp.getWcs(),
+            badMaskPlanes=("NO_DATA", "BAD"),
         )
 
         inExp.setFilter(gFilter)
@@ -175,6 +177,7 @@ class CoaddTestCase(utilsTests.TestCase):
         """Assert that two collections of filters are equal, ignoring order
         """
         self.assertEquals(set(f.getName() for f in fs1), set(f.getName() for f in fs2))
+
 
 def suite():
     """Return a suite containing all the test cases in this module.
