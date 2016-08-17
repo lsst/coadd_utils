@@ -70,19 +70,15 @@ class SetCoaddEdgeBitsTestCase(unittest.TestCase):
             errMsg = "\n".join(errMsgList)
             self.fail(errMsg)
 
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
 
 
-def suite():
-    """Return a suite containing all the test cases in this module.
-    """
+def setup_module(module):
     lsst.utils.tests.init()
 
-    suites = []
-    suites += unittest.makeSuite(SetCoaddEdgeBitsTestCase)
-    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
-
-    return unittest.TestSuite(suites)
 
 if __name__ == "__main__":
-    lsst.utils.tests.run(suite())
+    lsst.utils.tests.init()
+    unittest.main()

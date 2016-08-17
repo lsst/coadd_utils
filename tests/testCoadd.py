@@ -179,21 +179,14 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
         self.assertEquals(set(f.getName() for f in fs1), set(f.getName() for f in fs2))
 
 
-def suite():
-    """Return a suite containing all the test cases in this module.
-    """
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
     lsst.utils.tests.init()
 
-    suites = []
-    suites += unittest.makeSuite(CoaddTestCase)
-    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
-
-    return unittest.TestSuite(suites)
-
-
-def run(shouldExit=False):
-    """Run the tests"""
-    lsst.utils.tests.run(suite(), shouldExit)
 
 if __name__ == "__main__":
-    run(True)
+    lsst.utils.tests.init()
+    unittest.main()

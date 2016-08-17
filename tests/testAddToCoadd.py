@@ -308,22 +308,14 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
                 pass
 
 
-def suite():
-    """Return a suite containing all the test cases in this module.
-    """
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
     lsst.utils.tests.init()
 
-    suites = []
-    suites += unittest.makeSuite(AddToCoaddTestCase)
-    suites += unittest.makeSuite(AddToCoaddAfwdataTestCase)
-    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
-
-    return unittest.TestSuite(suites)
-
-
-def run(shouldExit=False):
-    """Run the tests"""
-    lsst.utils.tests.run(suite(), shouldExit)
 
 if __name__ == "__main__":
-    run(True)
+    lsst.utils.tests.init()
+    unittest.main()
