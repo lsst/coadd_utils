@@ -40,7 +40,7 @@ pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-class SetCoaddEdgeBitsTestCase(unittest.TestCase):
+class SetCoaddEdgeBitsTestCase(lsst.utils.tests.TestCase):
     """A test case for setCoaddEdgeBits
     """
 
@@ -54,21 +54,14 @@ class SetCoaddEdgeBitsTestCase(unittest.TestCase):
         depthMapArray = numpy.random.randint(0, 3, list((imDim[1], imDim[0]))).astype(numpy.uint16)
         depthMap = afwImage.makeImageFromArray(depthMapArray)
 
-        refCoaddMaskArray = coaddMask.getArray()
+        refCoaddMask = afwImage.MaskU(imDim)
+        refCoaddMaskArray = refCoaddMask.getArray()
         edgeMask = afwImage.MaskU.getPlaneBitMask("NO_DATA")
         refCoaddMaskArray |= numpy.array(numpy.where(depthMapArray > 0, 0, edgeMask),
                                          dtype=refCoaddMaskArray.dtype)
 
         coaddUtils.setCoaddEdgeBits(coaddMask, depthMap)
-        coaddMaskArray = coaddMask.getArray()
-        if numpy.any(refCoaddMaskArray != coaddMaskArray):
-            errMsgList = (
-                "Coadd mask does not match reference:",
-                "computed=  %s" % (coaddMaskArray,),
-                "reference= %s" % (refCoaddMaskArray,),
-            )
-            errMsg = "\n".join(errMsgList)
-            self.fail(errMsg)
+        self.assertMasksEqual(coaddMask, refCoaddMask)
 
 
 class MemoryTester(lsst.utils.tests.MemoryTestCase):
