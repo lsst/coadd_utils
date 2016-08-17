@@ -211,7 +211,7 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
             referenceAddToCoadd(coadd, weightMap, image, badPixelMask, weight)
         # this updates coadd and weightMap:
         afwOverlapBox = coaddUtils.addToCoadd(coadd, weightMap, image, badPixelMask, weight)
-        self.assertEquals(overlapBBox, afwOverlapBox)
+        self.assertEqual(overlapBBox, afwOverlapBox)
 
         coaddArrayList = coadd.getArrays()
         weightMapArray = weightMap.getArray()

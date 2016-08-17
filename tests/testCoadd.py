@@ -127,8 +127,8 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
             badPixelMask = 0
             for maskPlaneName in badMaskPlanes:
                 badPixelMask += afwImage.MaskU.getPlaneBitMask(maskPlaneName)
-            self.assertEquals(bbox, coadd.getBBox())
-            self.assertEquals(badPixelMask, coadd.getBadPixelMask())
+            self.assertEqual(bbox, coadd.getBBox())
+            self.assertEqual(badPixelMask, coadd.getBadPixelMask())
             self.assertWcsSame(wcs, coadd.getWcs())
 
     @unittest.skipUnless(AfwDataDir, "afwdata not available")
@@ -171,12 +171,12 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
         Right now compares only the name, but if == ever works for Filters (ticket #1744)
         then use == instead
         """
-        self.assertEquals(f1.getName(), f2.getName())
+        self.assertEqual(f1.getName(), f2.getName())
 
     def assertEqualFilterSets(self, fs1, fs2):
         """Assert that two collections of filters are equal, ignoring order
         """
-        self.assertEquals(set(f.getName() for f in fs1), set(f.getName() for f in fs2))
+        self.assertEqual(set(f.getName() for f in fs1), set(f.getName() for f in fs2))
 
 
 class MemoryTester(lsst.utils.tests.MemoryTestCase):
