@@ -28,21 +28,20 @@ import unittest
 
 import numpy
 
+import lsst.utils.tests
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
-import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 
-Verbosity = 0 # increase to see trace
+Verbosity = 0  # increase to see trace
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-
-class SetCoaddEdgeBitsTestCase(unittest.TestCase):
+class SetCoaddEdgeBitsTestCase(lsst.utils.tests.TestCase):
     """A test case for setCoaddEdgeBits
     """
+
     def testRandomMap(self):
         """Test setCoaddEdgeBits using a random depth map
         """
@@ -53,34 +52,24 @@ class SetCoaddEdgeBitsTestCase(unittest.TestCase):
         depthMapArray = numpy.random.randint(0, 3, list((imDim[1], imDim[0]))).astype(numpy.uint16)
         depthMap = afwImage.makeImageFromArray(depthMapArray)
 
-        refCoaddMaskArray = coaddMask.getArray()
+        refCoaddMask = afwImage.MaskU(imDim)
+        refCoaddMaskArray = refCoaddMask.getArray()
         edgeMask = afwImage.MaskU.getPlaneBitMask("NO_DATA")
         refCoaddMaskArray |= numpy.array(numpy.where(depthMapArray > 0, 0, edgeMask),
-            dtype=refCoaddMaskArray.dtype)
+                                         dtype=refCoaddMaskArray.dtype)
 
         coaddUtils.setCoaddEdgeBits(coaddMask, depthMap)
-        coaddMaskArray = coaddMask.getArray()
-        if numpy.any(refCoaddMaskArray != coaddMaskArray):
-            errMsgList = (
-                "Coadd mask does not match reference:",
-                "computed=  %s" % (coaddMaskArray,),
-                "reference= %s" % (refCoaddMaskArray,),
-            )
-            errMsg = "\n".join(errMsgList)
-            self.fail(errMsg)
+        self.assertMasksEqual(coaddMask, refCoaddMask)
 
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-def suite():
-    """Return a suite containing all the test cases in this module.
-    """
-    utilsTests.init()
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
 
-    suites = []
-    suites += unittest.makeSuite(SetCoaddEdgeBitsTestCase)
-    suites += unittest.makeSuite(utilsTests.MemoryTestCase)
 
-    return unittest.TestSuite(suites)
+def setup_module(module):
+    lsst.utils.tests.init()
+
 
 if __name__ == "__main__":
-    utilsTests.run(suite())
+    lsst.utils.tests.init()
+    unittest.main()

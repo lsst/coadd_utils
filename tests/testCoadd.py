@@ -26,15 +26,14 @@
 """
 import os
 import unittest
-import warnings
 
 import numpy
 
 import lsst.utils
+import lsst.utils.tests
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.image.utils as imageUtils
-import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 import lsst.pex.policy as pexPolicy
@@ -43,38 +42,37 @@ try:
     display
 except NameError:
     display = False
-    Verbosity = 0 # increase to see trace
+    Verbosity = 0  # increase to see trace
 
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
 try:
-    AfwDataDir = lsst.utils.getPackageDir('afwdata')
+    AfwdataDir = lsst.utils.getPackageDir('afwdata')
 except Exception:
-    AfwDataDir = None
+    AfwdataDir = None
+# path to LsstSim calexp relative to afwData package root
+SimCalexpSubpath = os.path.join("ImSim", "calexp", "v85408556-fr", "R23", "S11.fits")
 
-if AfwDataDir != None:
-    ImSimFile = os.path.join(AfwDataDir, "ImSim/calexp/v85408556-fr/R23/S11.fits")
 
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-class CoaddTestCase(utilsTests.TestCase):
+class CoaddTestCase(lsst.utils.tests.TestCase):
     """A test case for Coadd
     """
 
-    @unittest.skipUnless(AfwDataDir, "afwdata not available")
+    @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testAddOne(self):
         """Add a single exposure; make sure coadd = input, appropriately scaled
         """
-        inExp = afwImage.ExposureF(ImSimFile)
+        calexpPath = os.path.join(AfwdataDir, SimCalexpSubpath)
+        inExp = afwImage.ExposureF(calexpPath)
         inMaskedImage = inExp.getMaskedImage()
         for badMaskPlanes in (
             (),
             ("NO_DATA", "BAD"),
         ):
             coadd = coaddUtils.Coadd(
-                bbox = inExp.getBBox(),
-                wcs = inExp.getWcs(),
-                badMaskPlanes = badMaskPlanes,
+                bbox=inExp.getBBox(),
+                wcs=inExp.getWcs(),
+                badMaskPlanes=badMaskPlanes,
             )
             coadd.addExposure(inExp)
             coaddExp = coadd.getCoadd()
@@ -94,22 +92,23 @@ class CoaddTestCase(utilsTests.TestCase):
                 sky1 = wcs1.pixelToSky(fromPixPos)
                 sky2 = wcs2.pixelToSky(fromPixPos)
                 if not numpy.allclose(sky1.getPosition(), sky2.getPosition()):
-                    self.fail("wcs do not match at fromPixPos=%s: sky1=%s != sky2=%s" % \
-                        (fromPixPos, sky1, sky2))
+                    self.fail("wcs do not match at fromPixPos=%s: sky1=%s != sky2=%s" %
+                              (fromPixPos, sky1, sky2))
                 toPixPos1 = wcs1.skyToPixel(sky1)
                 toPixPos2 = wcs2.skyToPixel(sky1)
                 if not numpy.allclose((xPixPos, yPixPos), toPixPos1):
-                    self.fail("wcs do not match at sky1=%s: fromPixPos=%s != toPixPos1=%s" % \
-                        (sky1, fromPixPos, toPixPos1))
+                    self.fail("wcs do not match at sky1=%s: fromPixPos=%s != toPixPos1=%s" %
+                              (sky1, fromPixPos, toPixPos1))
                 if not numpy.allclose(toPixPos1, toPixPos2):
-                    self.fail("wcs do not match at fromPixPos=%s, sky1=%s: toPixPos1=%s != toPixPos2=%s" % \
-                        (fromPixPos, sky1, toPixPos1, toPixPos2))
+                    self.fail("wcs do not match at fromPixPos=%s, sky1=%s: toPixPos1=%s != toPixPos2=%s" %
+                              (fromPixPos, sky1, toPixPos1, toPixPos2))
 
-    @unittest.skipUnless(AfwDataDir, "afwdata not available")
+    @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testGetters(self):
         """Test getters for coadd
         """
-        inExp = afwImage.ExposureF(ImSimFile)
+        calexpPath = os.path.join(AfwdataDir, SimCalexpSubpath)
+        inExp = afwImage.ExposureF(calexpPath)
         bbox = inExp.getBBox()
         wcs = inExp.getWcs()
         for badMaskPlanes, bbox in (
@@ -119,35 +118,37 @@ class CoaddTestCase(utilsTests.TestCase):
             (("NO_DATA",),         afwGeom.Box2I(afwGeom.Point2I(  0, 1020), afwGeom.Extent2I(100, 102))),
         ):
             coadd = coaddUtils.Coadd(
-                bbox = bbox,
-                wcs = wcs,
-                badMaskPlanes = badMaskPlanes,
+                bbox=bbox,
+                wcs=wcs,
+                badMaskPlanes=badMaskPlanes,
             )
             badPixelMask = 0
             for maskPlaneName in badMaskPlanes:
                 badPixelMask += afwImage.MaskU.getPlaneBitMask(maskPlaneName)
-            self.assertEquals(bbox, coadd.getBBox())
-            self.assertEquals(badPixelMask, coadd.getBadPixelMask())
+            self.assertEqual(bbox, coadd.getBBox())
+            self.assertEqual(badPixelMask, coadd.getBadPixelMask())
             self.assertWcsSame(wcs, coadd.getWcs())
 
-    @unittest.skipUnless(AfwDataDir, "afwdata not available")
+    @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testFilters(self):
         """Test that the coadd filter is set correctly
         """
         filterPolicyFile = pexPolicy.DefaultPolicyFile("afw", "SdssFilters.paf", "tests")
-        filterPolicy = pexPolicy.Policy.createPolicy(filterPolicyFile, filterPolicyFile.getRepositoryPath(), True)
+        filterPolicy = pexPolicy.Policy.createPolicy(
+            filterPolicyFile, filterPolicyFile.getRepositoryPath(), True)
         imageUtils.defineFiltersFromPolicy(filterPolicy, reset=True)
 
         unkFilter = afwImage.Filter()
         gFilter = afwImage.Filter("g")
         rFilter = afwImage.Filter("r")
 
-        inExp = afwImage.ExposureF(ImSimFile, afwGeom.Box2I(afwGeom.Point2I(0,0), afwGeom.Extent2I(10, 10)),
-            afwImage.PARENT)
+        calexpPath = os.path.join(AfwdataDir, SimCalexpSubpath)
+        inExp = afwImage.ExposureF(calexpPath, afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(10, 10)),
+                                   afwImage.PARENT)
         coadd = coaddUtils.Coadd(
-            bbox = inExp.getBBox(),
-            wcs = inExp.getWcs(),
-            badMaskPlanes = ("NO_DATA", "BAD"),
+            bbox=inExp.getBBox(),
+            wcs=inExp.getWcs(),
+            badMaskPlanes=("NO_DATA", "BAD"),
         )
 
         inExp.setFilter(gFilter)
@@ -169,28 +170,22 @@ class CoaddTestCase(utilsTests.TestCase):
         Right now compares only the name, but if == ever works for Filters (ticket #1744)
         then use == instead
         """
-        self.assertEquals(f1.getName(), f2.getName())
+        self.assertEqual(f1.getName(), f2.getName())
 
     def assertEqualFilterSets(self, fs1, fs2):
         """Assert that two collections of filters are equal, ignoring order
         """
-        self.assertEquals(set(f.getName() for f in fs1), set(f.getName() for f in fs2))
-
-def suite():
-    """Return a suite containing all the test cases in this module.
-    """
-    utilsTests.init()
-
-    suites = []
-    suites += unittest.makeSuite(CoaddTestCase)
-    suites += unittest.makeSuite(utilsTests.MemoryTestCase)
-
-    return unittest.TestSuite(suites)
+        self.assertEqual(set(f.getName() for f in fs1), set(f.getName() for f in fs2))
 
 
-def run(shouldExit=False):
-    """Run the tests"""
-    utilsTests.run(suite(), shouldExit)
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
+
+
+def setup_module(module):
+    lsst.utils.tests.init()
+
 
 if __name__ == "__main__":
-    run(True)
+    lsst.utils.tests.init()
+    unittest.main()

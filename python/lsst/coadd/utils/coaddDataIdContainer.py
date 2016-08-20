@@ -26,6 +26,7 @@ import lsst.pipe.base as pipeBase
 
 __all__ = ["CoaddDataIdContainer", "ExistingCoaddDataIdContainer", "TractDataIdContainer"]
 
+
 class CoaddDataIdContainer(pipeBase.DataIdContainer):
     """A version of lsst.pipe.base.DataIdContainer specialized for coaddition.
 
@@ -33,6 +34,7 @@ class CoaddDataIdContainer(pipeBase.DataIdContainer):
 
     This code was originally in pipe_tasks (coaddBase.py)
     """
+
     def getSkymap(self, namespace):
         """Only retrieve skymap if required"""
         if not hasattr(self, "_skymap"):
@@ -53,12 +55,12 @@ class CoaddDataIdContainer(pipeBase.DataIdContainer):
                     raise argparse.ArgumentError(None, "--id must include " + key)
 
             # tract and patch are required; iterate over them if not provided
-            if not "tract" in dataId:
+            if "tract" not in dataId:
                 if "patch" in dataId:
                     raise RuntimeError("'patch' cannot be specified without 'tract'")
                 addList = [dict(tract=tract.getId(), patch="%d,%d" % patch.getIndex(), **dataId)
                            for tract in self.getSkymap(namespace) for patch in tract]
-            elif not "patch" in dataId:
+            elif "patch" not in dataId:
                 tract = self.getSkymap(namespace)[dataId["tract"]]
                 addList = [dict(patch="%d,%d" % patch.getIndex(), **dataId) for patch in tract]
             else:
@@ -67,13 +69,17 @@ class CoaddDataIdContainer(pipeBase.DataIdContainer):
             self.refList += [namespace.butler.dataRef(datasetType=self.datasetType, dataId=addId)
                              for addId in addList]
 
+
 class ExistingCoaddDataIdContainer(CoaddDataIdContainer):
     """A version of CoaddDataIdContainer that only produces references that exist"""
+
     def makeDataRefList(self, namespace):
         super(ExistingCoaddDataIdContainer, self).makeDataRefList(namespace)
         self.refList = [ref for ref in self.refList if ref.datasetExists()]
 
+
 class TractDataIdContainer(CoaddDataIdContainer):
+
     def makeDataRefList(self, namespace):
         """Make self.refList from self.idList
         It's difficult to make a data reference that merely points to an entire
@@ -81,14 +87,15 @@ class TractDataIdContainer(CoaddDataIdContainer):
         generate a list of data references for patches within the tract.
         """
         datasetType = namespace.config.coaddName + "Coadd"
-        validKeys = set(["tract", "filter", "patch",])
+        validKeys = set(["tract", "filter", "patch", ])
 
-        getPatchRefList = lambda tract: [namespace.butler.dataRef(datasetType=datasetType, tract=tract.getId(),
+        getPatchRefList = lambda tract: [namespace.butler.dataRef(datasetType=datasetType,
+                                                                  tract=tract.getId(),
                                                                   filter=dataId["filter"],
                                                                   patch="%d,%d" % patch.getIndex()) for
                                          patch in tract]
 
-        tractRefs = defaultdict(list) # Data references for each tract
+        tractRefs = defaultdict(list)  # Data references for each tract
         for dataId in self.idList:
             for key in validKeys:
                 if key in ("tract", "patch",):
@@ -111,4 +118,4 @@ class TractDataIdContainer(CoaddDataIdContainer):
                 tractRefs = dict((tract.getId(), tractRefs.get(tract.getId(), []) + getPatchRefList(tract))
                                  for tract in skymap)
 
-        self.refList = tractRefs.values()
+        self.refList = list(tractRefs.values())

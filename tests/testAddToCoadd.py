@@ -24,18 +24,18 @@
 
 """Test lsst.coadd.utils.addToCoadd
 """
+from builtins import range
 import os
 import unittest
-import warnings
 
 import numpy
 
 import lsst.utils
+import lsst.utils.tests
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import lsst.afw.display.ds9 as ds9
-import lsst.utils.tests as utilsTests
 import lsst.pex.exceptions as pexExcept
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
@@ -44,19 +44,17 @@ try:
     display
 except NameError:
     display = False
-    Verbosity = 0 # increase to see trace
+    Verbosity = 0  # increase to see trace
 
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
 try:
-    dataDir = lsst.utils.getPackageDir('afwdata')
+    AfwdataDir = lsst.utils.getPackageDir('afwdata')
 except Exception:
-    dataDir = None
+    AfwdataDir = None
+# path to a medium-sized MaskedImage, relative to afwdata package root
+MedMiSubpath = os.path.join("data", "med.fits")
 
-if dataDir != None:
-    medMIPath = os.path.join(dataDir, "data", "med.fits")
-
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 def slicesFromBox(box, image):
     """Computes the numpy slice in x and y associated with a parent bounding box
@@ -70,6 +68,7 @@ def slicesFromBox(box, image):
         slice(startInd[0], stopInd[0]),
         slice(startInd[1], stopInd[1]),
     )
+
 
 def referenceAddToCoadd(coadd, weightMap, maskedImage, badPixelMask, weight):
     """Reference implementation of lsst.coadd.utils.addToCoadd
@@ -108,12 +107,12 @@ def referenceAddToCoadd(coadd, weightMap, maskedImage, badPixelMask, weight):
     for ind in range(3):
         coaddView = coaddArrayList[ind][coaddSlices[1], coaddSlices[0]]
         maskedImageView = maskedImageArrayList[ind][imageSlices[1], imageSlices[0]]
-        if ind == 1: # mask plane
+        if ind == 1:  # mask plane
             coaddView |= numpy.where(badMaskView, 0, maskedImageView)
-        else: # image or variance plane
-            if ind == 0: # image
+        else:  # image or variance plane
+            if ind == 0:  # image
                 weightFac = weight
-            else: # variance
+            else:  # variance
                 weightFac = weight**2
             coaddView += numpy.where(badMaskView, 0, maskedImageView)*weightFac
     weightMapView = weightMapArray[coaddSlices[1], coaddSlices[0]]
@@ -149,7 +148,7 @@ class AddToCoaddTestCase(unittest.TestCase):
             image.set(badPixel)
 
             subBBox = afwGeom.Box2I(afwGeom.Point2I(0, i),
-                image.getDimensions() - afwGeom.Extent2I(0, i))
+                                    image.getDimensions() - afwGeom.Extent2I(0, i))
             subImage = image.Factory(image, subBBox, afwImage.LOCAL)
             subImage.set(truth)
             del subImage
@@ -193,9 +192,11 @@ class AddToCoaddTestCase(unittest.TestCase):
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+
 class AddToCoaddAfwdataTestCase(unittest.TestCase):
     """A test case for addToCoadd using afwdata
     """
+
     def referenceTest(self, coadd, weightMap, image, badPixelMask, weight):
         """Compare lsst implemenation of addToCoadd to a reference implementation.
 
@@ -206,7 +207,7 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
             referenceAddToCoadd(coadd, weightMap, image, badPixelMask, weight)
         # this updates coadd and weightMap:
         afwOverlapBox = coaddUtils.addToCoadd(coadd, weightMap, image, badPixelMask, weight)
-        self.assertEquals(overlapBBox, afwOverlapBox)
+        self.assertEqual(overlapBBox, afwOverlapBox)
 
         coaddArrayList = coadd.getArrays()
         weightMapArray = weightMap.getArray()
@@ -230,11 +231,12 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
             self.fail(errMsg)
         return overlapBBox
 
-    @unittest.skipUnless(dataDir, "afwdata not available")
+    @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testMed(self):
         """Test addToCoadd by adding an image with known bad pixels using varying masks
         """
         medBBox = afwGeom.Box2I(afwGeom.Point2I(130, 315), afwGeom.Extent2I(20, 21))
+        medMIPath = os.path.join(AfwdataDir, MedMiSubpath)
         maskedImage = afwImage.MaskedImageF(afwImage.MaskedImageF(medMIPath), medBBox)
         coadd = afwImage.MaskedImageF(medBBox)
         weightMap = afwImage.ImageF(medBBox)
@@ -242,12 +244,13 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
         for badPixelMask in (0x00, 0xFF):
             self.referenceTest(coadd, weightMap, maskedImage, badPixelMask, weight)
 
-    @unittest.skipUnless(dataDir, "afwdata not available")
+    @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testMultSizes(self):
         """Test addToCoadd by adding various subregions of the med image
         to a coadd that's a slightly different shape
         """
         bbox = afwGeom.Box2I(afwGeom.Point2I(130, 315), afwGeom.Extent2I(30, 31))
+        medMIPath = os.path.join(AfwdataDir, MedMiSubpath)
         fullMaskedImage = afwImage.MaskedImageF(medMIPath)
         maskedImage = afwImage.MaskedImageF(fullMaskedImage, bbox)
         coaddBBox = afwGeom.Box2I(
@@ -302,22 +305,15 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
             except pexExcept.Exception:
                 pass
 
-def suite():
-    """Return a suite containing all the test cases in this module.
-    """
-    utilsTests.init()
 
-    suites = []
-    suites += unittest.makeSuite(AddToCoaddTestCase)
-    suites += unittest.makeSuite(AddToCoaddAfwdataTestCase)
-    suites += unittest.makeSuite(utilsTests.MemoryTestCase)
-
-    return unittest.TestSuite(suites)
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
 
 
-def run(shouldExit=False):
-    """Run the tests"""
-    utilsTests.run(suite(), shouldExit)
+def setup_module(module):
+    lsst.utils.tests.init()
+
 
 if __name__ == "__main__":
-    run(True)
+    lsst.utils.tests.init()
+    unittest.main()

@@ -26,14 +26,17 @@
 """
 import unittest
 
+from builtins import range
+
+import lsst.utils.tests
 import lsst.afw.image as afwImage
-import lsst.utils.tests as utilsTests
 import lsst.pex.logging as pexLog
 import lsst.coadd.utils as coaddUtils
 
 Verbosity = 0
 
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
+
 
 def countBits(val):
     nBits = 0
@@ -47,13 +50,15 @@ MaxBitMask = (2**afwImage.MaskU_getNumPlanesMax() - 1)
 
 MaskPlaneNameIDDict = dict(afwImage.MaskU().getMaskPlaneDict())
 
+
 class AddToCoaddTestCase(unittest.TestCase):
     """A test case for setMaskBits
     """
+
     def testBits(self):
         """Test that the bits set are correct"""
 
-        fullPlaneNameList = MaskPlaneNameIDDict.keys()
+        fullPlaneNameList = list(MaskPlaneNameIDDict.keys())
         totNumBits = countBits(MaxBitMask)
         for i in range(len(fullPlaneNameList)):
             numPlanes = i + 1
@@ -61,29 +66,23 @@ class AddToCoaddTestCase(unittest.TestCase):
 
             bitMask = coaddUtils.makeBitMask(setPlaneNameList)
             self.assertEqual(countBits(bitMask), numPlanes)
-            for planeName, planeId in MaskPlaneNameIDDict.iteritems():
+            for planeName, planeId in MaskPlaneNameIDDict.items():
                 self.assertEqual((bitMask & (1 << planeId)) > 0, planeName in setPlaneNameList)
 
             invBitMask = coaddUtils.makeBitMask(setPlaneNameList, doInvert=True)
             self.assertEqual(countBits(invBitMask), totNumBits - numPlanes)
-            for planeName, planeId in MaskPlaneNameIDDict.iteritems():
+            for planeName, planeId in MaskPlaneNameIDDict.items():
                 self.assertEqual((invBitMask & (1 << planeId)) > 0, planeName not in setPlaneNameList)
 
-def suite():
-    """Return a suite containing all the test cases in this module.
-    """
-    utilsTests.init()
 
-    suites = []
-    suites += unittest.makeSuite(AddToCoaddTestCase)
-    suites += unittest.makeSuite(utilsTests.MemoryTestCase)
-
-    return unittest.TestSuite(suites)
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
 
 
-def run(shouldExit=False):
-    """Run the tests"""
-    utilsTests.run(suite(), shouldExit)
+def setup_module(module):
+    lsst.utils.tests.init()
+
 
 if __name__ == "__main__":
-    run(True)
+    lsst.utils.tests.init()
+    unittest.main()
