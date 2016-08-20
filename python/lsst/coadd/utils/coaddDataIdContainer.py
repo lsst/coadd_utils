@@ -55,12 +55,12 @@ class CoaddDataIdContainer(pipeBase.DataIdContainer):
                     raise argparse.ArgumentError(None, "--id must include " + key)
 
             # tract and patch are required; iterate over them if not provided
-            if not "tract" in dataId:
+            if "tract" not in dataId:
                 if "patch" in dataId:
                     raise RuntimeError("'patch' cannot be specified without 'tract'")
                 addList = [dict(tract=tract.getId(), patch="%d,%d" % patch.getIndex(), **dataId)
                            for tract in self.getSkymap(namespace) for patch in tract]
-            elif not "patch" in dataId:
+            elif "patch" not in dataId:
                 tract = self.getSkymap(namespace)[dataId["tract"]]
                 addList = [dict(patch="%d,%d" % patch.getIndex(), **dataId) for patch in tract]
             else:
@@ -89,7 +89,8 @@ class TractDataIdContainer(CoaddDataIdContainer):
         datasetType = namespace.config.coaddName + "Coadd"
         validKeys = set(["tract", "filter", "patch", ])
 
-        getPatchRefList = lambda tract: [namespace.butler.dataRef(datasetType=datasetType, tract=tract.getId(),
+        getPatchRefList = lambda tract: [namespace.butler.dataRef(datasetType=datasetType,
+                                                                  tract=tract.getId(),
                                                                   filter=dataId["filter"],
                                                                   patch="%d,%d" % patch.getIndex()) for
                                          patch in tract]

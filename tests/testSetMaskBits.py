@@ -24,8 +24,9 @@
 
 """Test lsst.coadd.utils.setMaskBits
 """
-from builtins import range
 import unittest
+
+from builtins import range
 
 import lsst.utils.tests
 import lsst.afw.image as afwImage

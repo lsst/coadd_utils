@@ -27,7 +27,6 @@
 from builtins import range
 import os
 import unittest
-import warnings
 
 import numpy
 
@@ -51,11 +50,9 @@ pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
 try:
     dataDir = lsst.utils.getPackageDir('afwdata')
+    medMIPath = os.path.join(dataDir, "data", "med.fits")
 except Exception:
     dataDir = None
-
-if dataDir != None:
-    medMIPath = os.path.join(dataDir, "data", "med.fits")
 
 
 def slicesFromBox(box, image):

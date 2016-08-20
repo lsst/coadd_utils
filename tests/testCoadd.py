@@ -26,7 +26,6 @@
 """
 import os
 import unittest
-import warnings
 
 import numpy
 
@@ -49,13 +48,9 @@ pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
 try:
     AfwDataDir = lsst.utils.getPackageDir('afwdata')
+    ImSimFile = os.path.join(AfwDataDir, "ImSim/calexp/v85408556-fr/R23/S11.fits")
 except Exception:
     AfwDataDir = None
-
-if AfwDataDir != None:
-    ImSimFile = os.path.join(AfwDataDir, "ImSim/calexp/v85408556-fr/R23/S11.fits")
-
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
 class CoaddTestCase(lsst.utils.tests.TestCase):

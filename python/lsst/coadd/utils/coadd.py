@@ -1,4 +1,3 @@
-from builtins import object
 #
 # LSST Data Management System
 # Copyright 2008, 2009, 2010, 2011, 2012 LSST Corporation.
@@ -21,6 +20,8 @@ from builtins import object
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 import math
+
+from builtins import object
 
 import lsst.pex.config as pexConfig
 from lsst.pex.logging import Log
