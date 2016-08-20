@@ -47,21 +47,23 @@ except NameError:
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
 try:
-    AfwDataDir = lsst.utils.getPackageDir('afwdata')
-    ImSimFile = os.path.join(AfwDataDir, "ImSim/calexp/v85408556-fr/R23/S11.fits")
+    AfwdataDir = lsst.utils.getPackageDir('afwdata')
 except Exception:
-    AfwDataDir = None
+    AfwdataDir = None
+# path to LsstSim calexp relative to afwData package root
+SimCalexpSubpath = os.path.join("ImSim", "calexp", "v85408556-fr", "R23", "S11.fits")
 
 
 class CoaddTestCase(lsst.utils.tests.TestCase):
     """A test case for Coadd
     """
 
-    @unittest.skipUnless(AfwDataDir, "afwdata not available")
+    @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testAddOne(self):
         """Add a single exposure; make sure coadd = input, appropriately scaled
         """
-        inExp = afwImage.ExposureF(ImSimFile)
+        calexpPath = os.path.join(AfwdataDir, SimCalexpSubpath)
+        inExp = afwImage.ExposureF(calexpPath)
         inMaskedImage = inExp.getMaskedImage()
         for badMaskPlanes in (
             (),
@@ -101,11 +103,12 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
                     self.fail("wcs do not match at fromPixPos=%s, sky1=%s: toPixPos1=%s != toPixPos2=%s" %
                               (fromPixPos, sky1, toPixPos1, toPixPos2))
 
-    @unittest.skipUnless(AfwDataDir, "afwdata not available")
+    @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testGetters(self):
         """Test getters for coadd
         """
-        inExp = afwImage.ExposureF(ImSimFile)
+        calexpPath = os.path.join(AfwdataDir, SimCalexpSubpath)
+        inExp = afwImage.ExposureF(calexpPath)
         bbox = inExp.getBBox()
         wcs = inExp.getWcs()
         for badMaskPlanes, bbox in (
@@ -126,7 +129,7 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
             self.assertEqual(badPixelMask, coadd.getBadPixelMask())
             self.assertWcsSame(wcs, coadd.getWcs())
 
-    @unittest.skipUnless(AfwDataDir, "afwdata not available")
+    @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testFilters(self):
         """Test that the coadd filter is set correctly
         """
@@ -139,7 +142,8 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
         gFilter = afwImage.Filter("g")
         rFilter = afwImage.Filter("r")
 
-        inExp = afwImage.ExposureF(ImSimFile, afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(10, 10)),
+        calexpPath = os.path.join(AfwdataDir, SimCalexpSubpath)
+        inExp = afwImage.ExposureF(calexpPath, afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(10, 10)),
                                    afwImage.PARENT)
         coadd = coaddUtils.Coadd(
             bbox=inExp.getBBox(),

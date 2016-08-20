@@ -49,10 +49,11 @@ except NameError:
 pexLog.Trace_setVerbosity("lsst.coadd.utils", Verbosity)
 
 try:
-    dataDir = lsst.utils.getPackageDir('afwdata')
-    medMIPath = os.path.join(dataDir, "data", "med.fits")
+    AfwdataDir = lsst.utils.getPackageDir('afwdata')
 except Exception:
-    dataDir = None
+    AfwdataDir = None
+# path to a medium-sized MaskedImage, relative to afwdata package root
+MedMiSubpath = os.path.join("data", "med.fits")
 
 
 def slicesFromBox(box, image):
@@ -230,11 +231,12 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
             self.fail(errMsg)
         return overlapBBox
 
-    @unittest.skipUnless(dataDir, "afwdata not available")
+    @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testMed(self):
         """Test addToCoadd by adding an image with known bad pixels using varying masks
         """
         medBBox = afwGeom.Box2I(afwGeom.Point2I(130, 315), afwGeom.Extent2I(20, 21))
+        medMIPath = os.path.join(AfwdataDir, MedMiSubpath)
         maskedImage = afwImage.MaskedImageF(afwImage.MaskedImageF(medMIPath), medBBox)
         coadd = afwImage.MaskedImageF(medBBox)
         weightMap = afwImage.ImageF(medBBox)
@@ -242,12 +244,13 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
         for badPixelMask in (0x00, 0xFF):
             self.referenceTest(coadd, weightMap, maskedImage, badPixelMask, weight)
 
-    @unittest.skipUnless(dataDir, "afwdata not available")
+    @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testMultSizes(self):
         """Test addToCoadd by adding various subregions of the med image
         to a coadd that's a slightly different shape
         """
         bbox = afwGeom.Box2I(afwGeom.Point2I(130, 315), afwGeom.Extent2I(30, 31))
+        medMIPath = os.path.join(AfwdataDir, MedMiSubpath)
         fullMaskedImage = afwImage.MaskedImageF(medMIPath)
         maskedImage = afwImage.MaskedImageF(fullMaskedImage, bbox)
         coaddBBox = afwGeom.Box2I(
