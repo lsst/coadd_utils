@@ -24,7 +24,7 @@ import math
 from builtins import object
 
 import lsst.pex.config as pexConfig
-from lsst.pex.logging import Log
+from lsst.log import Log
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 from .utilsLib import addToCoadd, setCoaddEdgeBits
@@ -61,7 +61,7 @@ class Coadd(object):
             badMaskPlanes should always include "NO_DATA".
         @param[in] logName: name by which messages are logged
         """
-        self._log = Log(Log.getDefaultLog(), logName)
+        self._log = Log.getLogger(logName)
         self._bbox = bbox
         self._wcs = wcs
         self._badPixelMask = afwImage.MaskU.getPlaneBitMask(badMaskPlanes)
@@ -121,7 +121,7 @@ class Coadd(object):
         filter = exposure.getFilter()
         self._filterDict.setdefault(filter.getName(), filter)
 
-        self._log.log(Log.INFO, "Add exposure to coadd with weight=%0.3g" % (weight,))
+        self._log.info("Add exposure to coadd with weight=%0.3g", weight)
 
         overlapBBox = addToCoadd(self._coadd.getMaskedImage(), self._weightMap,
                                  maskedImage, self._badPixelMask, weight)

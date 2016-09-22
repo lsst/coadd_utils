@@ -1,7 +1,7 @@
 setupRequired(afw)
+setupRequired(log)
 setupRequired(numpy)
 setupRequired(pex_config)
-setupRequired(pex_logging)
 setupRequired(pipe_base)
 setupRequired(scons)
 setupRequired(sconsUtils)

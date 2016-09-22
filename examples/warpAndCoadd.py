@@ -30,11 +30,11 @@ import time
 import traceback
 
 import lsst.pex.config as pexConfig
-import lsst.pex.logging as pexLog
 import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import lsst.coadd.utils as coaddUtils
+from lsst.log import Log
 
 
 class WarpAndCoaddConfig(pexConfig.Config):
@@ -159,7 +159,7 @@ def warpAndCoadd(coaddPath, exposureListPath, config):
             (timePerGoodExposure,), file=sys.stderr)
 
 if __name__ == "__main__":
-    pexLog.Trace.setVerbosity('lsst.coadd', 3)
+    Log.getLogger('coadd').setLevel(Log.DEBUG)
     helpStr = """Usage: warpAndCoadd.py coaddPath exposureListPath
 
 where:
