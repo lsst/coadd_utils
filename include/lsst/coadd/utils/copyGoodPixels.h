@@ -1,9 +1,9 @@
 // -*- LSST-C++ -*-
 
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -11,17 +11,17 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
- 
+
 #ifndef LSST_COADD_UTILS_ADDTOCOADD_H
 #define LSST_COADD_UTILS_ADDTOCOADD_H
 /**
@@ -57,7 +57,7 @@ namespace utils {
     *
     * Good pixels are those for which mask & badPixelMask == 0.
     *
-    * Only the overlapping pixels (relative to the parent) are copied;
+    * Only the overlapping pixels (relative to the destination) are copied;
     * thus the images do not have to be the same size.
     *
     * @return number of pixels copied
@@ -69,6 +69,27 @@ namespace utils {
         lsst::afw::image::MaskedImage<ImagePixelT, lsst::afw::image::MaskPixel,
             lsst::afw::image::VariancePixel> const &srcImage, ///< image to copy
         lsst::afw::image::MaskPixel const badPixelMask ///< skip input pixel if src mask & badPixelMask != 0
+    );
+
+    /**
+    * @brief copy good pixels from one covariance image to another
+    *
+    * Good pixels are those for which mask & badPixelMask == 0.
+    *
+    * Only the overlapping pixels (relative to the destination) are copied;
+    * thus the images do not have to be the same size.
+    *
+    * @return number of pixels copied
+    */
+    template<typename ImagePixelT>
+    int copyGoodPixels(
+        lsst::afw::image::MaskedImage<ImagePixelT, lsst::afw::image::MaskPixel,
+            lsst::afw::image::VariancePixel> &destImage,        ///< [in,out] image to be modified
+        lsst::afw::image::MaskedImage<ImagePixelT, lsst::afw::image::MaskPixel,
+            lsst::afw::image::VariancePixel> const &srcImage, ///< image to copy
+        lsst::afw::image::MaskPixel const badPixelMask, ///< skip input pixel if src mask & badPixelMask != 0
+        lsst::afw::image::Image<double> &destCovImage, //.< [in,out] covImage to be modified
+        lsst::afw::image::Image<double> const &srcCovImage ///< covImage to copy
     );
 
 }}} // lsst::coadd::utils

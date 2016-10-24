@@ -1,9 +1,9 @@
 // -*- LSST-C++ -*-
 
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -11,17 +11,17 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
- 
+
 /**
 * @file
 *
@@ -47,7 +47,7 @@ namespace {
      */
     struct CheckMask {
         CheckMask(lsst::afw::image::MaskPixel badPixel) : _badPixel(badPixel) {}
-        
+
         template<typename T>
         bool operator()(T val) const {
             return ((val.mask() & _badPixel) == 0) ? true : false;
@@ -55,20 +55,20 @@ namespace {
     private:
         lsst::afw::image::MaskPixel _badPixel;
     };
-    
+
     /*
      * A boolean functor to test if an Image pixel has known value (not NaN)
-     */    
+     */
     struct CheckKnownValue {
         CheckKnownValue(lsst::afw::image::MaskPixel) {}
-    
+
         template<typename T>
         bool operator()(T val) const {
             return !std::isnan(static_cast<float>(*val));
         }
     };
-    
-    /* 
+
+    /*
      * Implementation of copyGoodPixels
      *
      * The template parameter isValidPixel is a functor with operator()
@@ -89,10 +89,8 @@ namespace {
         if (overlapBBox.isEmpty()) {
             return 0;
         }
-    
         ImageT destView(destImage, overlapBBox, afwImage::PARENT, false);
         ImageT srcView(srcImage, overlapBBox, afwImage::PARENT, false);
-    
         isValidPixel const isValid(badPixelMask); // functor to check if a pixel is good
         int numGoodPix = 0;
         for (int y = 0, endY = srcView.getHeight(); y != endY; ++y) {
@@ -102,14 +100,61 @@ namespace {
             for (; srcIter != srcEndIter; ++srcIter, ++destIter) {
                 if (isValid(srcIter)) {
                     *destIter = *srcIter;
-//                     typename ImageT::SinglePixel pix = *srcIter;
-//                     *destIter = pix;
                     ++numGoodPix;
                 }
             }
         }
         return numGoodPix;
     }
+
+    template <typename ImageT, typename isValidPixel>
+    int copyGoodPixelsImpl(
+        ImageT &destImage,                                  ///< [in,out] image to modify
+        ImageT const &srcImage,                             ///< image to copy
+        lsst::afw::image::MaskPixel const badPixelMask,      ///< bad pixel mask
+        lsst::afw::image::Image<double> &destCovImage,      ///< [in,out] covImage to be modified
+        lsst::afw::image::Image<double> const &srcCovImage  ///< covImage to copy
+    ) {
+        afwGeom::Box2I overlapBBox = destImage.getBBox();
+        overlapBBox.clip(srcImage.getBBox());
+        if (overlapBBox.isEmpty()) {
+            return 0;
+        }
+        isValidPixel const isValid(badPixelMask); // functor to check if a pixel is good
+        int numGoodPix = 0;
+        int kernelXMult = srcCovImage.getWidth()/srcImage.getWidth();
+        int kernelYMult = srcCovImage.getHeight()/srcImage.getHeight();
+
+        int beginX = overlapBBox.getBeginX(), beginY = overlapBBox.getBeginY();
+        int endX = overlapBBox.getEndX(), endY = overlapBBox.getEndY();
+        int beginSrcX = srcImage.getBBox().getBeginX(), beginSrcY = srcImage.getBBox().getBeginY();
+        int beginDestX = destImage.getBBox().getBeginX(), beginDestY = destImage.getBBox().getBeginY();
+        typename ImageT::const_xy_locator srcLoc = srcImage.xy_at(0, 0);
+        typename ImageT::xy_locator destLoc = destImage.xy_at(0, 0);
+        typename lsst::afw::image::Image<double>::const_xy_locator srcCovLoc = srcCovImage.xy_at(0, 0);
+        typename lsst::afw::image::Image<double>::xy_locator destCovLoc = destCovImage.xy_at(0, 0);
+
+        for (int y = beginY; y < endY; ++y) {
+            for (int x = beginX; x < endX; ++x) {
+                if (isValid(srcLoc(x - beginSrcX, y - beginSrcY))) {
+                    destLoc(x - beginDestX, y - beginDestY) = srcLoc(x - beginSrcX, y - beginSrcY);
+                    ++numGoodPix;
+                    // Now copy covariance matrix
+                    for (int yCov = 0, endYCov = kernelYMult; yCov < endYCov; ++yCov) {
+                        for (int xCov = 0, endXCov = kernelXMult; xCov < endXCov; ++xCov) {
+                            destCovLoc((x - beginDestX)*kernelXMult + xCov,
+                                       (y - beginDestY)*kernelYMult + yCov) =
+                                            srcCovLoc((x - beginSrcX)*kernelXMult + xCov,
+                                                      (y - beginSrcY)*kernelYMult + yCov);
+                        } // for xCov
+                    } // for yCov
+                } // if isValid
+            } // for x
+        } // for y
+
+        return numGoodPix;
+    }
+
 } // anonymous namespace
 
 template <typename ImagePixelT>
@@ -135,6 +180,20 @@ int coaddUtils::copyGoodPixels(
     return copyGoodPixelsImpl<Image, CheckMask>(destImage, srcImage, badPixelMask);
 }
 
+template<typename ImagePixelT>
+int coaddUtils::copyGoodPixels(
+    lsst::afw::image::MaskedImage<ImagePixelT, lsst::afw::image::MaskPixel,
+        lsst::afw::image::VariancePixel> &destImage,        ///< [in,out] image to be modified
+    lsst::afw::image::MaskedImage<ImagePixelT, lsst::afw::image::MaskPixel,
+        lsst::afw::image::VariancePixel> const &srcImage, ///< image to copy
+    lsst::afw::image::MaskPixel const badPixelMask, ///< skip input pixel if src mask & badPixelMask != 0
+    lsst::afw::image::Image<double> &destCovImage, ///< [in,out] covImage to be modified
+    lsst::afw::image::Image<double> const &srcCovImage ///< covImage to copy
+) {
+    typedef lsst::afw::image::MaskedImage<ImagePixelT> Image;
+    return copyGoodPixelsImpl<Image, CheckMask>(destImage, srcImage, badPixelMask, destCovImage, srcCovImage);
+}
+
 // Explicit instantiations
 
 /// \cond
@@ -150,6 +209,14 @@ int coaddUtils::copyGoodPixels(
         MASKEDIMAGE(IMAGEPIXEL) &destImage, \
         MASKEDIMAGE(IMAGEPIXEL) const &srcImage, \
         afwImage::MaskPixel const badPixelMask \
+    ); \
+    \
+    template int coaddUtils::copyGoodPixels<IMAGEPIXEL>( \
+        MASKEDIMAGE(IMAGEPIXEL) &destImage, \
+        MASKEDIMAGE(IMAGEPIXEL) const &srcImage, \
+        afwImage::MaskPixel const badPixelMask, \
+        afwImage::Image<double> &destCovImage, \
+        afwImage::Image<double> const &srcCovImage \
     );
 
 INSTANTIATE(double);
