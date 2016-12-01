@@ -1,5 +1,6 @@
 setupRequired(afw)
 setupRequired(log)
+setupRequired(pybind11)
 setupRequired(numpy)
 setupRequired(pex_config)
 setupRequired(pipe_base)
