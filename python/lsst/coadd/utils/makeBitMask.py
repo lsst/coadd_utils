@@ -37,5 +37,5 @@ def makeBitMask(maskPlaneNameList, doInvert=False):
     """
     bitMask = afwImage.MaskU.getPlaneBitMask(maskPlaneNameList)
     if doInvert:
-        bitMask = (2**afwImage.MaskU_getNumPlanesMax() - 1) - bitMask
+        bitMask = (2**afwImage.MaskU.getNumPlanesMax() - 1) - bitMask
     return bitMask

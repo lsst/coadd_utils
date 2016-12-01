@@ -44,7 +44,7 @@ def countBits(val):
         val >>= 1
     return nBits
 
-MaxBitMask = (2**afwImage.MaskU_getNumPlanesMax() - 1)
+MaxBitMask = (2**afwImage.MaskU.getNumPlanesMax() - 1)
 
 MaskPlaneNameIDDict = dict(afwImage.MaskU().getMaskPlaneDict())
 
