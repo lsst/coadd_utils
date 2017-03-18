@@ -20,8 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include <pybind11/pybind11.h>
-//#include <pybind11/stl.h>
+#include "pybind11/pybind11.h"
 
 #include "lsst/coadd/utils/copyGoodPixels.h"
 
@@ -33,6 +32,7 @@ namespace coadd {
 namespace utils {
 
 namespace {
+
 template <typename ImagePixelT>
 void declareCopyGoodPixels(py::module &mod) {
     namespace afwImage = lsst::afw::image;
@@ -46,27 +46,22 @@ void declareCopyGoodPixels(py::module &mod) {
                     copyGoodPixels,
             "destImage"_a, "srcImage"_a, "badPixelMask"_a);
 }
-}
 
-PYBIND11_PLUGIN(_copyGoodPixels) {
-    py::module mod("_copyGoodPixels", "Python wrapper for afw _copyGoodPixels library");
+}  // <anonymous>
 
-    /* Module level */
+PYBIND11_PLUGIN(copyGoodPixels) {
+    py::module::import("lsst.afw.image");
+
+    py::module mod("copyGoodPixels");
+
     declareCopyGoodPixels<double>(mod);
     declareCopyGoodPixels<float>(mod);
     declareCopyGoodPixels<int>(mod);
     declareCopyGoodPixels<std::uint16_t>(mod);
 
-    /* Member types and enums */
-
-    /* Constructors */
-
-    /* Operators */
-
-    /* Members */
-
     return mod.ptr();
 }
-}
-}
-}  // lsst::coadd::utils
+
+}  // utils
+}  // coadd
+}  // lsst

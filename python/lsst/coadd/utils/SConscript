@@ -2,4 +2,4 @@
 from lsst.sconsUtils import scripts
 scripts.BasicSConscript.pybind11(['addToCoadd',
                                   'copyGoodPixels',
-                                  'setCoaddEdgeBits'])
+                                  'setCoaddEdgeBits'], addUnderscore=False)

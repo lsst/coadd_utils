@@ -19,7 +19,7 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 import math
 
 from builtins import object
@@ -28,7 +28,7 @@ import lsst.pex.config as pexConfig
 from lsst.log import Log
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
-from .utilsLib import addToCoadd, setCoaddEdgeBits
+from . import addToCoadd, setCoaddEdgeBits
 
 __all__ = ["Coadd"]
 

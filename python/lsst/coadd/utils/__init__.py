@@ -22,10 +22,13 @@
 
 """lsst.coadd.utils
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
+
+from .addToCoadd import *
+from .copyGoodPixels import *
+from .setCoaddEdgeBits import *
 from .version import *
 
 from .makeBitMask import *
-from .utilsLib import *
 from .coadd import *
 from .coaddDataIdContainer import *

@@ -20,8 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include <pybind11/pybind11.h>
-//#include <pybind11/stl.h>
+#include "pybind11/pybind11.h"
 
 #include "lsst/coadd/utils/setCoaddEdgeBits.h"
 
@@ -33,6 +32,7 @@ namespace coadd {
 namespace utils {
 
 namespace {
+
 template <typename WeightPixelT>
 void declareSetCoaddEdgeBits(py::module &mod) {
     namespace afwImage = lsst::afw::image;
@@ -42,27 +42,22 @@ void declareSetCoaddEdgeBits(py::module &mod) {
                     setCoaddEdgeBits,
             "coaddMask"_a, "weightMap"_a);
 }
-}
 
-PYBIND11_PLUGIN(_setCoaddEdgeBits) {
-    py::module mod("_setCoaddEdgeBits", "Python wrapper for afw _setCoaddEdgeBits library");
+}  // <anonymous>
 
-    /* Module level */
+PYBIND11_PLUGIN(setCoaddEdgeBits) {
+    py::module::import("lsst.afw.image");
+
+    py::module mod("setCoaddEdgeBits");
+
     declareSetCoaddEdgeBits<double>(mod);
     declareSetCoaddEdgeBits<float>(mod);
     declareSetCoaddEdgeBits<int>(mod);
     declareSetCoaddEdgeBits<std::uint16_t>(mod);
 
-    /* Member types and enums */
-
-    /* Constructors */
-
-    /* Operators */
-
-    /* Members */
-
     return mod.ptr();
 }
-}
-}
-}  // lsst::coadd::utils
+
+}  // utils
+}  // coadd
+}  // lsst
