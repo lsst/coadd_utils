@@ -20,8 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include <pybind11/pybind11.h>
-//#include <pybind11/stl.h>
+#include "pybind11/pybind11.h"
 
 #include "lsst/coadd/utils/addToCoadd.h"
 
@@ -33,6 +32,7 @@ namespace coadd {
 namespace utils {
 
 namespace {
+
 template <typename CoaddPixelT, typename WeightPixelT>
 void declareAddToCoadd(py::module &mod) {
     namespace afwGeom = lsst::afw::geom;
@@ -49,12 +49,15 @@ void declareAddToCoadd(py::module &mod) {
                     addToCoadd,
             "coadd"_a, "weightMap"_a, "maskedImage"_a, "badPixelMask"_a, "weight"_a);
 }
-}
 
-PYBIND11_PLUGIN(_addToCoadd) {
-    py::module mod("_addToCoadd", "Python wrapper for afw _addToCoadd library");
+}  // <anonymous>
 
-    /* Module level */
+PYBIND11_PLUGIN(addToCoadd) {
+    py::module::import("lsst.afw.geom");
+    py::module::import("lsst.afw.image");
+
+    py::module mod("addToCoadd");
+
     declareAddToCoadd<double, double>(mod);
     declareAddToCoadd<double, float>(mod);
     declareAddToCoadd<double, int>(mod);
@@ -64,16 +67,9 @@ PYBIND11_PLUGIN(_addToCoadd) {
     declareAddToCoadd<float, int>(mod);
     declareAddToCoadd<float, std::uint16_t>(mod);
 
-    /* Member types and enums */
-
-    /* Constructors */
-
-    /* Operators */
-
-    /* Members */
-
     return mod.ptr();
 }
-}
-}
-}  // lsst::coadd::utils
+
+}  // utils
+}  // coadd
+}  // lsst
