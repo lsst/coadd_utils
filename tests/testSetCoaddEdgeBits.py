@@ -45,15 +45,15 @@ class SetCoaddEdgeBitsTestCase(lsst.utils.tests.TestCase):
         """Test setCoaddEdgeBits using a random depth map
         """
         imDim = afwGeom.Extent2I(50, 55)
-        coaddMask = afwImage.MaskU(imDim)
+        coaddMask = afwImage.Mask(imDim)
 
         numpy.random.seed(12345)
         depthMapArray = numpy.random.randint(0, 3, list((imDim[1], imDim[0]))).astype(numpy.uint16)
         depthMap = afwImage.makeImageFromArray(depthMapArray)
 
-        refCoaddMask = afwImage.MaskU(imDim)
+        refCoaddMask = afwImage.Mask(imDim)
         refCoaddMaskArray = refCoaddMask.getArray()
-        edgeMask = afwImage.MaskU.getPlaneBitMask("NO_DATA")
+        edgeMask = afwImage.Mask.getPlaneBitMask("NO_DATA")
         refCoaddMaskArray |= numpy.array(numpy.where(depthMapArray > 0, 0, edgeMask),
                                          dtype=refCoaddMaskArray.dtype)
 

@@ -123,7 +123,7 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
             )
             badPixelMask = 0
             for maskPlaneName in badMaskPlanes:
-                badPixelMask += afwImage.MaskU.getPlaneBitMask(maskPlaneName)
+                badPixelMask += afwImage.Mask.getPlaneBitMask(maskPlaneName)
             self.assertEqual(bbox, coadd.getBBox())
             self.assertEqual(badPixelMask, coadd.getBadPixelMask())
             self.assertWcsSame(wcs, coadd.getWcs())
