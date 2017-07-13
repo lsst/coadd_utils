@@ -28,14 +28,14 @@ __all__ = ["makeBitMask"]
 def makeBitMask(maskPlaneNameList, doInvert=False):
     """Generate a bit mask consisting of ORed together Mask bit planes
 
-    @deprecated use afwImage.MaskU.getPlaneBitMask(maskPlaneNameList) instead.
+    @deprecated use afwImage.Mask.getPlaneBitMask(maskPlaneNameList) instead.
 
     @input[in] maskPlaneNameList: list of mask plane names
     @input[in] doInvert: if True then invert the result
 
     @return a bit mask consisting of the named bit planes ORed together (with the result possibly inverted)
     """
-    bitMask = afwImage.MaskU.getPlaneBitMask(maskPlaneNameList)
+    bitMask = afwImage.Mask.getPlaneBitMask(maskPlaneNameList)
     if doInvert:
-        bitMask = (2**afwImage.MaskU.getNumPlanesMax() - 1) - bitMask
+        bitMask = (2**afwImage.Mask.getNumPlanesMax() - 1) - bitMask
     return bitMask
