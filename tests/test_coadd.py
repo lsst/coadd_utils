@@ -109,10 +109,10 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
         bbox = inExp.getBBox()
         wcs = inExp.getWcs()
         for badMaskPlanes, bbox in (
-            (("NO_DATA",),         afwGeom.Box2I(afwGeom.Point2I(  1,    2), afwGeom.Extent2I(100, 102))),
-            (("NO_DATA", "BAD"),   afwGeom.Box2I(afwGeom.Point2I(  0,    0), afwGeom.Extent2I(100, 102))),
-            (("NO_DATA",),         afwGeom.Box2I(afwGeom.Point2I(104,    0), afwGeom.Extent2I(  5,  10))),
-            (("NO_DATA",),         afwGeom.Box2I(afwGeom.Point2I(  0, 1020), afwGeom.Extent2I(100, 102))),
+            (("NO_DATA",), afwGeom.Box2I(afwGeom.Point2I(1, 2), afwGeom.Extent2I(100, 102))),
+            (("NO_DATA", "BAD"), afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(100, 102))),
+            (("NO_DATA",), afwGeom.Box2I(afwGeom.Point2I(104, 0), afwGeom.Extent2I(5, 10))),
+            (("NO_DATA",), afwGeom.Box2I(afwGeom.Point2I(0, 1020), afwGeom.Extent2I(100, 102))),
         ):
             coadd = coaddUtils.Coadd(
                 bbox=bbox,

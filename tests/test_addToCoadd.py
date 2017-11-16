@@ -188,8 +188,6 @@ class AddToCoaddTestCase(unittest.TestCase):
             self.assertEqual(truth_mean, mean)
             self.assertEqual(truth_stdev, stdev)
 
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
 
 class AddToCoaddAfwdataTestCase(unittest.TestCase):
     """A test case for addToCoadd using afwdata
