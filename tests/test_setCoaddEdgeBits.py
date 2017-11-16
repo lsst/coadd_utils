@@ -24,7 +24,7 @@
 """
 import unittest
 
-import numpy
+import numpy as np
 
 import lsst.utils.tests
 import lsst.afw.geom as afwGeom
@@ -45,15 +45,15 @@ class SetCoaddEdgeBitsTestCase(lsst.utils.tests.TestCase):
         imDim = afwGeom.Extent2I(50, 55)
         coaddMask = afwImage.Mask(imDim)
 
-        numpy.random.seed(12345)
-        depthMapArray = numpy.random.randint(0, 3, list((imDim[1], imDim[0]))).astype(numpy.uint16)
+        np.random.seed(12345)
+        depthMapArray = np.random.randint(0, 3, list((imDim[1], imDim[0]))).astype(np.uint16)
         depthMap = afwImage.makeImageFromArray(depthMapArray)
 
         refCoaddMask = afwImage.Mask(imDim)
         refCoaddMaskArray = refCoaddMask.getArray()
         edgeMask = afwImage.Mask.getPlaneBitMask("NO_DATA")
-        refCoaddMaskArray |= numpy.array(numpy.where(depthMapArray > 0, 0, edgeMask),
-                                         dtype=refCoaddMaskArray.dtype)
+        refCoaddMaskArray |= np.array(np.where(depthMapArray > 0, 0, edgeMask),
+                                      dtype=refCoaddMaskArray.dtype)
 
         coaddUtils.setCoaddEdgeBits(coaddMask, depthMap)
         self.assertMasksEqual(coaddMask, refCoaddMask)

@@ -27,7 +27,7 @@ from builtins import range
 import os
 import unittest
 
-import numpy
+import numpy as np
 
 import lsst.utils
 import lsst.utils.tests
@@ -106,15 +106,15 @@ def referenceAddToCoadd(coadd, weightMap, maskedImage, badPixelMask, weight):
         coaddView = coaddArrayList[ind][coaddSlices[1], coaddSlices[0]]
         maskedImageView = maskedImageArrayList[ind][imageSlices[1], imageSlices[0]]
         if ind == 1:  # mask plane
-            coaddView |= numpy.where(badMaskView, 0, maskedImageView)
+            coaddView |= np.where(badMaskView, 0, maskedImageView)
         else:  # image or variance plane
             if ind == 0:  # image
                 weightFac = weight
             else:  # variance
                 weightFac = weight**2
-            coaddView += numpy.where(badMaskView, 0, maskedImageView)*weightFac
+            coaddView += np.where(badMaskView, 0, maskedImageView)*weightFac
     weightMapView = weightMapArray[coaddSlices[1], coaddSlices[0]]
-    weightMapView += numpy.where(badMaskView, 0, 1)*weight
+    weightMapView += np.where(badMaskView, 0, 1)*weight
     return overlapBBox, coaddArrayList, weightMapArray
 
 
@@ -209,7 +209,7 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
         weightMapArray = weightMap.getArray()
 
         for name, ind in (("image", 0), ("mask", 1), ("variance", 2)):
-            if not numpy.allclose(coaddArrayList[ind], refCoaddArrayList[ind]):
+            if not np.allclose(coaddArrayList[ind], refCoaddArrayList[ind]):
                 errMsgList = (
                     "Computed %s does not match reference for badPixelMask=%s:" % (name, badPixelMask),
                     "computed=  %s" % (coaddArrayList[ind],),
@@ -217,7 +217,7 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
                 )
                 errMsg = "\n".join(errMsgList)
                 self.fail(errMsg)
-        if not numpy.allclose(weightMapArray, refweightMapArray):
+        if not np.allclose(weightMapArray, refweightMapArray):
             errMsgList = (
                 "Computed weight map does not match reference for badPixelMask=%s:" % (badPixelMask,),
                 "computed=  %s" % (weightMapArray,),

@@ -25,7 +25,7 @@
 import os
 import unittest
 
-import numpy
+import numpy as np
 
 import lsst.utils
 import lsst.utils.tests
@@ -88,15 +88,15 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
                 fromPixPos = afwGeom.Point2D(xPixPos, yPixPos)
                 sky1 = wcs1.pixelToSky(fromPixPos)
                 sky2 = wcs2.pixelToSky(fromPixPos)
-                if not numpy.allclose(sky1.getPosition(), sky2.getPosition()):
+                if not np.allclose(sky1.getPosition(), sky2.getPosition()):
                     self.fail("wcs do not match at fromPixPos=%s: sky1=%s != sky2=%s" %
                               (fromPixPos, sky1, sky2))
                 toPixPos1 = wcs1.skyToPixel(sky1)
                 toPixPos2 = wcs2.skyToPixel(sky1)
-                if not numpy.allclose((xPixPos, yPixPos), toPixPos1):
+                if not np.allclose((xPixPos, yPixPos), toPixPos1):
                     self.fail("wcs do not match at sky1=%s: fromPixPos=%s != toPixPos1=%s" %
                               (sky1, fromPixPos, toPixPos1))
-                if not numpy.allclose(toPixPos1, toPixPos2):
+                if not np.allclose(toPixPos1, toPixPos2):
                     self.fail("wcs do not match at fromPixPos=%s, sky1=%s: toPixPos1=%s != toPixPos2=%s" %
                               (fromPixPos, sky1, toPixPos1, toPixPos2))
 
