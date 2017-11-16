@@ -56,7 +56,7 @@ class Coadd(object):
 
         @param[in] bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
-        @param[in] wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
+        @param[in] wcs: WCS of coadd exposure (lsst.afw.geom.SKyWcs)
         @param[in] badMaskPlanes: mask planes to pay attention to when rejecting masked pixels.
             Specify as a collection of names.
             badMaskPlanes should always include "NO_DATA".
@@ -81,7 +81,7 @@ class Coadd(object):
 
         @param[in] bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
-        @param[in] wcs: WCS of coadd exposure (lsst.afw.math.Wcs)
+        @param[in] wcs: WCS of coadd exposure (lsst.afw.geom.SKyWcs)
         @param[in] config: coadd config; an instance of CoaddConfig
         @param[in] logName: name by which messages are logged
         """
