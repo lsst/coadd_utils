@@ -80,7 +80,7 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
             skipMaskArr = inMaskArr & badMask != 0
 
             msg = "coadd != input exposure"
-            self.assertMaskedImagesNearlyEqual(inMaskedImage, coaddMaskedImage, skipMask=skipMaskArr, msg=msg)
+            self.assertMaskedImagesAlmostEqual(inMaskedImage, coaddMaskedImage, skipMask=skipMaskArr, msg=msg)
 
     def assertWcsSame(self, wcs1, wcs2):
         for xPixPos in (0, 1000, 2000):

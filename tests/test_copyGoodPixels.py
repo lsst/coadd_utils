@@ -149,7 +149,7 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
         imageArrays = maskedImage.getArrays()
         imageArrays[0][:] = np.random.normal(5000, 5000, npShape)  # image
         imageArrays[2][:] = np.random.normal(3000, 3000, npShape)  # variance
-        imageArrays[1][:] = np.logical_and(np.random.random_integers(0, 7, npShape), ~excludeMask)
+        imageArrays[1][:] = np.logical_and(np.random.randint(0, 8, npShape), ~excludeMask)
         return maskedImage
 
     def getRandomImage(self, bbox, nanSigma=0):
@@ -176,7 +176,7 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
 
         msg = "masked image != reference masked image"
         try:
-            self.assertMaskedImagesNearlyEqual(destImage, refDestImage, msg=msg)
+            self.assertMaskedImagesAlmostEqual(destImage, refDestImage, msg=msg)
         except Exception:
             destImage.writeFits("destMaskedImage.fits")
             refDestImage.writeFits("refDestMaskedImage.fits")
@@ -188,7 +188,7 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
 
         msg = "image != reference image"
         try:
-            self.assertImagesNearlyEqual(destImage, refDestImage, msg=msg)
+            self.assertImagesAlmostEqual(destImage, refDestImage, msg=msg)
         except Exception:
             destImage.writeFits("destImage.fits")
             refDestImage.writeFits("refDestImage.fits")
