@@ -25,7 +25,7 @@
 import unittest
 
 from builtins import range
-import numpy
+import numpy as np
 
 import lsst.utils.tests
 import lsst.afw.geom as afwGeom
@@ -70,10 +70,10 @@ def referenceCopyGoodPixelsImage(destImage, srcImage):
     srcImageView = srcImage.Factory(srcImage, overlapBBox, afwImage.PARENT, False)
     srcImageArray = srcImageView.getArray()
 
-    isBadArray = numpy.isnan(srcImageArray)
+    isBadArray = np.isnan(srcImageArray)
 
-    destImageArray[:] = numpy.where(isBadArray, destImageArray, srcImageArray)
-    numGoodPix = numpy.sum(numpy.logical_not(isBadArray))
+    destImageArray[:] = np.where(isBadArray, destImageArray, srcImageArray)
+    numGoodPix = np.sum(np.logical_not(isBadArray))
     return destImage, numGoodPix
 
 
@@ -110,8 +110,8 @@ def referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badPixelMask):
     for ind in range(3):
         destImageView = destImageArrayList[ind]
         srcImageView = srcImageArrayList[ind]
-        destImageView[:] = numpy.where(isBadArray, destImageView, srcImageView)
-    numGoodPix = numpy.sum(numpy.logical_not(isBadArray))
+        destImageView[:] = np.where(isBadArray, destImageView, srcImageView)
+    numGoodPix = np.sum(np.logical_not(isBadArray))
     return destImage, numGoodPix
 
 
@@ -126,7 +126,7 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
         afwDim = bbox.getDimensions()
         npShape = (afwDim[1], afwDim[0])
 
-        numpy.random.seed(0)
+        np.random.seed(0)
         maskedImage = afwImage.MaskedImageF(bbox)
         imageArrays = maskedImage.getArrays()
         imageArrays[0][:] = val
@@ -144,12 +144,12 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
         afwDim = bbox.getDimensions()
         npShape = (afwDim[1], afwDim[0])
 
-        numpy.random.seed(0)
+        np.random.seed(0)
         maskedImage = afwImage.MaskedImageF(bbox)
         imageArrays = maskedImage.getArrays()
-        imageArrays[0][:] = numpy.random.normal(5000, 5000, npShape)  # image
-        imageArrays[2][:] = numpy.random.normal(3000, 3000, npShape)  # variance
-        imageArrays[1][:] = numpy.logical_and(numpy.random.random_integers(0, 7, npShape), ~excludeMask)
+        imageArrays[0][:] = np.random.normal(5000, 5000, npShape)  # image
+        imageArrays[2][:] = np.random.normal(3000, 3000, npShape)  # variance
+        imageArrays[1][:] = np.logical_and(np.random.randint(0, 8, npShape), ~excludeMask)
         return maskedImage
 
     def getRandomImage(self, bbox, nanSigma=0):
@@ -158,14 +158,14 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
         afwDim = bbox.getDimensions()
         npShape = (afwDim[1], afwDim[0])
 
-        numpy.random.seed(0)
+        np.random.seed(0)
         image = afwImage.ImageF(bbox)
         imageArray = image.getArray()
-        imageArray[:] = numpy.random.normal(5000, 5000, npShape)
+        imageArray[:] = np.random.normal(5000, 5000, npShape)
         if nanSigma > 0:
             # add NaNs at nanSigma above mean of a test array
-            nanTest = numpy.random.normal(0, 1, npShape)
-            imageArray[:] = numpy.where(nanTest > nanSigma, numpy.nan, imageArray)
+            nanTest = np.random.normal(0, 1, npShape)
+            imageArray[:] = np.where(nanTest > nanSigma, np.nan, imageArray)
         return image
 
     def basicMaskedImageTest(self, srcImage, destImage, badMask):
@@ -176,7 +176,7 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
 
         msg = "masked image != reference masked image"
         try:
-            self.assertMaskedImagesNearlyEqual(destImage, refDestImage, msg=msg)
+            self.assertMaskedImagesAlmostEqual(destImage, refDestImage, msg=msg)
         except Exception:
             destImage.writeFits("destMaskedImage.fits")
             refDestImage.writeFits("refDestMaskedImage.fits")
@@ -188,7 +188,7 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
 
         msg = "image != reference image"
         try:
-            self.assertImagesNearlyEqual(destImage, refDestImage, msg=msg)
+            self.assertImagesAlmostEqual(destImage, refDestImage, msg=msg)
         except Exception:
             destImage.writeFits("destImage.fits")
             refDestImage.writeFits("refDestImage.fits")
