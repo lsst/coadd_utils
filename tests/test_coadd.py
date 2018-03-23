@@ -82,24 +82,6 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
             msg = "coadd != input exposure"
             self.assertMaskedImagesAlmostEqual(inMaskedImage, coaddMaskedImage, skipMask=skipMaskArr, msg=msg)
 
-    def assertWcsSame(self, wcs1, wcs2):
-        for xPixPos in (0, 1000, 2000):
-            for yPixPos in (0, 1000, 2000):
-                fromPixPos = afwGeom.Point2D(xPixPos, yPixPos)
-                sky1 = wcs1.pixelToSky(fromPixPos)
-                sky2 = wcs2.pixelToSky(fromPixPos)
-                if not np.allclose(sky1.getPosition(), sky2.getPosition()):
-                    self.fail("wcs do not match at fromPixPos=%s: sky1=%s != sky2=%s" %
-                              (fromPixPos, sky1, sky2))
-                toPixPos1 = wcs1.skyToPixel(sky1)
-                toPixPos2 = wcs2.skyToPixel(sky1)
-                if not np.allclose((xPixPos, yPixPos), toPixPos1):
-                    self.fail("wcs do not match at sky1=%s: fromPixPos=%s != toPixPos1=%s" %
-                              (sky1, fromPixPos, toPixPos1))
-                if not np.allclose(toPixPos1, toPixPos2):
-                    self.fail("wcs do not match at fromPixPos=%s, sky1=%s: toPixPos1=%s != toPixPos2=%s" %
-                              (fromPixPos, sky1, toPixPos1, toPixPos2))
-
     @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testGetters(self):
         """Test getters for coadd
@@ -124,7 +106,7 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
                 badPixelMask += afwImage.Mask.getPlaneBitMask(maskPlaneName)
             self.assertEqual(bbox, coadd.getBBox())
             self.assertEqual(badPixelMask, coadd.getBadPixelMask())
-            self.assertWcsSame(wcs, coadd.getWcs())
+            self.assertWcsAlmostEqualOverBBox(wcs, coadd.getWcs(), coadd.getBBox())
 
     @unittest.skipUnless(AfwdataDir, "afwdata not available")
     def testFilters(self):
