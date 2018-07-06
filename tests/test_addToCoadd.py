@@ -157,7 +157,7 @@ class AddToCoaddTestCase(unittest.TestCase):
             else:
                 coaddUtils.addToCoadd(coadd, weightMap, image, weight)
 
-            self.assertEqual(image.get(image.getWidth() - 1, image.getHeight() - 1), truth)
+            self.assertEqual(image[-1, -1, afwImage.LOCAL], truth)
 
         coadd /= weightMap
 
