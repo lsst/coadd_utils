@@ -24,8 +24,6 @@
 """
 import unittest
 
-from builtins import range
-
 import lsst.utils.tests
 import lsst.afw.image as afwImage
 import lsst.coadd.utils as coaddUtils

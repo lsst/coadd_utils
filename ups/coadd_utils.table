@@ -7,7 +7,6 @@ setupRequired(pipe_base)
 setupRequired(scons)
 setupRequired(sconsUtils)
 setupRequired(utils)
-setupRequired(python_future)
 
 setupOptional(afwdata)
 

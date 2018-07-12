@@ -23,7 +23,6 @@
 #
 """Demonstrate how to create a coadd by warping and adding.
 """
-from __future__ import print_function
 import os
 import sys
 import time
@@ -93,7 +92,7 @@ def warpAndCoadd(coaddPath, exposureListPath, config):
     expNum = 0
     numExposuresInCoadd = 0
     numExposuresFailed = 0
-    with file(exposureListPath, "rU") as infile:
+    with open(exposureListPath, "rU") as infile:
         for exposurePath in infile:
             exposurePath = exposurePath.strip()
             if not exposurePath or exposurePath.startswith("#"):
@@ -108,7 +107,8 @@ def warpAndCoadd(coaddPath, exposureListPath, config):
                     exposure.writeFits("exposure%s.fits" % (expNum,))
 
                 if not coadd:
-                    print("Create warper and coadd with size and WCS matching the first/reference exposure", file=sys.stderr)
+                    print("Create warper and coadd with size and WCS matching the first/reference exposure",
+                          file=sys.stderr)
                     warper = afwMath.Warper.fromConfig(config.warp)
                     coadd = coaddUtils.Coadd.fromConfig(
                         bbox=exposure.getBBox(),
@@ -155,8 +155,9 @@ def warpAndCoadd(coaddPath, exposureListPath, config):
     print("Coadded %d exposures and failed %d" % (numExposuresInCoadd, numExposuresFailed), file=sys.stderr)
     if numExposuresInCoadd > 1:
         timePerGoodExposure = accumGoodTime / float(numExposuresInCoadd - 1)
-        print("Processing speed: %.1f seconds/exposure (ignoring first and failed)" % \
-            (timePerGoodExposure,), file=sys.stderr)
+        print("Processing speed: %.1f seconds/exposure (ignoring first and failed)" %
+              (timePerGoodExposure,), file=sys.stderr)
+
 
 if __name__ == "__main__":
     Log.getLogger('coadd').setLevel(Log.DEBUG)
