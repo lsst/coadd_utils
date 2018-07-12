@@ -25,8 +25,6 @@
 import os
 import unittest
 
-import numpy as np
-
 import lsst.utils
 import lsst.utils.tests
 import lsst.afw.geom as afwGeom
