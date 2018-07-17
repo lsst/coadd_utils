@@ -43,7 +43,7 @@ void declareSetCoaddEdgeBits(py::module &mod) {
             "coaddMask"_a, "weightMap"_a);
 }
 
-}  // <anonymous>
+}  // namespace
 
 PYBIND11_MODULE(setCoaddEdgeBits, mod) {
     py::module::import("lsst.afw.image");
@@ -54,6 +54,6 @@ PYBIND11_MODULE(setCoaddEdgeBits, mod) {
     declareSetCoaddEdgeBits<std::uint16_t>(mod);
 }
 
-}  // utils
-}  // coadd
-}  // lsst
+}  // namespace utils
+}  // namespace coadd
+}  // namespace lsst
