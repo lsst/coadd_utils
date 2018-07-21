@@ -38,9 +38,10 @@ void declareAddToCoadd(py::module &mod) {
     namespace afwGeom = lsst::afw::geom;
     namespace afwImage = lsst::afw::image;
 
-    mod.def("addToCoadd", (afwGeom::Box2I(*)(afwImage::Image<CoaddPixelT> &, afwImage::Image<WeightPixelT> &,
-                                             afwImage::Image<CoaddPixelT> const &, WeightPixelT)) &
-                                  addToCoadd,
+    mod.def("addToCoadd",
+            (afwGeom::Box2I(*)(afwImage::Image<CoaddPixelT> &, afwImage::Image<WeightPixelT> &,
+                               afwImage::Image<CoaddPixelT> const &, WeightPixelT)) &
+                    addToCoadd,
             "coadd"_a, "weightMap"_a, "image"_a, "weight"_a);
     mod.def("addToCoadd",
             (afwGeom::Box2I(*)(afwImage::MaskedImage<CoaddPixelT> &, afwImage::Image<WeightPixelT> &,
@@ -50,13 +51,11 @@ void declareAddToCoadd(py::module &mod) {
             "coadd"_a, "weightMap"_a, "maskedImage"_a, "badPixelMask"_a, "weight"_a);
 }
 
-}  // <anonymous>
+}  // namespace
 
-PYBIND11_PLUGIN(addToCoadd) {
+PYBIND11_MODULE(addToCoadd, mod) {
     py::module::import("lsst.afw.geom");
     py::module::import("lsst.afw.image");
-
-    py::module mod("addToCoadd");
 
     declareAddToCoadd<double, double>(mod);
     declareAddToCoadd<double, float>(mod);
@@ -66,10 +65,8 @@ PYBIND11_PLUGIN(addToCoadd) {
     declareAddToCoadd<float, float>(mod);
     declareAddToCoadd<float, int>(mod);
     declareAddToCoadd<float, std::uint16_t>(mod);
-
-    return mod.ptr();
 }
 
-}  // utils
-}  // coadd
-}  // lsst
+}  // namespace utils
+}  // namespace coadd
+}  // namespace lsst

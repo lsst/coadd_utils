@@ -47,21 +47,17 @@ void declareCopyGoodPixels(py::module &mod) {
             "destImage"_a, "srcImage"_a, "badPixelMask"_a);
 }
 
-}  // <anonymous>
+}  // namespace
 
-PYBIND11_PLUGIN(copyGoodPixels) {
+PYBIND11_MODULE(copyGoodPixels, mod) {
     py::module::import("lsst.afw.image");
-
-    py::module mod("copyGoodPixels");
 
     declareCopyGoodPixels<double>(mod);
     declareCopyGoodPixels<float>(mod);
     declareCopyGoodPixels<int>(mod);
     declareCopyGoodPixels<std::uint16_t>(mod);
-
-    return mod.ptr();
 }
 
-}  // utils
-}  // coadd
-}  // lsst
+}  // namespace utils
+}  // namespace coadd
+}  // namespace lsst
