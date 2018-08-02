@@ -197,8 +197,8 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
 
     def testMaskedImage(self):
         """Test image version of copyGoodPixels"""
-        srcBBox = afwGeom.Box2I(afwGeom.Point2I(2, 17), afwGeom.Point2I(100, 101))
-        destBBox = afwGeom.Box2I(afwGeom.Point2I(13, 4), afwGeom.Point2I(95, 130))
+        srcBBox = afwGeom.Box2I(afwGeom.Point2I(2, 17), afwGeom.Point2I(100, 101), invert=False)
+        destBBox = afwGeom.Box2I(afwGeom.Point2I(13, 4), afwGeom.Point2I(95, 130), invert=False)
         destXY0 = destBBox.getMin()
 
         srcImage = self.getRandomMaskedImage(srcBBox)
@@ -209,15 +209,16 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
 
             for bboxStart in (destXY0, (50, 51)):
                 for bboxDim in ((25, 36), (200, 200)):
-                    destViewBox = afwGeom.Box2I(afwGeom.Point2I(*bboxStart), afwGeom.Extent2I(*bboxDim))
+                    destViewBox = afwGeom.Box2I(afwGeom.Point2I(*bboxStart), afwGeom.Extent2I(*bboxDim),
+                                                invert=False)
                     destViewBox.clip(destBBox)
                     destView = destImage.Factory(destImage, destViewBox, afwImage.PARENT, False)
                     self.basicMaskedImageTest(srcImage, destView, badMask)
 
     def testImage(self):
         """Test image version of copyGoodPixels"""
-        srcBBox = afwGeom.Box2I(afwGeom.Point2I(2, 17), afwGeom.Point2I(100, 101))
-        destBBox = afwGeom.Box2I(afwGeom.Point2I(13, 4), afwGeom.Point2I(95, 130))
+        srcBBox = afwGeom.Box2I(afwGeom.Point2I(2, 17), afwGeom.Point2I(100, 101), invert=False)
+        destBBox = afwGeom.Box2I(afwGeom.Point2I(13, 4), afwGeom.Point2I(95, 130), invert=False)
         destXY0 = destBBox.getMin()
 
         srcImage = self.getRandomImage(srcBBox)
@@ -228,7 +229,8 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
 
             for bboxStart in (destXY0, (50, 51)):
                 for bboxDim in ((25, 36), (200, 200)):
-                    destViewBox = afwGeom.Box2I(afwGeom.Point2I(*bboxStart), afwGeom.Extent2I(*bboxDim))
+                    destViewBox = afwGeom.Box2I(afwGeom.Point2I(*bboxStart), afwGeom.Extent2I(*bboxDim),
+                                                invert=False)
                     destViewBox.clip(destBBox)
                     destView = destImage.Factory(destImage, destViewBox, afwImage.PARENT, False)
                     self.basicImageTest(srcImage, destView)

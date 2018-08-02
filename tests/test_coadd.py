@@ -89,10 +89,11 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
         bbox = inExp.getBBox()
         wcs = inExp.getWcs()
         for badMaskPlanes, bbox in (
-            (("NO_DATA",), afwGeom.Box2I(afwGeom.Point2I(1, 2), afwGeom.Extent2I(100, 102))),
-            (("NO_DATA", "BAD"), afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(100, 102))),
-            (("NO_DATA",), afwGeom.Box2I(afwGeom.Point2I(104, 0), afwGeom.Extent2I(5, 10))),
-            (("NO_DATA",), afwGeom.Box2I(afwGeom.Point2I(0, 1020), afwGeom.Extent2I(100, 102))),
+            (("NO_DATA",), afwGeom.Box2I(afwGeom.Point2I(1, 2), afwGeom.Extent2I(100, 102), invert=False)),
+            (("NO_DATA", "BAD"), afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(100, 102), 
+                                               invert=False)),
+            (("NO_DATA",), afwGeom.Box2I(afwGeom.Point2I(104, 0), afwGeom.Extent2I(5, 10), invert=False)),
+            (("NO_DATA",), afwGeom.Box2I(afwGeom.Point2I(0, 1020), afwGeom.Extent2I(100, 102), invert=False)),
         ):
             coadd = coaddUtils.Coadd(
                 bbox=bbox,
@@ -120,8 +121,8 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
         rFilter = afwImage.Filter("r")
 
         calexpPath = os.path.join(AfwdataDir, SimCalexpSubpath)
-        inExp = afwImage.ExposureF(calexpPath, afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(10, 10)),
-                                   afwImage.PARENT)
+        inExp = afwImage.ExposureF(calexpPath, afwGeom.Box2I(afwGeom.Point2I(0, 0), afwGeom.Extent2I(10, 10),
+                                                             invert=False), afwImage.PARENT)
         coadd = coaddUtils.Coadd(
             bbox=inExp.getBBox(),
             wcs=inExp.getWcs(),

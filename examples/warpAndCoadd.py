@@ -77,10 +77,8 @@ def warpAndCoadd(coaddPath, exposureListPath, config):
     """
     weightPath = os.path.splitext(coaddPath)[0] + "_weight.fits"
 
-    bbox = afwGeom.Box2I(
-        afwGeom.Point2I(config.bboxMin[0], config.bboxMin[1]),
-        afwGeom.Extent2I(config.bboxSize[0], config.bboxSize[1]),
-    )
+    bbox = afwGeom.Box2I(afwGeom.Point2I(config.bboxMin[0], config.bboxMin[1]),
+                         afwGeom.Extent2I(config.bboxSize[0], config.bboxSize[1]), invert=False)
     print("SaveDebugImages =", config.saveDebugImages)
     print("bbox =", bbox)
 
