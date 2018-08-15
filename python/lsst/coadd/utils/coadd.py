@@ -40,7 +40,7 @@ class CoaddConfig(pexConfig.Config):
     )
 
 
-class Coadd(object):
+class Coadd:
     """Coadd by weighted addition
 
     This class may be subclassed to implement other coadd techniques.
