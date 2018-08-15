@@ -19,10 +19,9 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
+__all__ = ["makeBitMask"]
 
 import lsst.afw.image as afwImage
-
-__all__ = ["makeBitMask"]
 
 
 def makeBitMask(maskPlaneNameList, doInvert=False):

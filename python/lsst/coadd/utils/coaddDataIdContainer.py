@@ -19,12 +19,12 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
+__all__ = ["CoaddDataIdContainer", "ExistingCoaddDataIdContainer", "TractDataIdContainer"]
+
 import argparse
 from collections import defaultdict
 
 import lsst.pipe.base as pipeBase
-
-__all__ = ["CoaddDataIdContainer", "ExistingCoaddDataIdContainer", "TractDataIdContainer"]
 
 
 class CoaddDataIdContainer(pipeBase.DataIdContainer):
