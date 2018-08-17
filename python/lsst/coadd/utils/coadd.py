@@ -19,6 +19,8 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
+__all__ = ["Coadd"]
+
 import math
 
 import lsst.pex.config as pexConfig
@@ -26,8 +28,6 @@ from lsst.log import Log
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 from . import addToCoadd, setCoaddEdgeBits
-
-__all__ = ["Coadd"]
 
 
 class CoaddConfig(pexConfig.Config):
@@ -40,7 +40,7 @@ class CoaddConfig(pexConfig.Config):
     )
 
 
-class Coadd(object):
+class Coadd:
     """Coadd by weighted addition
 
     This class may be subclassed to implement other coadd techniques.
