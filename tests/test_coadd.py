@@ -31,7 +31,6 @@ import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
 import lsst.afw.image.utils as imageUtils
 import lsst.coadd.utils as coaddUtils
-import lsst.pex.policy as pexPolicy
 from lsst.log import Log
 
 try:
@@ -110,10 +109,9 @@ class CoaddTestCase(lsst.utils.tests.TestCase):
     def testFilters(self):
         """Test that the coadd filter is set correctly
         """
-        filterPolicyFile = pexPolicy.DefaultPolicyFile("afw", "SdssFilters.paf", "tests")
-        filterPolicy = pexPolicy.Policy.createPolicy(
-            filterPolicyFile, filterPolicyFile.getRepositoryPath(), True)
-        imageUtils.defineFiltersFromPolicy(filterPolicy, reset=True)
+
+        imageUtils.defineFilter("g", 468.6)
+        imageUtils.defineFilter("r", 616.5)
 
         unkFilter = afwImage.Filter()
         gFilter = afwImage.Filter("g")
