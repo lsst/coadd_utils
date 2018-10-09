@@ -51,13 +51,19 @@ class Coadd:
     def __init__(self, bbox, wcs, badMaskPlanes, logName="coadd.utils.Coadd"):
         """Create a coadd
 
-        @param[in] bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
+        Parameters
+        ----------
+        bbox :
+            bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
-        @param[in] wcs: WCS of coadd exposure (lsst.afw.geom.SKyWcs)
-        @param[in] badMaskPlanes: mask planes to pay attention to when rejecting masked pixels.
+        wcs :
+            WCS of coadd exposure (lsst.afw.geom.SKyWcs)
+        badMaskPlanes :
+            mask planes to pay attention to when rejecting masked pixels.
             Specify as a collection of names.
             badMaskPlanes should always include "NO_DATA".
-        @param[in] logName: name by which messages are logged
+        logName :
+            name by which messages are logged
         """
         self._log = Log.getLogger(logName)
         self._bbox = bbox
@@ -76,11 +82,17 @@ class Coadd:
     def fromConfig(cls, bbox, wcs, config, logName="coadd.utils.Coadd"):
         """Create a coadd
 
-        @param[in] bbox: bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
+        Parameters
+        ----------
+        bbox :
+            bounding box of coadd Exposure with respect to parent (lsst.afw.geom.Box2I):
             coadd dimensions = bbox.getDimensions(); xy0 = bbox.getMin()
-        @param[in] wcs: WCS of coadd exposure (lsst.afw.geom.SKyWcs)
-        @param[in] config: coadd config; an instance of CoaddConfig
-        @param[in] logName: name by which messages are logged
+        wcs :
+            WCS of coadd exposure (lsst.afw.geom.SKyWcs)
+        config :
+            coadd config; an instance of CoaddConfig
+        logName :
+            name by which messages are logged
         """
         return cls(
             bbox=bbox,
@@ -92,17 +104,28 @@ class Coadd:
     def addExposure(self, exposure, weightFactor=1.0):
         """Add an Exposure to the coadd
 
-        @param[in] exposure: Exposure to add to coadd; this should be:
+        Parameters
+        ----------
+        exposure :
+            Exposure to add to coadd; this should be:
+
             - background-subtracted or background-matched to the other images being coadded
             - psf-matched to the desired PSF model (optional)
             - warped to match the coadd
             - photometrically scaled to the desired flux magnitude
-        @param[in] weightFactor: extra weight factor for this exposure
 
-        @return
-        - overlapBBox: region of overlap between exposure and coadd in parent coordinates (afwGeom.Box2I)
-        - weight: weight with which exposure was added to coadd; weight = weightFactor / clipped mean variance
+        weightFactor :
+        extra weight factor for this exposure
 
+        Returns
+        -------
+        overlapBBox :
+            region of overlap between exposure and coadd in parent coordinates (afwGeom.Box2I)
+        weight :
+            weight with which exposure was added to coadd; weight = weightFactor / clipped mean variance
+
+        Notes
+        -----
         Subclasses may override to preprocess the exposure or change the way it is added to the coadd.
         """
         maskedImage = exposure.getMaskedImage()
@@ -132,7 +155,9 @@ class Coadd:
         If all exposures in this coadd have the same-named filter then that filter is set in the coadd.
         Otherwise the coadd will have the default unknown filter.
 
-        @warning: the Calib is not be set.
+        Notes
+        -----
+        warning : the Calib is not be set.
         """
         # make a deep copy so I can scale it
         coaddMaskedImage = self._coadd.getMaskedImage()

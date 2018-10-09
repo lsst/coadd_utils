@@ -27,12 +27,19 @@ import lsst.afw.image as afwImage
 def makeBitMask(maskPlaneNameList, doInvert=False):
     """Generate a bit mask consisting of ORed together Mask bit planes
 
-    @deprecated use afwImage.Mask.getPlaneBitMask(maskPlaneNameList) instead.
+    deprecated : use afwImage.Mask.getPlaneBitMask(maskPlaneNameList) instead.
 
-    @input[in] maskPlaneNameList: list of mask plane names
-    @input[in] doInvert: if True then invert the result
+    Parameters
+    ----------
+    maskPlaneNameList :
+        list of mask plane names
+    doInvert :
+        if True then invert the result
 
-    @return a bit mask consisting of the named bit planes ORed together (with the result possibly inverted)
+    Returns
+    -------
+    bitmask :
+        a bit mask consisting of the named bit planes ORed together (with the result possibly inverted)
     """
     bitMask = afwImage.Mask.getPlaneBitMask(maskPlaneNameList)
     if doInvert:
