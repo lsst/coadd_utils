@@ -9,9 +9,5 @@ Functions available from C++ and Python:
 
 @li lsst::coadd::utils::addToCoadd: add good pixels from an Image or MaskedImage to a %coadd
 @li lsst::coadd::utils::setCoaddEdgeBits: set edge bits of a %coadd's mask based on the %coadd's weight map
-
-Classes available only from Python:
-
-@li lsst.coaddutils.Coadd: a mean coadd with a method to add additional exposures
 */
 }}}
