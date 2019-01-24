@@ -19,10 +19,9 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-__all__ = ["CoaddDataIdContainer", "ExistingCoaddDataIdContainer", "TractDataIdContainer"]
+__all__ = ["CoaddDataIdContainer", "ExistingCoaddDataIdContainer"]
 
 import argparse
-from collections import defaultdict
 
 import lsst.pipe.base as pipeBase
 
@@ -76,46 +75,3 @@ class ExistingCoaddDataIdContainer(CoaddDataIdContainer):
     def makeDataRefList(self, namespace):
         super(ExistingCoaddDataIdContainer, self).makeDataRefList(namespace)
         self.refList = [ref for ref in self.refList if ref.datasetExists()]
-
-
-class TractDataIdContainer(CoaddDataIdContainer):
-
-    def makeDataRefList(self, namespace):
-        """Make self.refList from self.idList
-        It's difficult to make a data reference that merely points to an entire
-        tract: there is no data product solely at the tract level.  Instead, we
-        generate a list of data references for patches within the tract.
-        """
-        datasetType = namespace.config.coaddName + "Coadd"
-        validKeys = set(["tract", "filter", "patch", ])
-
-        def getPatchRefList(tract):
-            return [namespace.butler.dataRef(datasetType=datasetType,
-                                             tract=tract.getId(),
-                                             filter=dataId["filter"],
-                                             patch="%d,%d" % patch.getIndex()) for patch in tract]
-
-        tractRefs = defaultdict(list)  # Data references for each tract
-        for dataId in self.idList:
-            for key in validKeys:
-                if key in ("tract", "patch",):
-                    # Will deal with these explicitly
-                    continue
-                if key not in dataId:
-                    raise argparse.ArgumentError(None, "--id must include " + key)
-
-            skymap = self.getSkymap(namespace)
-
-            if "tract" in dataId:
-                tractId = dataId["tract"]
-                if "patch" in dataId:
-                    tractRefs[tractId].append(namespace.butler.dataRef(datasetType=datasetType, tract=tractId,
-                                                                       filter=dataId['filter'],
-                                                                       patch=dataId['patch']))
-                else:
-                    tractRefs[tractId] += getPatchRefList(skymap[tractId])
-            else:
-                tractRefs = dict((tract.getId(), tractRefs.get(tract.getId(), []) + getPatchRefList(tract))
-                                 for tract in skymap)
-
-        self.refList = list(tractRefs.values())
