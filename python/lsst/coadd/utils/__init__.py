@@ -28,6 +28,5 @@ from .copyGoodPixels import *
 from .setCoaddEdgeBits import *
 from .version import *
 
-from .makeBitMask import *
 from .coadd import *
 from .coaddDataIdContainer import *
