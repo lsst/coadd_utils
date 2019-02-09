@@ -9,5 +9,4 @@ coadd_utils documentation preview
 .. toctree::
    :maxdepth: 1
 
-   coadd_utils/index
    lsst.coadd.utils/index
