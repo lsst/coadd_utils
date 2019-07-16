@@ -27,7 +27,7 @@ import unittest
 import numpy as np
 
 import lsst.utils.tests
-import lsst.afw.geom as afwGeom
+import lsst.geom as geom
 import lsst.afw.image as afwImage
 import lsst.coadd.utils as coaddUtils
 from lsst.log import Log
@@ -42,7 +42,7 @@ class SetCoaddEdgeBitsTestCase(lsst.utils.tests.TestCase):
     def testRandomMap(self):
         """Test setCoaddEdgeBits using a random depth map
         """
-        imDim = afwGeom.Extent2I(50, 55)
+        imDim = geom.Extent2I(50, 55)
         coaddMask = afwImage.Mask(imDim)
 
         np.random.seed(12345)
