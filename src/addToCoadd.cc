@@ -1,9 +1,9 @@
 // -*- LSST-C++ -*-
 
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -11,17 +11,17 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
- 
+
 /**
 * @file
 *
@@ -33,11 +33,11 @@
 #include "boost/format.hpp"
 
 #include "lsst/pex/exceptions.h"
-#include "lsst/afw/geom.h"
+#include "lsst/geom.h"
 #include "lsst/coadd/utils/addToCoadd.h"
 
 namespace pexExcept = lsst::pex::exceptions;
-namespace afwGeom = lsst::afw::geom;
+namespace geom = lsst::geom;
 namespace afwImage = lsst::afw::image;
 namespace coaddUtils = lsst::coadd::utils;
 
@@ -47,7 +47,7 @@ namespace {
      */
     struct CheckMask {
         CheckMask(lsst::afw::image::MaskPixel badPixel) : _badPixel(badPixel) {}
-        
+
         template<typename T>
         bool operator()(T val) const {
             return ((val.mask() & _badPixel) == 0) ? true : false;
@@ -55,20 +55,20 @@ namespace {
     private:
         lsst::afw::image::MaskPixel _badPixel;
     };
-    
+
     /*
      * A boolean functor to test if an Image pixel has known value (not NaN)
-     */    
+     */
     struct CheckKnownValue {
         CheckKnownValue(lsst::afw::image::MaskPixel) {}
-    
+
         template<typename T>
         bool operator()(T val) const {
             return !std::isnan(static_cast<float>(*val));
         }
     };
-    
-    /* 
+
+    /*
      * Implementation of addToCoadd
      *
      * The template parameter isValidPixel is a functor with operator()
@@ -79,7 +79,7 @@ namespace {
      * @return overlapping bounding box, relative to parent image
      */
     template <typename CoaddT, typename WeightPixelT, typename isValidPixel>
-    static lsst::afw::geom::Box2I addToCoaddImpl(
+    static lsst::geom::Box2I addToCoaddImpl(
         CoaddT &coadd,                                      ///< [in,out] coadd to be modified
         lsst::afw::image::Image<WeightPixelT> &weightMap,   ///< [in,out] weight map to be modified
         CoaddT const &image,                                ///< image to add to coadd
@@ -87,23 +87,23 @@ namespace {
         WeightPixelT weight                                 ///< relative weight of this image
     ) {
         typedef typename afwImage::Image<WeightPixelT> WeightMapT;
-        
+
         if (coadd.getBBox() != weightMap.getBBox()) {
             throw LSST_EXCEPT(pexExcept::InvalidParameterError,
                 (boost::format("coadd and weightMap parent bboxes differ: %s != %s") %
                 coadd.getBBox() % weightMap.getBBox()).str());
         }
-        
-        afwGeom::Box2I overlapBBox = coadd.getBBox();
+
+        geom::Box2I overlapBBox = coadd.getBBox();
         overlapBBox.clip(image.getBBox());
         if (overlapBBox.isEmpty()) {
             return overlapBBox;
         }
-    
+
         CoaddT coaddView(coadd, overlapBBox, afwImage::PARENT, false);
         WeightMapT weightMapView(weightMap, overlapBBox, afwImage::PARENT, false);
         CoaddT imageView(image, overlapBBox, afwImage::PARENT, false);
-    
+
         isValidPixel const isValid(badPixelMask); // functor to check if a pixel is good
         for (int y = 0, endY = imageView.getHeight(); y != endY; ++y) {
             typename CoaddT::const_x_iterator imageIter = imageView.row_begin(y);
@@ -124,7 +124,7 @@ namespace {
 } // anonymous namespace
 
 template <typename CoaddPixelT, typename WeightPixelT>
-lsst::afw::geom::Box2I coaddUtils::addToCoadd(
+lsst::geom::Box2I coaddUtils::addToCoadd(
     // spell out lsst:afw::image to make Doxygen happy
     lsst::afw::image::Image<CoaddPixelT> &coadd,
     lsst::afw::image::Image<WeightPixelT> &weightMap,
@@ -136,7 +136,7 @@ lsst::afw::geom::Box2I coaddUtils::addToCoadd(
 }
 
 template <typename CoaddPixelT, typename WeightPixelT>
-lsst::afw::geom::Box2I coaddUtils::addToCoadd(
+lsst::geom::Box2I coaddUtils::addToCoadd(
     // spell out lsst:afw::image to make Doxygen happy
     lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
         lsst::afw::image::VariancePixel> &coadd,
@@ -156,14 +156,14 @@ lsst::afw::geom::Box2I coaddUtils::addToCoadd(
 #define MASKEDIMAGE(IMAGEPIXEL) afwImage::MaskedImage<IMAGEPIXEL, \
     afwImage::MaskPixel, afwImage::VariancePixel>
 #define INSTANTIATE(COADDPIXEL, WEIGHTPIXEL) \
-    template lsst::afw::geom::Box2I coaddUtils::addToCoadd<COADDPIXEL, WEIGHTPIXEL>( \
+    template lsst::geom::Box2I coaddUtils::addToCoadd<COADDPIXEL, WEIGHTPIXEL>( \
         afwImage::Image<COADDPIXEL> &coadd, \
         afwImage::Image<WEIGHTPIXEL> &weightMap, \
         afwImage::Image<COADDPIXEL> const &image,       \
         WEIGHTPIXEL weight \
     ); \
     \
-    template lsst::afw::geom::Box2I coaddUtils::addToCoadd<COADDPIXEL, WEIGHTPIXEL>( \
+    template lsst::geom::Box2I coaddUtils::addToCoadd<COADDPIXEL, WEIGHTPIXEL>( \
         MASKEDIMAGE(COADDPIXEL) &coadd, \
         afwImage::Image<WEIGHTPIXEL> &weightMap, \
         MASKEDIMAGE(COADDPIXEL) const &image, \

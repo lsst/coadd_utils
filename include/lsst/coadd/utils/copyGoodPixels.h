@@ -29,7 +29,7 @@
  *
  * @author Russell Owen
  */
-#include "lsst/afw/geom.h"
+#include "lsst/geom.h"
 #include "lsst/afw/image.h"
 
 namespace lsst {
