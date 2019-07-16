@@ -29,7 +29,7 @@
  *
  * @author Russell Owen
  */
-#include "lsst/afw/geom.h"
+#include "lsst/geom.h"
 #include "lsst/afw/image.h"
 
 namespace lsst {
@@ -50,7 +50,7 @@ namespace utils {
  * @throw pexExcept::InvalidParameterError if coadd and weightMap dimensions or xy0 do not match.
  */
 template <typename CoaddPixelT, typename WeightPixelT>
-lsst::afw::geom::Box2I addToCoadd(
+lsst::geom::Box2I addToCoadd(
         lsst::afw::image::Image<CoaddPixelT> &coadd,  ///< [in,out] coadd to be modified
         lsst::afw::image::Image<WeightPixelT> &
                 weightMap,  ///< [in,out] weight map to be modified;
@@ -73,7 +73,7 @@ lsst::afw::geom::Box2I addToCoadd(
  * @throw pexExcept::InvalidParameterError if coadd and weightMap dimensions or xy0 do not match.
  */
 template <typename CoaddPixelT, typename WeightPixelT>
-lsst::afw::geom::Box2I addToCoadd(
+lsst::geom::Box2I addToCoadd(
         lsst::afw::image::MaskedImage<CoaddPixelT, lsst::afw::image::MaskPixel,
                                       lsst::afw::image::VariancePixel>
                 &coadd,  ///< [in,out] coadd to be modified

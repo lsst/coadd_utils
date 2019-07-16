@@ -33,11 +33,11 @@
 #include "boost/format.hpp"
 
 #include "lsst/pex/exceptions.h"
-#include "lsst/afw/geom.h"
+#include "lsst/geom.h"
 #include "lsst/coadd/utils/copyGoodPixels.h"
 
 namespace pexExcept = lsst::pex::exceptions;
-namespace afwGeom = lsst::afw::geom;
+namespace geom = lsst::geom;
 namespace afwImage = lsst::afw::image;
 namespace coaddUtils = lsst::coadd::utils;
 
@@ -84,7 +84,7 @@ namespace {
         ImageT const &srcImage,                             ///< image to copy
         lsst::afw::image::MaskPixel const badPixelMask      ///< bad pixel mask; may be ignored
     ) {
-        afwGeom::Box2I overlapBBox = destImage.getBBox();
+        geom::Box2I overlapBBox = destImage.getBBox();
         overlapBBox.clip(srcImage.getBBox());
         if (overlapBBox.isEmpty()) {
             return 0;

@@ -35,16 +35,16 @@ namespace {
 
 template <typename CoaddPixelT, typename WeightPixelT>
 void declareAddToCoadd(py::module &mod) {
-    namespace afwGeom = lsst::afw::geom;
+    namespace geom = lsst::geom;
     namespace afwImage = lsst::afw::image;
 
     mod.def("addToCoadd",
-            (afwGeom::Box2I(*)(afwImage::Image<CoaddPixelT> &, afwImage::Image<WeightPixelT> &,
+            (geom::Box2I(*)(afwImage::Image<CoaddPixelT> &, afwImage::Image<WeightPixelT> &,
                                afwImage::Image<CoaddPixelT> const &, WeightPixelT)) &
                     addToCoadd,
             "coadd"_a, "weightMap"_a, "image"_a, "weight"_a);
     mod.def("addToCoadd",
-            (afwGeom::Box2I(*)(afwImage::MaskedImage<CoaddPixelT> &, afwImage::Image<WeightPixelT> &,
+            (geom::Box2I(*)(afwImage::MaskedImage<CoaddPixelT> &, afwImage::Image<WeightPixelT> &,
                                afwImage::MaskedImage<CoaddPixelT> const &, afwImage::MaskPixel const,
                                WeightPixelT)) &
                     addToCoadd,
