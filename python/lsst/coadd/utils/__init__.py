@@ -25,8 +25,5 @@
 
 from .addToCoadd import *
 from .copyGoodPixels import *
-from .getGen3CoaddExposureId import *
 from .setCoaddEdgeBits import *
 from .version import *
-
-from .coaddDataIdContainer import *
