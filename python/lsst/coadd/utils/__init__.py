@@ -23,7 +23,5 @@
 """lsst.coadd.utils
 """
 
-from .addToCoadd import *
-from .copyGoodPixels import *
-from .setCoaddEdgeBits import *
+from ._coaddUtilsLib import *
 from .version import *

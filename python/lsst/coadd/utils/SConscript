@@ -1,5 +1,8 @@
 # -*- python -*-
 from lsst.sconsUtils import scripts
-scripts.BasicSConscript.pybind11(['addToCoadd',
-                                  'copyGoodPixels',
-                                  'setCoaddEdgeBits'], addUnderscore=False)
+scripts.BasicSConscript.python(["_coaddUtilsLib"], [
+    '_coaddUtilsLib.cc',
+    'addToCoadd.cc',
+    'copyGoodPixels.cc',
+    'setCoaddEdgeBits.cc'
+])

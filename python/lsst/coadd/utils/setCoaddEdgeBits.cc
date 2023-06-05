@@ -21,6 +21,7 @@
  */
 
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 
 #include "lsst/coadd/utils/setCoaddEdgeBits.h"
 
@@ -45,9 +46,8 @@ void declareSetCoaddEdgeBits(py::module &mod) {
 
 }  // namespace
 
-PYBIND11_MODULE(setCoaddEdgeBits, mod) {
-    py::module::import("lsst.afw.image");
-
+void wrapSetCoaddEdgeBits(lsst::cpputils::python::WrapperCollection &wrappers) {
+    auto &mod = wrappers.module;
     declareSetCoaddEdgeBits<double>(mod);
     declareSetCoaddEdgeBits<float>(mod);
     declareSetCoaddEdgeBits<int>(mod);
