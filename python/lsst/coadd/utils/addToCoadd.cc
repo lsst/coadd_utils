@@ -21,6 +21,7 @@
  */
 
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 
 #include "lsst/coadd/utils/addToCoadd.h"
 
@@ -53,10 +54,8 @@ void declareAddToCoadd(py::module &mod) {
 
 }  // namespace
 
-PYBIND11_MODULE(addToCoadd, mod) {
-    py::module::import("lsst.afw.geom");
-    py::module::import("lsst.afw.image");
-
+void wrapAddtoCoadd(lsst::cpputils::python::WrapperCollection &wrappers) {
+    auto &mod = wrappers.module;
     declareAddToCoadd<double, double>(mod);
     declareAddToCoadd<double, float>(mod);
     declareAddToCoadd<double, int>(mod);

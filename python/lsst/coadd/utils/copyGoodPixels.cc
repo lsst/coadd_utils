@@ -21,6 +21,7 @@
  */
 
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 
 #include "lsst/coadd/utils/copyGoodPixels.h"
 
@@ -49,9 +50,8 @@ void declareCopyGoodPixels(py::module &mod) {
 
 }  // namespace
 
-PYBIND11_MODULE(copyGoodPixels, mod) {
-    py::module::import("lsst.afw.image");
-
+void wrapCopyGoodPixels(lsst::cpputils::python::WrapperCollection &wrappers) {
+    auto &mod = wrappers.module;
     declareCopyGoodPixels<double>(mod);
     declareCopyGoodPixels<float>(mod);
     declareCopyGoodPixels<int>(mod);
