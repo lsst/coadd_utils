@@ -64,10 +64,10 @@ def referenceCopyGoodPixelsImage(destImage, srcImage):
         return (destImage, 0)
 
     destImageView = destImage.Factory(destImage, overlapBBox, afwImage.PARENT, False)
-    destImageArray = destImageView.getArray()
+    destImageArray = destImageView.array
 
     srcImageView = srcImage.Factory(srcImage, overlapBBox, afwImage.PARENT, False)
-    srcImageArray = srcImageView.getArray()
+    srcImageArray = srcImageView.array
 
     isBadArray = np.isnan(srcImageArray)
 
@@ -156,7 +156,7 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
 
         np.random.seed(0)
         image = afwImage.ImageF(bbox)
-        imageArray = image.getArray()
+        imageArray = image.array
         imageArray[:] = np.random.normal(5000, 5000, npShape)
         if nanSigma > 0:
             # add NaNs at nanSigma above mean of a test array
