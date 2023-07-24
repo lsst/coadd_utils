@@ -64,10 +64,10 @@ def referenceCopyGoodPixelsImage(destImage, srcImage):
         return (destImage, 0)
 
     destImageView = destImage.Factory(destImage, overlapBBox, afwImage.PARENT, False)
-    destImageArray = destImageView.getArray()
+    destImageArray = destImageView.array
 
     srcImageView = srcImage.Factory(srcImage, overlapBBox, afwImage.PARENT, False)
-    srcImageArray = srcImageView.getArray()
+    srcImageArray = srcImageView.array
 
     isBadArray = np.isnan(srcImageArray)
 
@@ -99,17 +99,16 @@ def referenceCopyGoodPixelsMaskedImage(destImage, srcImage, badPixelMask):
         return (destImage, 0)
 
     destImageView = destImage.Factory(destImage, overlapBBox, afwImage.PARENT, False)
-    destImageArrayList = destImageView.getArrays()
-
     srcImageView = srcImage.Factory(srcImage, overlapBBox, afwImage.PARENT, False)
-    srcImageArrayList = srcImageView.getArrays()
 
-    isBadArray = (srcImageArrayList[1] & badPixelMask) != 0
+    isBadArray = (srcImageView.mask.array & badPixelMask) != 0
 
-    for ind in range(3):
-        destImageView = destImageArrayList[ind]
-        srcImageView = srcImageArrayList[ind]
-        destImageView[:] = np.where(isBadArray, destImageView, srcImageView)
+    destImageView.image.array = np.where(isBadArray, destImageView.image.array, srcImageView.image.array)
+    destImageView.mask.array = np.where(isBadArray, destImageView.mask.array, srcImageView.mask.array)
+    destImageView.variance.array = np.where(isBadArray,
+                                            destImageView.variance.array,
+                                            srcImageView.variance.array)
+
     numGoodPix = np.sum(np.logical_not(isBadArray))
     return destImage, numGoodPix
 
@@ -127,11 +126,10 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
 
         np.random.seed(0)
         maskedImage = afwImage.MaskedImageF(bbox)
-        imageArrays = maskedImage.getArrays()
-        imageArrays[0][:] = val
-        imageArrays[2][:] = val * 0.5
-        imageArrays[1][:, 0:npShape[1]/2] = 0
-        imageArrays[1][:, npShape[1]/2:] = badMask
+        maskedImage.image.array[:] = val
+        maskedImage.variance.array[:] = val * 0.5
+        maskedImage.mask.array[:, 0:npShape[1]/2] = 0
+        maskedImage.mask.array[:, npShape[1]/2:] = badMask
         return maskedImage
 
     def getRandomMaskedImage(self, bbox, excludeMask=0):
@@ -145,10 +143,9 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
 
         np.random.seed(0)
         maskedImage = afwImage.MaskedImageF(bbox)
-        imageArrays = maskedImage.getArrays()
-        imageArrays[0][:] = np.random.normal(5000, 5000, npShape)  # image
-        imageArrays[2][:] = np.random.normal(3000, 3000, npShape)  # variance
-        imageArrays[1][:] = np.logical_and(np.random.randint(0, 8, npShape), ~excludeMask)
+        maskedImage.image.array[:] = np.random.normal(5000, 5000, npShape)
+        maskedImage.variance.array[:] = np.random.normal(3000, 3000, npShape)
+        maskedImage.mask.array[:] = np.logical_and(np.random.randint(0, 8, npShape), ~excludeMask)
         return maskedImage
 
     def getRandomImage(self, bbox, nanSigma=0):
@@ -159,7 +156,7 @@ class CopyGoodPixelsTestCase(lsst.utils.tests.TestCase):
 
         np.random.seed(0)
         image = afwImage.ImageF(bbox)
-        imageArray = image.getArray()
+        imageArray = image.array
         imageArray[:] = np.random.normal(5000, 5000, npShape)
         if nanSigma > 0:
             # add NaNs at nanSigma above mean of a test array

@@ -50,10 +50,9 @@ class SetCoaddEdgeBitsTestCase(lsst.utils.tests.TestCase):
         depthMap = afwImage.makeImageFromArray(depthMapArray)
 
         refCoaddMask = afwImage.Mask(imDim)
-        refCoaddMaskArray = refCoaddMask.getArray()
         edgeMask = afwImage.Mask.getPlaneBitMask("NO_DATA")
-        refCoaddMaskArray |= np.array(np.where(depthMapArray > 0, 0, edgeMask),
-                                      dtype=refCoaddMaskArray.dtype)
+        refCoaddMask.array |= np.array(np.where(depthMapArray > 0, 0, edgeMask),
+                                       dtype=refCoaddMask.array.dtype)
 
         coaddUtils.setCoaddEdgeBits(coaddMask, depthMap)
         self.assertMasksEqual(coaddMask, refCoaddMask)

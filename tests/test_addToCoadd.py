@@ -87,13 +87,13 @@ def referenceAddToCoadd(coadd, weightMap, maskedImage, badPixelMask, weight):
     overlapBBox = coadd.getBBox()
     overlapBBox.clip(maskedImage.getBBox())
 
-    coaddArrayList = tuple(arr.copy() for arr in coadd.getArrays())
-    weightMapArray = weightMap.getArray().copy()
+    coaddArrayList = coadd.image.array.copy(), coadd.mask.array.copy(), coadd.variance.array.copy()
+    weightMapArray = weightMap.array.copy()
 
     if overlapBBox.isEmpty():
         return (overlapBBox, coaddArrayList, weightMapArray)
 
-    maskedImageArrayList = maskedImage.getArrays()
+    maskedImageArrayList = maskedImage.image.array, maskedImage.mask.array, maskedImage.variance.array
     badMaskArr = (maskedImageArrayList[1] & badPixelMask) != 0
 
     coaddSlices = slicesFromBox(overlapBBox, coadd)
@@ -203,8 +203,8 @@ class AddToCoaddAfwdataTestCase(unittest.TestCase):
         afwOverlapBox = coaddUtils.addToCoadd(coadd, weightMap, image, badPixelMask, weight)
         self.assertEqual(overlapBBox, afwOverlapBox)
 
-        coaddArrayList = coadd.getArrays()
-        weightMapArray = weightMap.getArray()
+        coaddArrayList = coadd.image.array, coadd.mask.array, coadd.variance.array
+        weightMapArray = weightMap.array
 
         for name, ind in (("image", 0), ("mask", 1), ("variance", 2)):
             if not np.allclose(coaddArrayList[ind], refCoaddArrayList[ind]):
