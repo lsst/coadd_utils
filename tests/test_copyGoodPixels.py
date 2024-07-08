@@ -30,14 +30,11 @@ import lsst.utils.tests
 import lsst.geom as geom
 import lsst.afw.image as afwImage
 import lsst.coadd.utils as coaddUtils
-from lsst.log import Log
 
 try:
     display
 except NameError:
     display = False
-
-Log.getLogger("coadd.utils").setLevel(Log.INFO)
 
 
 def referenceCopyGoodPixelsImage(destImage, srcImage):
