@@ -1,6 +1,7 @@
 setupRequired(afw)
 setupRequired(sconsUtils)
 setupRequired(utils)
+setupRequired(cpputils)
 
 setupOptional(afwdata)
 setupOptional(pex_config)
