@@ -1,5 +1,4 @@
 setupRequired(afw)
-setupRequired(log)
 setupRequired(sconsUtils)
 setupRequired(utils)
 

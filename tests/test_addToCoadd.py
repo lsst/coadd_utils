@@ -35,14 +35,11 @@ import lsst.afw.math as afwMath
 import lsst.afw.display.ds9 as ds9
 import lsst.pex.exceptions as pexExcept
 import lsst.coadd.utils as coaddUtils
-from lsst.log import Log
 
 try:
     display
 except NameError:
     display = False
-
-Log.getLogger("coadd.utils").setLevel(Log.INFO)
 
 try:
     AfwdataDir = lsst.utils.getPackageDir('afwdata')
