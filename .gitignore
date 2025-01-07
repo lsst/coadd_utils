@@ -20,3 +20,4 @@ doc/doxygen.conf
 doc/xml
 tests/.tests
 version.py
+python/*.dist-info/
