@@ -23,4 +23,5 @@
 """
 
 from ._coaddUtilsLib import *
+from ._pyutils import *
 from .version import *
