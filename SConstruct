@@ -1,4 +1,4 @@
 # -*- python -*-
 from lsst.sconsUtils import scripts
 
-scripts.BasicSConstruct("coadd_utils")
+scripts.BasicSConstruct("coadd_utils", noCfgFile=True)
