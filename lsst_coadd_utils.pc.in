@@ -1,0 +1,12 @@
+prefix=${pcfiledir}/../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+doxygen_tag=${prefix}/doc/coadd_utils.tag
+lsst_build_requires=pybind11 python3
+
+Name: lsst_coadd_utils
+Description: LSST Science Pipelines coaddition utilities
+Version: @VERSION@
+Requires: lsst_afw lsst_cpputils
+Cflags: -I${includedir}
+Libs: -L${libdir} -lcoadd_utils
